@@ -1,0 +1,10 @@
+{
+  "generator-jhipster-module": {
+    "promptValues": {
+      "githubName": "fdelbrayelle",
+      "authorName": "François Delbrayelle",
+      "authorEmail": "fdelbrayelle@gmail.com",
+      "authorUrl": "https://fdelbrayelle.github.io/"
+    }
+  }
+}

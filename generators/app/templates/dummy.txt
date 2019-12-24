@@ -1,0 +1,2 @@
+hello kafka!
+It's dummy.txt
