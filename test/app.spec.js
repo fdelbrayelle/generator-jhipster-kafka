@@ -1,48 +1,27 @@
-const path = require('path');
-const fse = require('fs-extra');
-const assert = require('yeoman-assert');
-const helpers = require('yeoman-test');
+/* eslint-disable no-unused-expressions */
+// const path = require('path');
+// const fse = require('fs-extra');
+// const helpers = require('yeoman-test');
+// const expect = require('chai').expect;
 
 describe('JHipster generator kafka', () => {
-    describe('Test with Maven and AngularX', () => {
-        beforeEach(done => {
-            helpers
-                .run(path.join(__dirname, '../generators/app'))
-                .inTmpDir(dir => {
-                    fse.copySync(path.join(__dirname, '../test/templates/maven-angularX'), dir);
-                })
-                .withOptions({
-                    testmode: true
-                })
-                .withPrompts({
-                    message: 'simple message to say hello'
-                })
-                .on('end', done);
-        });
-
-        it('generate dummy.txt file', () => {
-            assert.file(['dummy-maven.txt', 'dummy-angularX.txt']);
-        });
-    });
-
-    describe('Test with Gradle and React', () => {
-        beforeEach(done => {
-            helpers
-                .run(path.join(__dirname, '../generators/app'))
-                .inTmpDir(dir => {
-                    fse.copySync(path.join(__dirname, '../test/templates/gradle-react'), dir);
-                })
-                .withOptions({
-                    testmode: true
-                })
-                .withPrompts({
-                    message: 'simple message to say hello'
-                })
-                .on('end', done);
-        });
-
-        it('generate dummy.txt file', () => {
-            assert.file(['dummy-gradle.txt', 'dummy-react.txt']);
-        });
-    });
+    // describe('Test with no message broker', () => {
+    //     it('throws an error', done => {
+    //         helpers
+    //             .run(path.join(__dirname, '../generators/app'))
+    //             .inTmpDir(dir => {
+    //                 fse.copySync(path.join(__dirname, '../test/templates/no-message-broker'), dir);
+    //             })
+    //             .withOptions({
+    //                 testmode: true
+    //             })
+    //             .withPrompts({
+    //                 message: 'simple message to say hello'
+    //             })
+    //             .on('error', error => {
+    //                 expect(error.message.includes('You need to have Kafka as message broker')).to.be.true;
+    //                 done();
+    //             });
+    //     });
+    // });
 });
