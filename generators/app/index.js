@@ -17,6 +17,9 @@ module.exports = class extends BaseGenerator {
                 if (!this.jhipsterAppConfig) {
                     this.error('Cannot read .yo-rc.json');
                 }
+                if (this.jhipsterAppConfig.messageBroker !== 'kafka') {
+                    this.error('You need to have Kafka as message broker');
+                }
             },
             displayLogo() {
                 // it's here to show that you can use functions from generator-jhipster
@@ -102,18 +105,6 @@ module.exports = class extends BaseGenerator {
         this.log(`\nmessage=${this.message}`);
         this.log('------\n');
 
-        if (this.clientFramework === 'react') {
-            this.template('dummy.txt', 'dummy-react.txt');
-        }
-        if (this.clientFramework === 'angularX') {
-            this.template('dummy.txt', 'dummy-angularX.txt');
-        }
-        if (this.buildTool === 'maven') {
-            this.template('dummy.txt', 'dummy-maven.txt');
-        }
-        if (this.buildTool === 'gradle') {
-            this.template('dummy.txt', 'dummy-gradle.txt');
-        }
         try {
             this.registerModule(
                 'generator-jhipster-kafka',
