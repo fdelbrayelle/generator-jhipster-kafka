@@ -1,6 +1,6 @@
 # generator-jhipster-kafka
 
-[![NPM version][npm-image]][npm-url] [![Build Status][travis-image]][travis-url] [![Dependency Status][daviddm-image]][daviddm-url]
+[![NPM version][npm-image]][npm-url] [![Build Status][github-actions-image]][github-actions-url] [![Dependency Status][daviddm-image]][daviddm-url]
 
 > JHipster module, A JHipster module to generate Apache Kafka consumers and producers.
 
@@ -52,7 +52,7 @@ Apache-2.0 © [François Delbrayelle](https://fdelbrayelle.github.io/)
 
 [npm-image]: https://img.shields.io/npm/v/generator-jhipster-kafka.svg
 [npm-url]: https://npmjs.org/package/generator-jhipster-kafka
-[travis-image]: https://travis-ci.org/fdelbrayelle/generator-jhipster-kafka.svg?branch=master
-[travis-url]: https://travis-ci.org/fdelbrayelle/generator-jhipster-kafka
+[github-actions-image]: https://github.com/fdelbrayelle/generator-jhipster-kafka/workflows/Build/badge.svg
+[github-actions-url]: https://github.com/fdelbrayelle/generator-jhipster-kafka/actions
 [daviddm-image]: https://david-dm.org/fdelbrayelle/generator-jhipster-kafka.svg?theme=shields.io
 [daviddm-url]: https://david-dm.org/fdelbrayelle/generator-jhipster-kafka
