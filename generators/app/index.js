@@ -42,12 +42,38 @@ module.exports = class extends BaseGenerator {
     }
 
     prompting() {
+        const choices = [];
+
+        choices.push({
+            name: 'Consumer',
+            value: 'consumer'
+        });
+        choices.push({
+            name: 'Producer',
+            value: 'producer'
+        });
+
         const prompts = [
             {
+                type: 'checkbox',
+                name: 'components',
+                message: 'Which Kafka component do you want ?',
+                choices,
+                default: []
+            },
+            {
                 type: 'input',
-                name: 'message',
-                message: 'Please put something',
-                default: 'hello world!'
+                name: 'entityClass',
+                message: 'What is the entity ?',
+                validate: input => {
+                    if (!/^([a-zA-Z0-9_]*)$/.test(input)) {
+                        return 'Your field name cannot contain special characters';
+                    }
+                    if (input === '') {
+                        return 'Your field name cannot be empty';
+                    }
+                    return true;
+                }
             }
         ];
 
@@ -115,6 +141,24 @@ module.exports = class extends BaseGenerator {
             );
         } catch (err) {
             this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
+        }
+
+        this.entityClass = this.props.entityClass;
+
+        this.template('src/main/java/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+
+        if (this.props.components.includes('consumer')) {
+            this.template(
+                'src/main/java/service/kafka/consumer/EntityConsumer.java.ejs',
+                `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+            );
+        }
+
+        if (this.props.components.includes('producer')) {
+            this.template(
+                'src/main/java/service/kafka/producer/EntityProducer.java.ejs',
+                `${javaDir}service/kafka/producer/${this.entityClass}Producer.java`
+            );
         }
     }
 
