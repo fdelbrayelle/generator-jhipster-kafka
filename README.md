@@ -46,6 +46,15 @@ yarn global upgrade generator-jhipster-kafka
 
 # Usage
 
+This describes how to use basically this module with a JHipster generated project:
+
+1. Create a JHipster project in a new folder: `mkdir myproject && jhipster`
+2. Choose `Asynchronous messages using Apache Kafka` in server side options
+3. Go to the `generator-jhipster-kafka` project folder and run `npm link`
+4. Go back to your JHipster project and run `npm link generator-jhipster-kafka`
+5. In the same folder, then run `yo jhipster-kafka`
+6. You can choose to add a consumer and/or a producer for an entity (at the moment it only generates a basic `StringConsumer`)
+
 # License
 
 Apache-2.0 © [François Delbrayelle](https://fdelbrayelle.github.io/)
