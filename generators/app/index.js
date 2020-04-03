@@ -145,18 +145,24 @@ module.exports = class extends BaseGenerator {
 
         this.entityClass = this.props.entityClass;
 
-        this.template('src/main/java/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+        this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
 
         if (this.props.components.includes('consumer')) {
             this.template(
-                'src/main/java/service/kafka/consumer/EntityConsumer.java.ejs',
-                `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+                'src/main/java/package/service/kafka/consumer/StringConsumer.java.ejs',
+                `${javaDir}service/kafka/consumer/StringConsumer.java`
             );
+
+            // TODO: Next step with a given entity
+            // this.template(
+            //     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
+            //     `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+            // );
         }
 
         if (this.props.components.includes('producer')) {
             this.template(
-                'src/main/java/service/kafka/producer/EntityProducer.java.ejs',
+                'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                 `${javaDir}service/kafka/producer/${this.entityClass}Producer.java`
             );
         }
