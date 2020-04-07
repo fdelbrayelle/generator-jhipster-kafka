@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
@@ -106,6 +107,7 @@ module.exports = class extends BaseGenerator {
         // use constants from generator-constants.js
         const javaDir = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.packageFolder}/`;
         const resourceDir = jhipsterConstants.SERVER_MAIN_RES_DIR;
+        const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
 
         // variable from questions
@@ -125,6 +127,7 @@ module.exports = class extends BaseGenerator {
         this.log('\n--- some const ---');
         this.log(`javaDir=${javaDir}`);
         this.log(`resourceDir=${resourceDir}`);
+        this.log(`resourceDir=${testResourceDir}`);
         this.log(`webappDir=${webappDir}`);
 
         this.log('\n--- variables from questions ---');
@@ -145,21 +148,77 @@ module.exports = class extends BaseGenerator {
 
         this.entityClass = this.props.entityClass;
 
-        this.template('src/main/java/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+        this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
 
         if (this.props.components.includes('consumer')) {
             this.template(
-                'src/main/java/service/kafka/consumer/EntityConsumer.java.ejs',
-                `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+                'src/main/java/package/service/kafka/consumer/StringConsumer.java.ejs',
+                `${javaDir}service/kafka/consumer/StringConsumer.java`
             );
+
+            // TODO: Next step with a given entity
+            // this.template(
+            //     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
+            //     `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+            // );
         }
 
         if (this.props.components.includes('producer')) {
             this.template(
-                'src/main/java/service/kafka/producer/EntityProducer.java.ejs',
+                'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                 `${javaDir}service/kafka/producer/${this.entityClass}Producer.java`
             );
         }
+
+        const dasherizedBaseName = _.kebabCase(this.baseName);
+
+        const sourceKafkaProperties = `kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    group.id: ${dasherizedBaseName}
+    auto.offset.reset: earliest
+  producer:
+    key.serializer: org.apache.kafka.common.serialization.StringSerializer
+    value.serializer: org.apache.kafka.common.serialization.StringSerializer`;
+
+        const destinationKafkaProperties = `kafka:
+  '[bootstrap.servers]': localhost:9092
+  consumer:
+    string:
+      name: topic-string
+      enabled: true
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[group.id]': ${dasherizedBaseName}
+      '[auto.offset.reset]': earliest
+  producer:
+    string:
+      name: topic-string
+      enabled: true
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
+      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+
+        const destinationKafkaTestProperties = `kafka:
+  '[bootstrap.servers]': localhost:9092
+  consumer:
+    string:
+      name: topic-string
+      enabled: false
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[group.id]': ${dasherizedBaseName}
+      '[auto.offset.reset]': earliest
+  producer:
+    string:
+      name: topic-string
+      enabled: false
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
+      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+
+        this.replaceContent(`${resourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaProperties);
+        this.replaceContent(`${testResourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaTestProperties);
     }
 
     install() {
