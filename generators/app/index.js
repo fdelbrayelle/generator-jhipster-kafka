@@ -1,9 +1,9 @@
 const chalk = require('chalk');
+const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const packagejs = require('../../package.json');
-const utilYaml = require('./utilYaml.js');
 
 module.exports = class extends BaseGenerator {
     get initializing() {
@@ -170,106 +170,55 @@ module.exports = class extends BaseGenerator {
             );
         }
 
-        // FIXME: This is the template to obtain after using utilYaml below
+        const dasherizedBaseName = _.kebabCase(this.baseName);
 
-        // kafka:
-        //     '[bootstrap.servers]': localhost:9092
-        //     consumer:
-        //         string:
-        //             name: topic-string
-        //             enabled: true
-        //             '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-        //             '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-        //             '[group.id]': generated-project-for-tests
-        //                 '[auto.offset.reset]': earliest
-        //     producer:
-        //         string:
-        //             name: topic-string
-        //             enabled: true
-        //             '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-        //             '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer
+        const sourceKafkaProperties = `kafka:
+  bootstrap-servers: localhost:9092
+  consumer:
+    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    group.id: ${dasherizedBaseName}
+    auto.offset.reset: earliest
+  producer:
+    key.serializer: org.apache.kafka.common.serialization.StringSerializer
+    value.serializer: org.apache.kafka.common.serialization.StringSerializer`;
 
-        const yamlPropertiesToDelete = {};
-        utilYaml.deletePropertyInArray(yamlPropertiesToDelete, 'kafka.bootstrap.servers', this);
-        utilYaml.deletePropertyInArray(yamlPropertiesToDelete, 'kafka.consumer', this);
-        utilYaml.deletePropertyInArray(yamlPropertiesToDelete, 'kafka.producer', this);
-        utilYaml.updateYamlProperties(`${resourceDir}config/application.yml`, yamlPropertiesToDelete, this);
-        utilYaml.addYamlPropertyAtBeginin(`${resourceDir}config/application.yml`, "kafka.'[bootstrap.servers]'", 'localhost:9092', this);
-        utilYaml.addYamlPropertyAtBeginin(`${resourceDir}config/application.yml`, 'kafka.consumer.string.name', 'topic-string', this);
-        utilYaml.addYamlPropertyAtBeginin(`${resourceDir}config/application.yml`, 'kafka.consumer.string.enabled', 'true', this);
-        utilYaml.addYamlPropertyAtBeginin(
-            `${resourceDir}config/application.yml`,
-            "kafka.consumer.string.'[key.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${resourceDir}config/application.yml`,
-            "kafka.consumer.string.'[value.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${resourceDir}config/application.yml`,
-            "kafka.consumer.string.'[auto.offset.reset]'",
-            'earliest',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(`${resourceDir}config/application.yml`, 'kafka.producer.string.name', 'topic-string', this);
-        utilYaml.addYamlPropertyAtBeginin(`${resourceDir}config/application.yml`, 'kafka.producer.string.enabled', 'true', this);
-        utilYaml.addYamlPropertyAtBeginin(
-            `${resourceDir}config/application.yml`,
-            "kafka.consumer.string.'[key.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${resourceDir}config/application.yml`,
-            "kafka.consumer.string.'[value.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.updateYamlProperties(`${testResourceDir}config/application.yml`, yamlPropertiesToDelete, this);
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.'[bootstrap.servers]'",
-            'localhost:9092',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(`${testResourceDir}config/application.yml`, 'kafka.consumer.string.name', 'topic-string', this);
-        utilYaml.addYamlPropertyAtBeginin(`${testResourceDir}config/application.yml`, 'kafka.consumer.string.enabled', 'false', this);
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.consumer.string.'[key.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.consumer.string.'[value.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.consumer.string.'[auto.offset.reset]'",
-            'earliest',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(`${testResourceDir}config/application.yml`, 'kafka.producer.string.name', 'topic-string', this);
-        utilYaml.addYamlPropertyAtBeginin(`${testResourceDir}config/application.yml`, 'kafka.producer.string.enabled', 'false', this);
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.consumer.string.'[key.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
-        utilYaml.addYamlPropertyAtBeginin(
-            `${testResourceDir}config/application.yml`,
-            "kafka.consumer.string.'[value.deserializer]'",
-            'org.apache.kafka.common.serialization.StringDeserializer',
-            this
-        );
+        const destinationKafkaProperties = `kafka:
+  '[bootstrap.servers]': localhost:9092
+  consumer:
+    string:
+      name: topic-string
+      enabled: true
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[group.id]': ${dasherizedBaseName}
+      '[auto.offset.reset]': earliest
+  producer:
+    string:
+      name: topic-string
+      enabled: true
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
+      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+
+        const destinationKafkaTestProperties = `kafka:
+  '[bootstrap.servers]': localhost:9092
+  consumer:
+    string:
+      name: topic-string
+      enabled: false
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
+      '[group.id]': ${dasherizedBaseName}
+      '[auto.offset.reset]': earliest
+  producer:
+    string:
+      name: topic-string
+      enabled: false
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
+      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+
+        this.replaceContent(`${resourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaProperties);
+        this.replaceContent(`${testResourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaTestProperties);
     }
 
     install() {
