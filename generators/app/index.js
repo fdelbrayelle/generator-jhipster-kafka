@@ -58,14 +58,15 @@ module.exports = class extends BaseGenerator {
             {
                 type: 'checkbox',
                 name: 'components',
-                message: 'Which Kafka component do you want ?',
+                message: 'Which Kafka components would you like to generate?',
                 choices,
                 default: []
             },
             {
+                when: response => response.components.includes('consumer') || response.components.includes('producer'),
                 type: 'input',
                 name: 'entityClass',
-                message: 'What is the entity ?',
+                message: 'For which entity (class name)?',
                 validate: input => {
                     if (!/^([a-zA-Z0-9_]*)$/.test(input)) {
                         return 'Your field name cannot contain special characters';
@@ -147,20 +148,21 @@ module.exports = class extends BaseGenerator {
         }
 
         this.entityClass = this.props.entityClass;
-
-        this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+        this.dasherizedEntityClass = _.kebabCase(this.entityClass);
 
         if (this.props.components.includes('consumer')) {
-            this.template(
-                'src/main/java/package/service/kafka/consumer/StringConsumer.java.ejs',
-                `${javaDir}service/kafka/consumer/StringConsumer.java`
-            );
+            this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
 
-            // TODO: Next step with a given entity
+            // FIXME: To be remove soon...
             // this.template(
-            //     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
-            //     `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+            //     'src/main/java/package/service/kafka/consumer/StringConsumer.java.ejs',
+            //     `${javaDir}service/kafka/consumer/StringConsumer.java`
             // );
+
+            this.template(
+                'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
+                `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
+            );
         }
 
         if (this.props.components.includes('producer')) {
@@ -187,7 +189,7 @@ module.exports = class extends BaseGenerator {
   '[bootstrap.servers]': localhost:9092
   consumer:
     string:
-      name: topic-string
+      name: ${this.dasherizedEntityClass}-topic
       enabled: true
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
@@ -195,7 +197,7 @@ module.exports = class extends BaseGenerator {
       '[auto.offset.reset]': earliest
   producer:
     string:
-      name: topic-string
+      name: ${this.dasherizedEntityClass}-topic
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
@@ -204,7 +206,7 @@ module.exports = class extends BaseGenerator {
   '[bootstrap.servers]': localhost:9092
   consumer:
     string:
-      name: topic-string
+      name: ${this.dasherizedEntityClass}-topic
       enabled: false
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
@@ -212,7 +214,7 @@ module.exports = class extends BaseGenerator {
       '[auto.offset.reset]': earliest
   producer:
     string:
-      name: topic-string
+      name: ${this.dasherizedEntityClass}-topic
       enabled: false
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
