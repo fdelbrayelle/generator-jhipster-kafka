@@ -1,0 +1,60 @@
+<%#
+ Copyright 2013-2020 the original author or authors from the JHipster project.
+
+ This file is part of the JHipster project, see https://www.jhipster.tech/
+ for more information.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-%>
+package <%= packageName %>.service.kafka;
+
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.annotation.PostConstruct;
+import java.util.Map;
+
+public abstract class GenericProducer<T> {
+
+    private final Logger log = LoggerFactory.getLogger(GenericProducer.class);
+
+    private final KafkaProducer<String, T> kafkaProducer;
+
+    private String topicName;
+
+    public GenericProducer(final String topicName, final Map<String, Object> properties) {
+        this.topicName = topicName;
+        this.kafkaProducer = new KafkaProducer<>(properties);
+    }
+
+    @PostConstruct
+    public void init() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    public void send(final T message) {
+        final ProducerRecord<String, T> record = new ProducerRecord<>(topicName, message);
+        try {
+            kafkaProducer.send(record);
+        } catch (final Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    public void shutdown() {
+        log.info("Shutdown Kafka producer");
+        kafkaProducer.close();
+    }
+}

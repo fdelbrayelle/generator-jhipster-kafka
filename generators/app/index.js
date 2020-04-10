@@ -165,6 +165,10 @@ module.exports = class extends BaseGenerator {
             this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
         }
 
+        if (this.components.includes('producer') && this.entities.length > 0) {
+            this.template('src/main/java/package/service/kafka/GenericProducer.java.ejs', `${javaDir}service/kafka/GenericProducer.java`);
+        }
+
         this.entities.forEach(entity => {
             this.entityClass = entity;
             this.dasherizedEntityClass = _.kebabCase(entity);
