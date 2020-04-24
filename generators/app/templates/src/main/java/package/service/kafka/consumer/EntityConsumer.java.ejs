@@ -23,13 +23,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.stereotype.Service;
 import <%= packageName %>.config.KafkaProperties;
 import <%= packageName %>.domain.<%= entityClass %>;
 import <%= packageName %>.service.kafka.GenericConsumer;
 
-@Configuration
+@Service
 public class <%= entityClass %>Consumer extends GenericConsumer<<%= entityClass %>> {
 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>.class);

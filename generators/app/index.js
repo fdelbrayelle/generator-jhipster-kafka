@@ -165,18 +165,20 @@ module.exports = class extends BaseGenerator {
             this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
         }
 
-        if (this.components.includes('producer') && this.entities.length > 0) {
-            this.template('src/main/java/package/service/kafka/GenericProducer.java.ejs', `${javaDir}service/kafka/GenericProducer.java`);
-        }
-
         this.entities.forEach(entity => {
             this.entityClass = entity;
             this.dasherizedEntityClass = _.kebabCase(entity);
+            this.dasherizedBaseName = _.kebabCase(this.baseName);
+            this.camelCaseEntityClass = _.camelCase(entity);
 
             if (this.components.includes('consumer')) {
                 this.template(
                     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                     `${javaDir}service/kafka/consumer/${entity}Consumer.java`
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
+                    `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`
                 );
             }
 
@@ -185,16 +187,18 @@ module.exports = class extends BaseGenerator {
                     'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                     `${javaDir}service/kafka/producer/${entity}Producer.java`
                 );
+                this.template(
+                    'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
+                    `${javaDir}service/kafka/serializer/${entity}Serializer.java`
+                );
             }
-
-            const dasherizedBaseName = _.kebabCase(this.baseName);
 
             const sourceKafkaProperties = `kafka:
   bootstrap-servers: localhost:9092
   consumer:
     key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
     value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    group.id: ${dasherizedBaseName}
+    group.id: ${this.dasherizedBaseName}
     auto.offset.reset: earliest
   producer:
     key.serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -203,36 +207,36 @@ module.exports = class extends BaseGenerator {
             const destinationKafkaProperties = `kafka:
   '[bootstrap.servers]': localhost:9092
   consumer:
-    string:
+    ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: true
-      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[group.id]': ${dasherizedBaseName}
+      '[key.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[group.id]': ${this.dasherizedBaseName}
       '[auto.offset.reset]': earliest
   producer:
-    string:
+    ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: true
-      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+      '[key.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer
+      '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
 
             const destinationKafkaTestProperties = `kafka:
   '[bootstrap.servers]': localhost:9092
   consumer:
-    string:
+    ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: false
-      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[group.id]': ${dasherizedBaseName}
+      '[key.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[group.id]': ${this.dasherizedBaseName}
       '[auto.offset.reset]': earliest
   producer:
-    string:
+    ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: false
-      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+      '[key.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer
+      '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
 
             this.replaceContent(`${resourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaProperties);
             this.replaceContent(`${testResourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaTestProperties);

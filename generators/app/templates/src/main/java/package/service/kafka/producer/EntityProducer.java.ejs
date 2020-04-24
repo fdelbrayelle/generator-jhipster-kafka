@@ -18,16 +18,47 @@
 -%>
 package <%= packageName %>.service.kafka.producer;
 
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+import javax.annotation.PostConstruct;
+
 import <%= packageName %>.config.KafkaProperties;
 import <%= packageName %>.domain.<%= entityClass %>;
-import <%= packageName %>.service.kafka.GenericProducer;
 
-@Component
-public class <%= entityClass %>Producer extends GenericProducer<<%= entityClass %>> {
+@Service
+public class <%= entityClass %>Producer {
 
-    public <%= entityClass %>Producer(@Value("${kafka.producer.<%= dasherizedEntityClass %>.name}") final String topic, final KafkaProperties kafkaProperties) {
-        super(topic, kafkaProperties.getProducerConfiguration("<%= dasherizedEntityClass %>"));
+    private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Producer.class);
+
+    private final KafkaProducer<String, <%= entityClass %>> kafkaProducer;
+
+    private String topicName;
+
+    public <%= entityClass %>Producer(@Value("${kafka.producer.<%= dasherizedEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
+        this.topicName = topicName;
+        this.kafkaProducer = new KafkaProducer<>(kafkaProperties.getProducerConfiguration("<%= dasherizedEntityClass %>"));
+    }
+
+    @PostConstruct
+    public void init() {
+        Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
+    }
+
+    public void send(final <%= entityClass %> message) {
+        final ProducerRecord<String, <%= entityClass %>> record = new ProducerRecord<>(topicName, message);
+        try {
+            kafkaProducer.send(record);
+        } catch (final Exception e) {
+            log.error(e.getMessage(), e);
+        }
+    }
+
+    public void shutdown() {
+        log.info("Shutdown Kafka producer");
+        kafkaProducer.close();
     }
 }
