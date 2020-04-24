@@ -108,11 +108,13 @@ module.exports = class extends BaseGenerator {
 
         // read config from .yo-rc.json
         this.baseName = this.jhipsterAppConfig.baseName;
+        this.dasherizedBaseName = _.kebabCase(this.baseName);
         this.packageName = this.jhipsterAppConfig.packageName;
         this.packageFolder = this.jhipsterAppConfig.packageFolder;
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
         this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
         this.buildTool = this.jhipsterAppConfig.buildTool;
+        this.reactive = this.jhipsterAppConfig.reactive;
 
         // use function in generator-base.js from generator-jhipster
         this.angularAppName = this.getAngularAppName();
@@ -120,8 +122,10 @@ module.exports = class extends BaseGenerator {
         // use constants from generator-constants.js
         const javaDir = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.packageFolder}/`;
         const resourceDir = jhipsterConstants.SERVER_MAIN_RES_DIR;
+        const testDir = `${jhipsterConstants.SERVER_TEST_SRC_DIR + this.packageFolder}/`;
         const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
+        this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
 
         // variable from questions
         this.components = this.props.components;
@@ -143,6 +147,7 @@ module.exports = class extends BaseGenerator {
         this.log(`resourceDir=${resourceDir}`);
         this.log(`resourceDir=${testResourceDir}`);
         this.log(`webappDir=${webappDir}`);
+        this.log(`kafkaVersion=${this.kafkaVersion}`);
 
         this.log('\n--- variables from questions ---');
         this.log(`\ncomponents=${this.components}`);
@@ -161,6 +166,17 @@ module.exports = class extends BaseGenerator {
             this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
         }
 
+        if (this.components.includes('consumer') && this.components.includes('producer') && this.entities.length > 0) {
+            this.template(
+                'src/main/java/package/web/rest/KafkaResource.java.ejs',
+                `${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`
+            );
+            this.template(
+                'src/test/java/package/web/rest/KafkaResourceIT.java.ejs',
+                `${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`
+            );
+        }
+
         if (this.components.includes('consumer') && this.entities.length > 0) {
             this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
         }
@@ -168,7 +184,6 @@ module.exports = class extends BaseGenerator {
         this.entities.forEach(entity => {
             this.entityClass = entity;
             this.dasherizedEntityClass = _.kebabCase(entity);
-            this.dasherizedBaseName = _.kebabCase(this.baseName);
             this.camelCaseEntityClass = _.camelCase(entity);
 
             if (this.components.includes('consumer')) {

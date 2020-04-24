@@ -48,6 +48,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 import java.time.Duration;
 <%_ }  _%>
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -64,7 +65,7 @@ public class <%= upperFirstCamelCase(baseName) %>KafkaResource {
 
     private final KafkaProperties kafkaProperties;
     <%_ if (!reactive) { _%>
-    private KafkaProducer<String, String> producer;
+    private Map<String, KafkaProducer<String, Object>> producers;
     private ExecutorService sseExecutorService = Executors.newCachedThreadPool();
     <%_ } else { _%>
     private KafkaSender<String, String> sender;
@@ -73,17 +74,20 @@ public class <%= upperFirstCamelCase(baseName) %>KafkaResource {
     public <%= upperFirstCamelCase(baseName) %>KafkaResource(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
         <%_ if (!reactive) { _%>
-        this.producer = new KafkaProducer<>(kafkaProperties.getProducerConfiguration("string"));
+        this.producers = new HashMap<>();
+        for (String topicName : kafkaProperties.getProducer().keySet()) {
+            this.producers.put(topicName, new KafkaProducer<>(kafkaProperties.getProducer().get(topicName)));
+        }
         <%_ } else { _%>
-        this.sender = KafkaSender.create(SenderOptions.create(getProducerConfiguration("string")));
+        this.sender = KafkaSender.create(SenderOptions.create(kafkaProperties.getProducerProps()));
         <%_ }  _%>
     }
 
     @PostMapping("/publish/{topic}")
-    public <% if (!reactive) { %>PublishResult<% } else { %>Mono<PublishResult><% }  %> publish(@PathVariable String topic, @RequestParam String message, @RequestParam(required = false) String key)<% if (!reactive) { %> throws ExecutionException, InterruptedException<% } %> {
+    public <% if (!reactive) { %>PublishResult<% } else { %>Mono<PublishResult><% }  %> publish(@PathVariable String topic, @RequestParam(required = false) String key, @RequestParam String message)<% if (!reactive) { %> throws ExecutionException, InterruptedException<% } %> {
         log.debug("REST request to send to Kafka topic {} with key {} the message : {}", topic, key, message);
         <%_ if (!reactive) { _%>
-        RecordMetadata metadata = producer.send(new ProducerRecord<>(topic, key, message)).get();
+        RecordMetadata metadata = producers.get(topic).send(new ProducerRecord<>(topic, key, message)).get();
         return new PublishResult(metadata.topic(), metadata.partition(), metadata.offset(), Instant.ofEpochMilli(metadata.timestamp()));
         <%_ } else { _%>
         return Mono.just(SenderRecord.create(topic, null, null, key, message, null))
@@ -95,23 +99,21 @@ public class <%= upperFirstCamelCase(baseName) %>KafkaResource {
     }
 
     @GetMapping("/consume")
-    public <% if (!reactive) { %>SseEmitter<% } else { %>Flux<String><% }  %> consume(@RequestParam("topic") List<String> topics, @RequestParam Map<String, String> consumerParams) {
+    public <% if (!reactive) { %>SseEmitter<% } else { %>Flux<String><% }  %> consume(@RequestParam("topic") List<String> topics) {
         log.debug("REST request to consume records from Kafka topics {}", topics);
-        Map<String, Object> consumerProps = kafkaProperties.getConsumerConfiguration("string");
-        consumerProps.putAll(consumerParams);
-        consumerProps.remove("topic");
 
         <%_ if (!reactive) { _%>
         SseEmitter emitter = new SseEmitter(0L);
         sseExecutorService.execute(() -> {
-            KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
+            // topics contains at the moment only one topic
+            KafkaConsumer<String, Object> consumer = new KafkaConsumer<>(kafkaProperties.getConsumer().get(topics.get(0)));
             emitter.onCompletion(consumer::close);
             consumer.subscribe(topics);
             boolean exitLoop = false;
             while(!exitLoop) {
                 try {
-                    ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(5));
-                    for (ConsumerRecord<String, String> record : records) {
+                    ConsumerRecords<String, Object> records = consumer.poll(Duration.ofSeconds(5));
+                    for (ConsumerRecord<String, Object> record : records) {
                         emitter.send(record.value());
                     }
                     emitter.send(SseEmitter.event().comment(""));

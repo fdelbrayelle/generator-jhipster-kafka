@@ -35,7 +35,7 @@ public class <%= entityClass %>Consumer extends GenericConsumer<<%= entityClass 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>.class);
 
     public <%= entityClass %>Consumer(@Value("${kafka.consumer.<%= dasherizedEntityClass %>.name}") final String topic, final KafkaProperties kafkaProperties) {
-        super(topic, kafkaProperties.getConsumerConfiguration("<%= dasherizedEntityClass %>"));
+        super(topic, kafkaProperties.getConsumer().get("<%= dasherizedEntityClass %>"));
     }
 
     @Override

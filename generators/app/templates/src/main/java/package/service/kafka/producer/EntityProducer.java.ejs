@@ -40,7 +40,7 @@ public class <%= entityClass %>Producer {
 
     public <%= entityClass %>Producer(@Value("${kafka.producer.<%= dasherizedEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
         this.topicName = topicName;
-        this.kafkaProducer = new KafkaProducer<>(kafkaProperties.getProducerConfiguration("<%= dasherizedEntityClass %>"));
+        this.kafkaProducer = new KafkaProducer<>(kafkaProperties.getProducer().get("<%= dasherizedEntityClass %>"));
     }
 
     @PostConstruct

@@ -22,15 +22,12 @@ import <%= packageName %>.config.KafkaProperties;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
 <%_ if (!reactive) { _%>
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 <%_ } else { _%>
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -42,18 +39,18 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
 <%_ if (!reactive) { _%>
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 <%_ } _%>
 
-class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
+public class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
 
     private static boolean started = false;
     private static KafkaContainer kafkaContainer;
+    private KafkaProperties kafkaProperties;
 
     <%_ if (!reactive) { _%>
     private MockMvc restMockMvc;
@@ -70,17 +67,17 @@ class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
     }
 
     private static void startTestcontainer() {
-        kafkaContainer = new KafkaContainer("<%= KAFKA_VERSION %>");
+        kafkaContainer = new KafkaContainer("<%= kafkaVersion %>");
         kafkaContainer.start();
     }
 
     @BeforeEach
     void setup() {
-        KafkaProperties kafkaProperties = new KafkaProperties();
+        kafkaProperties = new KafkaProperties();
         Map<String, Map<String, Object>> producerProps = getProducerProps();
         kafkaProperties.setProducer(new HashMap<>(producerProps));
 
-        Map<String, Map<String, Object>> consumerProps = getConsumerProps("default-group");
+        Map<String, Map<String, Object>> consumerProps = getConsumerProps();
         consumerProps.get("string").put("client.id", "default-client");
         kafkaProperties.setConsumer(consumerProps);
 
@@ -96,7 +93,7 @@ class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
     @Test
     void producesMessages()<% if (!reactive) { %> throws Exception<% } %> {
         <%_ if (!reactive) { _%>
-        restMockMvc.perform(post("/api/<%= dasherizedBaseName %>-kafka/publish/topic-produce?message=value-produce"))
+        restMockMvc.perform(post("/api/<%= dasherizedBaseName %>-kafka/publish/string?message=value-produced"))
             .andExpect(status().isOk())
             .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         <%_ } else { _%>
@@ -106,37 +103,27 @@ class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
             .expectHeader().contentType(MediaType.APPLICATION_JSON);
         <%_ } _%>
 
-        Map<String, Object> consumerProps = new HashMap<>(getConsumerProps("group-produce"));
+        Map<String, Object> consumerProps = new HashMap<>(getConsumerProps().get("string"));
         KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProps);
-        consumer.subscribe(Collections.singletonList("topic-produce"));
+        consumer.subscribe(Collections.singletonList("string"));
         ConsumerRecords<String, String> records = consumer.poll(Duration.ofSeconds(1));
 
-        assertThat(records.count()).isEqualTo(1);
+        assertEquals(1, records.count());
         ConsumerRecord<String, String> record = records.iterator().next();
-        assertThat(record.value()).isEqualTo("value-produce");
+        assertEquals("value-produced", record.value());
     }
 
     @Test
     void consumesMessages()<% if (!reactive) { %> throws Exception<% } %> {
-        Map<String, Object> producerProps = new HashMap<>(getProducerProps());
-        KafkaProducer<String, String> producer = new KafkaProducer<>(producerProps);
-
-        producer.send(new ProducerRecord<>("topic-consume", "value-consume"));
-
         <%_ if (!reactive) { _%>
-        MvcResult mvcResult = restMockMvc.perform(get("/api/<%= dasherizedBaseName %>-kafka/consume?topic=topic-consume"))
+        restMockMvc.perform(get("/api/generated-project-for-tests-kafka/consume?topic=string"))
             .andExpect(status().isOk())
             .andExpect(request().asyncStarted())
             .andReturn();
 
-        for (int i = 0; i < 100; i++) {
-            Thread.sleep(100);
-            String content = mvcResult.getResponse().getContentAsString();
-            if (content.contains("data:value-consume")) {
-                return;
-            }
-        }
-        fail("Expected content data:value-consume not received");
+        restMockMvc.perform(post("/api/generated-project-for-tests-kafka/publish/string?message=value-to-consume"))
+            .andExpect(status().isOk())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON));
         <%_ } else { _%>
         String value = client.get().uri("/api/jhipster-kafka/consume?topic=topic-consume")
             .accept(MediaType.TEXT_EVENT_STREAM)
@@ -160,14 +147,14 @@ class <%= upperFirstCamelCase(baseName) %>KafkaResourceIT {
         return props;
     }
 
-    private Map<String, Map<String, Object>> getConsumerProps(String group) {
+    private Map<String, Map<String, Object>> getConsumerProps() {
         Map<String, Map<String, Object>> props = new HashMap<>();
         Map<String, Object> consumerProps = new HashMap<>();
         consumerProps.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProps.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
         consumerProps.put("bootstrap.servers", kafkaContainer.getBootstrapServers());
         consumerProps.put("auto.offset.reset", "earliest");
-        consumerProps.put("group.id", group);
+        consumerProps.put("group.id", "generated-project-for-tests");
         props.put("string", consumerProps);
         return props;
     }
