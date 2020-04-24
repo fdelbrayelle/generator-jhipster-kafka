@@ -21,6 +21,7 @@ package <%= packageName %>.config;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +33,25 @@ public class KafkaProperties {
 
     private Map<String, Map<String, Object>> producer = new HashMap<>();
 
-    public Map<String, Map<String, Object>>getConsumer() {
+    @PostConstruct
+    public void init() {
+
+        for (String consumerKey: consumer.keySet()) {
+            final Map<String, Object> properties = consumer.get(consumerKey);
+            if (! properties.containsKey("bootstrap.servers")) {
+                properties.put("bootstrap.servers", "localhost:9092");
+            }
+        }
+
+        for (String consumerKey: producer.keySet()) {
+            final Map<String, Object> properties = producer.get(consumerKey);
+            if (! properties.containsKey("bootstrap.servers")) {
+                properties.put("bootstrap.servers", "localhost:9092");
+            }
+        }
+    }
+
+    public Map<String, Map<String, Object>> getConsumer() {
         return this.consumer;
     }
 
