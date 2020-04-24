@@ -210,7 +210,7 @@ module.exports = class extends BaseGenerator {
     ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: true
-      '[key.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
       '[group.id]': ${this.dasherizedBaseName}
       '[auto.offset.reset]': earliest
@@ -218,7 +218,7 @@ module.exports = class extends BaseGenerator {
     ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: true
-      '[key.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
 
             const destinationKafkaTestProperties = `kafka:
@@ -227,7 +227,7 @@ module.exports = class extends BaseGenerator {
     ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: false
-      '[key.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
       '[group.id]': ${this.dasherizedBaseName}
       '[auto.offset.reset]': earliest
@@ -235,7 +235,7 @@ module.exports = class extends BaseGenerator {
     ${this.camelCaseEntityClass}:
       name: ${this.dasherizedEntityClass}-topic
       enabled: false
-      '[key.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer
+      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
 
             this.replaceContent(`${resourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaProperties);
