@@ -1,4 +1,5 @@
 const chalk = require('chalk');
+const shelljs = require('shelljs');
 const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
@@ -43,38 +44,50 @@ module.exports = class extends BaseGenerator {
     }
 
     prompting() {
-        const choices = [];
+        const componentsChoices = [];
 
-        choices.push({
+        componentsChoices.push({
             name: 'Consumer',
             value: 'consumer'
         });
-        choices.push({
+        componentsChoices.push({
             name: 'Producer',
             value: 'producer'
+        });
+
+        const domainClassesPath = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.jhipsterAppConfig.packageFolder}/domain`;
+        const files = shelljs.ls(`${domainClassesPath}/*.java`);
+
+        const entitiesChoices = [];
+        files.forEach(file => {
+            if (shelljs.grep(/^@Entity$/, file) !== '') {
+                const className = file
+                    .split('.')
+                    .slice(0, -1)
+                    .join('.')
+                    .match(/\w*$/i);
+                entitiesChoices.push({
+                    name: className,
+                    value: className
+                });
+            }
         });
 
         const prompts = [
             {
                 type: 'checkbox',
                 name: 'components',
-                message: 'Which Kafka component do you want ?',
-                choices,
+                message: 'Which Kafka components would you like to generate?',
+                choices: componentsChoices,
                 default: []
             },
             {
-                type: 'input',
-                name: 'entityClass',
-                message: 'What is the entity ?',
-                validate: input => {
-                    if (!/^([a-zA-Z0-9_]*)$/.test(input)) {
-                        return 'Your field name cannot contain special characters';
-                    }
-                    if (input === '') {
-                        return 'Your field name cannot be empty';
-                    }
-                    return true;
-                }
+                when: response => response.components.includes('consumer') || response.components.includes('producer'),
+                type: 'checkbox',
+                name: 'entities',
+                message: 'For which entity (class name)?',
+                choices: entitiesChoices,
+                default: []
             }
         ];
 
@@ -95,11 +108,13 @@ module.exports = class extends BaseGenerator {
 
         // read config from .yo-rc.json
         this.baseName = this.jhipsterAppConfig.baseName;
+        this.dasherizedBaseName = _.kebabCase(this.baseName);
         this.packageName = this.jhipsterAppConfig.packageName;
         this.packageFolder = this.jhipsterAppConfig.packageFolder;
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
         this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
         this.buildTool = this.jhipsterAppConfig.buildTool;
+        this.reactive = this.jhipsterAppConfig.reactive;
 
         // use function in generator-base.js from generator-jhipster
         this.angularAppName = this.getAngularAppName();
@@ -107,11 +122,14 @@ module.exports = class extends BaseGenerator {
         // use constants from generator-constants.js
         const javaDir = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.packageFolder}/`;
         const resourceDir = jhipsterConstants.SERVER_MAIN_RES_DIR;
+        const testDir = `${jhipsterConstants.SERVER_TEST_SRC_DIR + this.packageFolder}/`;
         const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
+        this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
 
         // variable from questions
-        this.message = this.props.message;
+        this.components = this.props.components;
+        this.entities = this.props.entities;
 
         // show all variables
         this.log('\n--- some config read from config ---');
@@ -129,9 +147,11 @@ module.exports = class extends BaseGenerator {
         this.log(`resourceDir=${resourceDir}`);
         this.log(`resourceDir=${testResourceDir}`);
         this.log(`webappDir=${webappDir}`);
+        this.log(`kafkaVersion=${this.kafkaVersion}`);
 
         this.log('\n--- variables from questions ---');
-        this.log(`\nmessage=${this.message}`);
+        this.log(`\ncomponents=${this.components}`);
+        this.log(`\nentities=${this.entities}`);
         this.log('------\n');
 
         try {
@@ -146,79 +166,90 @@ module.exports = class extends BaseGenerator {
             this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
         }
 
-        this.entityClass = this.props.entityClass;
+        this.removeFile(`${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`);
+        this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
 
-        this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
-
-        if (this.props.components.includes('consumer')) {
-            this.template(
-                'src/main/java/package/service/kafka/consumer/StringConsumer.java.ejs',
-                `${javaDir}service/kafka/consumer/StringConsumer.java`
-            );
-
-            // TODO: Next step with a given entity
-            // this.template(
-            //     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
-            //     `${javaDir}service/kafka/consumer/${this.entityClass}Consumer.java`
-            // );
+        if (this.components.includes('consumer') && this.entities.length > 0) {
+            this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
         }
 
-        if (this.props.components.includes('producer')) {
-            this.template(
-                'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
-                `${javaDir}service/kafka/producer/${this.entityClass}Producer.java`
-            );
-        }
-
-        const dasherizedBaseName = _.kebabCase(this.baseName);
-
-        const sourceKafkaProperties = `kafka:
-  bootstrap-servers: localhost:9092
-  consumer:
-    key.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    value.deserializer: org.apache.kafka.common.serialization.StringDeserializer
-    group.id: ${dasherizedBaseName}
-    auto.offset.reset: earliest
-  producer:
-    key.serializer: org.apache.kafka.common.serialization.StringSerializer
-    value.serializer: org.apache.kafka.common.serialization.StringSerializer`;
-
-        const destinationKafkaProperties = `kafka:
+        let kafkaProperties = `kafka:
   '[bootstrap.servers]': localhost:9092
-  consumer:
-    string:
-      name: topic-string
+  `;
+        let consumersCpt = 0;
+
+        this.entities.forEach(entity => {
+            this.entityClass = entity;
+            this.dasherizedEntityClass = _.kebabCase(entity);
+            this.camelCaseEntityClass = _.camelCase(entity);
+
+            if (this.components.includes('consumer')) {
+                if (consumersCpt === 0) {
+                    kafkaProperties += 'consumer:';
+                }
+
+                kafkaProperties += `
+    ${this.camelCaseEntityClass}:
+      name: ${this.dasherizedEntityClass}-topic
       enabled: true
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[group.id]': ${dasherizedBaseName}
-      '[auto.offset.reset]': earliest
-  producer:
-    string:
-      name: topic-string
+      '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
+      '[group.id]': ${this.dasherizedBaseName}
+      '[auto.offset.reset]': earliest`;
+
+                this.template(
+                    'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
+                    `${javaDir}service/kafka/consumer/${entity}Consumer.java`
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
+                    `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`
+                );
+
+                consumersCpt++;
+            }
+        });
+
+        let producersCpt = 0;
+
+        this.entities.forEach(entity => {
+            this.entityClass = entity;
+            this.dasherizedEntityClass = _.kebabCase(entity);
+            this.camelCaseEntityClass = _.camelCase(entity);
+
+            if (this.components.includes('producer')) {
+                if (producersCpt === 0) {
+                    kafkaProperties += `
+  producer:`;
+                }
+
+                kafkaProperties += `
+    ${this.camelCaseEntityClass}:
+      name: ${this.dasherizedEntityClass}-topic
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+      '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
 
-        const destinationKafkaTestProperties = `kafka:
-  '[bootstrap.servers]': localhost:9092
-  consumer:
-    string:
-      name: topic-string
-      enabled: false
-      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[group.id]': ${dasherizedBaseName}
-      '[auto.offset.reset]': earliest
-  producer:
-    string:
-      name: topic-string
-      enabled: false
-      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': org.apache.kafka.common.serialization.StringSerializer`;
+                this.template(
+                    'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
+                    `${javaDir}service/kafka/producer/${entity}Producer.java`
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
+                    `${javaDir}service/kafka/serializer/${entity}Serializer.java`
+                );
 
-        this.replaceContent(`${resourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaProperties);
-        this.replaceContent(`${testResourceDir}config/application.yml`, sourceKafkaProperties, destinationKafkaTestProperties);
+                producersCpt++;
+            }
+        });
+
+        kafkaProperties += '\n';
+
+        this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
+
+        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
+        this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
+        this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
     }
 
     install() {
