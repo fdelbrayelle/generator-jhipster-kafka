@@ -166,16 +166,8 @@ module.exports = class extends BaseGenerator {
             this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
         }
 
-        if (this.components.includes('consumer') && this.components.includes('producer') && this.entities.length > 0) {
-            this.template(
-                'src/main/java/package/web/rest/KafkaResource.java.ejs',
-                `${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`
-            );
-            this.template(
-                'src/test/java/package/web/rest/KafkaResourceIT.java.ejs',
-                `${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`
-            );
-        }
+        this.removeFile(`${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`);
+        this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
 
         if (this.components.includes('consumer') && this.entities.length > 0) {
             this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
