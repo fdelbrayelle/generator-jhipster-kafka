@@ -38,9 +38,9 @@ public class <%= entityClass %>Producer {
 
     private String topicName;
 
-    public <%= entityClass %>Producer(@Value("${kafka.producer.<%= dasherizedEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
+    public <%= entityClass %>Producer(@Value("${kafka.producer.<%= camelCaseEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
         this.topicName = topicName;
-        this.kafkaProducer = new KafkaProducer<>(kafkaProperties.getProducer().get("<%= dasherizedEntityClass %>"));
+        this.kafkaProducer = new KafkaProducer<>(kafkaProperties.getProducer().get("<%= camelCaseEntityClass %>"));
     }
 
     @PostConstruct

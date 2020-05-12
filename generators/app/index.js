@@ -7,6 +7,21 @@ const jhipsterConstants = require('generator-jhipster/generators/generator-const
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
+    constructor(args, opts) {
+        super(args, opts);
+
+        this.configOptions = this.options.configOptions || {};
+
+        // This adds support for a `--skip-prompts` flag
+        this.option('skip-prompts', {
+            desc: 'Generate pre-existing configuration',
+            type: Boolean,
+            defaults: false
+        });
+
+        this.setupClientOptions(this);
+    }
+
     get initializing() {
         return {
             init(args) {
@@ -44,6 +59,19 @@ module.exports = class extends BaseGenerator {
     }
 
     prompting() {
+        // To generate a consumer and a producer for CI tests
+        if (this.options['skip-prompts']) {
+            this.log('Skipping prompts...');
+            this.props = {};
+            this.props.components = [];
+            this.props.components.push('consumer', 'producer');
+            // DocumentBankAccount entity is generated for tests purpose
+            // in the main generator (see: 11-generate-entities.sh).
+            this.props.entities = [];
+            this.props.entities.push('DocumentBankAccount');
+            return;
+        }
+
         const componentsChoices = [];
 
         componentsChoices.push({
@@ -95,7 +123,6 @@ module.exports = class extends BaseGenerator {
         this.prompt(prompts).then(props => {
             this.props = props;
             // To access props later use this.props.someOption;
-
             done();
         });
     }
@@ -170,6 +197,10 @@ module.exports = class extends BaseGenerator {
 
         if (this.components.includes('consumer') && this.entities.length > 0) {
             this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+        }
+
+        if (this.components.includes('consumer') || this.components.includes('producer')) {
+            this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`);
         }
 
         let kafkaProperties = `kafka:
