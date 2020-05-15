@@ -30,15 +30,21 @@ import java.util.Map;
 @Configuration
 @ConfigurationProperties(prefix = "kafka")
 public class KafkaProperties {
-
+    public static final int DEFAULT_POLL_TIMEOUT = 10_000;
     public static final String BOOTSTRAP_SERVER = "localhost:9092";
 
     private Map<String, Map<String, Object>> consumer = new HashMap<>();
 
     private Map<String, Map<String, Object>> producer = new HashMap<>();
 
+    private Integer pollingTimeout;
+
     @PostConstruct
     public void init() {
+
+        if (pollingTimeout == null) {
+            pollingTimeout = DEFAULT_POLL_TIMEOUT;
+        }
 
         for (String consumerKey: consumer.keySet()) {
             final Map<String, Object> properties = consumer.get(consumerKey);
@@ -53,6 +59,14 @@ public class KafkaProperties {
                 properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, BOOTSTRAP_SERVER);
             }
         }
+    }
+
+    public Integer getPollingTimeout() {
+        return pollingTimeout;
+    }
+
+    public void setPollingTimeout(Integer pollingTimeout) {
+        this.pollingTimeout = pollingTimeout;
     }
 
     public Map<String, Map<String, Object>> getConsumer() {

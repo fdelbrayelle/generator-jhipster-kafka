@@ -4,6 +4,7 @@ const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
+const mkdirp = require('mkdirp');
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
@@ -116,6 +117,13 @@ module.exports = class extends BaseGenerator {
                 message: 'For which entity (class name)?',
                 choices: entitiesChoices,
                 default: []
+            },
+            {
+                when: response => response.components.includes('consumer'),
+                type: 'number',
+                name: 'pollingTimeout',
+                message: 'Define the consumer polling timeout?',
+                default: '10000'
             }
         ];
 
@@ -141,7 +149,7 @@ module.exports = class extends BaseGenerator {
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
         this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
         this.buildTool = this.jhipsterAppConfig.buildTool;
-
+        this.mainClass = this.getMainClassName();
         // use function in generator-base.js from generator-jhipster
         this.angularAppName = this.getAngularAppName();
 
@@ -156,6 +164,7 @@ module.exports = class extends BaseGenerator {
         // variable from questions
         this.components = this.props.components;
         this.entities = this.props.entities;
+        this.pollingTimeout = this.props.pollingTimeout;
 
         // show all variables
         this.log('\n--- some config read from config ---');
@@ -206,6 +215,18 @@ module.exports = class extends BaseGenerator {
         let kafkaProperties = `kafka:
   '[bootstrap.servers]': localhost:9092
   `;
+        if (this.components.includes('consumer') && this.pollingTimeout) {
+            kafkaProperties += `pollingTimeout: ${this.pollingTimeout}
+  `;
+            this.template(
+                'src/test/java/package/config/kafkaPropertiesIT/KafkaConfiguredPollingPropertiesIT.java.ejs',
+                `${testDir}config/kafkaPropertiesIT/KafkaConfiguredPollingPropertiesIT.java`
+            );
+            this.template(
+                'src/test/java/package/config/kafkaPropertiesIT/KafkaEmptyPollingPropertiesIT.java.ejs',
+                `${testDir}config/kafkaPropertiesIT/KafkaEmptyPollingPropertiesIT.java`
+            );
+        }
         let consumersCpt = 0;
 
         this.entities.forEach(entity => {
