@@ -4,7 +4,6 @@ const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
-const mkdirp = require('mkdirp');
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
