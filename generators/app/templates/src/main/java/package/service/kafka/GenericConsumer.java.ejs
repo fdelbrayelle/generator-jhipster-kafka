@@ -72,7 +72,7 @@ public abstract class GenericConsumer<T> implements Runnable {
             // Ignore exception if closing
             if (!closed.get()) throw e;
         } catch (final Exception e) {
-            log.error("An error occured while trying to poll records from topic!", e);
+            log.error("An error occurred while trying to poll records from topic!", e);
         } finally {
             consumer.close();
         }
