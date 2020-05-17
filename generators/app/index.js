@@ -148,7 +148,6 @@ module.exports = class extends BaseGenerator {
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
         this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
         this.buildTool = this.jhipsterAppConfig.buildTool;
-        this.mainClass = this.getMainClassName();
         // use function in generator-base.js from generator-jhipster
         this.angularAppName = this.getAngularAppName();
 
@@ -217,14 +216,6 @@ module.exports = class extends BaseGenerator {
         if (this.components.includes('consumer') && this.pollingTimeout) {
             kafkaProperties += `pollingTimeout: ${this.pollingTimeout}
   `;
-            this.template(
-                'src/test/java/package/config/kafkaPropertiesIT/KafkaConfiguredPollingPropertiesIT.java.ejs',
-                `${testDir}config/kafkaPropertiesIT/KafkaConfiguredPollingPropertiesIT.java`
-            );
-            this.template(
-                'src/test/java/package/config/kafkaPropertiesIT/KafkaEmptyPollingPropertiesIT.java.ejs',
-                `${testDir}config/kafkaPropertiesIT/KafkaEmptyPollingPropertiesIT.java`
-            );
         }
         let consumersCpt = 0;
 
