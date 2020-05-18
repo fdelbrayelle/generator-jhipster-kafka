@@ -136,6 +136,7 @@ module.exports = class extends BaseGenerator {
         // read config from .yo-rc.json
         this.baseName = this.jhipsterAppConfig.baseName;
         this.dasherizedBaseName = _.kebabCase(this.baseName);
+        this.snakeCaseBaseName = _.snakeCase(this.baseName);
         this.packageName = this.jhipsterAppConfig.packageName;
         this.packageFolder = this.jhipsterAppConfig.packageFolder;
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
@@ -210,8 +211,8 @@ module.exports = class extends BaseGenerator {
 
         this.entities.forEach(entity => {
             this.entityClass = entity;
-            this.dasherizedEntityClass = _.kebabCase(entity);
             this.camelCaseEntityClass = _.camelCase(entity);
+            this.snakeCaseEntityClass = _.snakeCase(entity);
 
             if (this.components.includes('consumer')) {
                 if (consumersCpt === 0) {
@@ -220,7 +221,12 @@ module.exports = class extends BaseGenerator {
 
                 kafkaProperties += `
     ${this.camelCaseEntityClass}:
-      name: ${this.dasherizedEntityClass}-topic
+      # This is a template topic naming convention which can be changed.
+      # %3Cmessage_type%3E.%3Capplication_name%3E.%3Centity_name%3E with (all in snake_case):
+      # - %3Cmessage_type%3E: queuing, logging, tracking, etl/db, streaming, push, user...
+      # - %3Capplication_name%3E: the application base name
+      # - %3Centity_name%3E: the entity name which is consumed
+      name: queuing.${this.snakeCaseBaseName}.${this.snakeCaseEntityClass}
       enabled: true
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
@@ -244,8 +250,8 @@ module.exports = class extends BaseGenerator {
 
         this.entities.forEach(entity => {
             this.entityClass = entity;
-            this.dasherizedEntityClass = _.kebabCase(entity);
             this.camelCaseEntityClass = _.camelCase(entity);
+            this.snakeCaseEntityClass = _.snakeCase(entity);
 
             if (this.components.includes('producer')) {
                 if (producersCpt === 0) {
@@ -255,7 +261,12 @@ module.exports = class extends BaseGenerator {
 
                 kafkaProperties += `
     ${this.camelCaseEntityClass}:
-      name: ${this.dasherizedEntityClass}-topic
+      # This is a template topic naming convention which can be changed.
+      # %3Cmessage_type%3E.%3Capplication_name%3E.%3Centity_name%3E with (all in snake_case):
+      # - %3Cmessage_type%3E: queuing, logging, tracking, etl/db, streaming, push, user...
+      # - %3Capplication_name%3E: the application base name
+      # - %3Centity_name%3E: the entity name which is produced
+      name: queuing.${this.snakeCaseBaseName}.${this.snakeCaseEntityClass}
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
