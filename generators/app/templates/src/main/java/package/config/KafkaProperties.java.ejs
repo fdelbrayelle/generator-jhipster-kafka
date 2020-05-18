@@ -31,15 +31,16 @@ import java.util.Map;
 @Configuration
 @ConfigurationProperties(prefix = "kafka")
 public class KafkaProperties {
-    private Map<String, Map<String, Object>> consumer = new HashMap<>();
-
-    private Map<String, Map<String, Object>> producer = new HashMap<>();
 
     @Value("${kafka.bootstrap.servers:localhost:9092}")
     private String bootstrapServers;
 
     @Value("${kafka.polling.timeout:10000}")
     private Integer pollingTimeout;
+
+    private Map<String, Map<String, Object>> consumer = new HashMap<>();
+
+    private Map<String, Map<String, Object>> producer = new HashMap<>();
 
     @PostConstruct
     public void init() {
