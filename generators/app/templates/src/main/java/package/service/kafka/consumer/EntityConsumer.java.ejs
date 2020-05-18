@@ -35,7 +35,7 @@ public class <%= entityClass %>Consumer extends GenericConsumer<<%= entityClass 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>.class);
 
     public <%= entityClass %>Consumer(@Value("${kafka.consumer.<%= camelCaseEntityClass %>.name}") final String topic, final KafkaProperties kafkaProperties) {
-        super(topic, kafkaProperties.getConsumer().get("<%= camelCaseEntityClass %>"));
+        super(topic, kafkaProperties.getConsumer().get("<%= camelCaseEntityClass %>"), kafkaProperties.getPollingTimeout());
     }
 
     @Override

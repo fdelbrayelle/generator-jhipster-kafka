@@ -116,6 +116,13 @@ module.exports = class extends BaseGenerator {
                 message: 'For which entity (class name)?',
                 choices: entitiesChoices,
                 default: []
+            },
+            {
+                when: response => response.components.includes('consumer'),
+                type: 'number',
+                name: 'pollingTimeout',
+                message: 'Define the consumer polling timeout?',
+                default: '10000'
             }
         ];
 
@@ -141,7 +148,6 @@ module.exports = class extends BaseGenerator {
         this.clientFramework = this.jhipsterAppConfig.clientFramework;
         this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
         this.buildTool = this.jhipsterAppConfig.buildTool;
-
         // use function in generator-base.js from generator-jhipster
         this.angularAppName = this.getAngularAppName();
 
@@ -156,6 +162,7 @@ module.exports = class extends BaseGenerator {
         // variable from questions
         this.components = this.props.components;
         this.entities = this.props.entities;
+        this.pollingTimeout = this.props.pollingTimeout;
 
         // show all variables
         this.log('\n--- some config read from config ---');
@@ -204,8 +211,12 @@ module.exports = class extends BaseGenerator {
         }
 
         let kafkaProperties = `kafka:
-  '[bootstrap.servers]': localhost:9092
+  bootstrap.servers: localhost:9092
   `;
+        if (this.components.includes('consumer') && this.pollingTimeout) {
+            kafkaProperties += `polling.timeout: ${this.pollingTimeout}
+  `;
+        }
         let consumersCpt = 0;
 
         this.entities.forEach(entity => {
