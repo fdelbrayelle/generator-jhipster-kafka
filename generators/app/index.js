@@ -214,7 +214,8 @@ module.exports = class extends BaseGenerator {
   '[bootstrap.servers]': localhost:9092
   `;
         if (this.components.includes('consumer') && this.pollingTimeout) {
-            kafkaProperties += `pollingTimeout: ${this.pollingTimeout}
+            kafkaProperties += `polling:
+    timeout: ${this.pollingTimeout}
   `;
         }
         let consumersCpt = 0;
