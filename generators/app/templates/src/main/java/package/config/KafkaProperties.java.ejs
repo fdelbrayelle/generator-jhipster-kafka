@@ -35,10 +35,10 @@ public class KafkaProperties {
 
     private Map<String, Map<String, Object>> producer = new HashMap<>();
 
-    @Value("${kafka[bootstrap.servers]:localhost:9092}")
+    @Value("${kafka.bootstrap.servers:localhost:9092}")
     private String bootstrapServers;
 
-    @Value("${kafka[polling.timeout]:10000}")
+    @Value("${kafka.polling.timeout:10000}")
     private Integer pollingTimeout;
 
     @PostConstruct

@@ -211,10 +211,10 @@ module.exports = class extends BaseGenerator {
         }
 
         let kafkaProperties = `kafka:
-  '[bootstrap.servers]': localhost:9092
+  bootstrap.servers: localhost:9092
   `;
         if (this.components.includes('consumer') && this.pollingTimeout) {
-            kafkaProperties += `'[polling.timeout]': ${this.pollingTimeout}
+            kafkaProperties += `polling.timeout: ${this.pollingTimeout}
   `;
         }
         let consumersCpt = 0;
