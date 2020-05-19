@@ -5,6 +5,8 @@ const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
+const jsYaml = require('js-yaml');
+const fsModule = require('fs');
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
@@ -94,7 +96,7 @@ module.exports = class extends BaseGenerator {
                     .split('.')
                     .slice(0, -1)
                     .join('.')
-                    .match(/\w*$/i);
+                    .match(/\w*$/i)[0];
                 entitiesChoices.push({
                     name: className,
                     value: className
@@ -102,13 +104,35 @@ module.exports = class extends BaseGenerator {
             }
         });
 
+        const defaultComponents = [];
+        const defaultEntities = [];
+
+        const previousData = this.getPreviousConfiguration();
+        if (previousData.kafka) {
+            const kafkaConfiguration = previousData.kafka;
+            if (kafkaConfiguration.consumer) {
+                defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'consumer').value);
+                for (const currentEntityName in kafkaConfiguration.consumer) {
+                    defaultEntities.push(`${_.upperFirst(_.camelCase(currentEntityName))}`);
+                }
+            }
+            if (kafkaConfiguration.producer) {
+                defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'producer').value);
+                for (const entityName in kafkaConfiguration.producer) {
+                    defaultEntities.push(`${_.upperFirst(_.camelCase(entityName))}`);
+                }
+            }
+        }
+
+        this.log(defaultEntities);
+        this.log(defaultComponents);
         const prompts = [
             {
                 type: 'checkbox',
                 name: 'components',
                 message: 'Which Kafka components would you like to generate?',
                 choices: componentsChoices,
-                default: []
+                default: defaultComponents
             },
             {
                 when: response => response.components.includes('consumer') || response.components.includes('producer'),
@@ -116,7 +140,7 @@ module.exports = class extends BaseGenerator {
                 name: 'entities',
                 message: 'For which entity (class name)?',
                 choices: entitiesChoices,
-                default: []
+                default: defaultEntities
             },
             {
                 when: response => response.components.includes('consumer'),
@@ -133,6 +157,19 @@ module.exports = class extends BaseGenerator {
             // To access props later use this.props.someOption;
             done();
         });
+    }
+
+    getPreviousConfiguration() {
+        try {
+            return jsYaml.safeLoad(fsModule.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8'));
+        } catch (e) {
+            this.log(
+                `${chalk.red.bold(
+                    'WARN!'
+                )} Could not parse the previous kafka configuration, some previous configurations could be overwritten\n`
+            );
+        }
+        return {};
     }
 
     writing() {
@@ -174,7 +211,11 @@ module.exports = class extends BaseGenerator {
         this.components = this.props.components;
         this.entities = this.props.entities;
         this.pollingTimeout = this.props.pollingTimeout;
-
+        // variable from previous states
+        /* //`${resourceDir}config/application.yml`
+        //`${testResourceDir}config/application.yml`
+        this.previousData = jsYaml.load(fsModule.readFileSync(`${resourceDir}config/application.yml`, 'utf8'));
+        this.log(this.previousData); */
         // show all variables
         this.log('\n--- some config read from config ---');
         this.log(`baseName=${this.baseName}`);
@@ -256,7 +297,7 @@ module.exports = class extends BaseGenerator {
         const kafkaProperties = this.generateKafkaProperties();
         this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
 
-        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
+        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g; // TODO this approach remove properties set under kafka block.
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
         this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
     }

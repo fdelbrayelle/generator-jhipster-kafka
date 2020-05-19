@@ -3,7 +3,7 @@ kafka:
 <%_ if (pollingTimeout) { _%>
   polling.timeout: <%= pollingTimeout %>
 <%_ } _%>
-<%_ if (components.includes('consumer')) _%>
+<%_ if (components.includes('consumer')) { _%>
   consumer:
     <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
@@ -19,7 +19,8 @@ kafka:
       '[group.id]': <%= dasherizedBaseName %>
       '[auto.offset.reset]': earliest
     <%_ } _%>
-<%_ if (components.includes('producer')) _%>
+<%_ } _%>
+<%_ if (components.includes('producer')) { _%>
   producer:
   <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
@@ -33,3 +34,4 @@ kafka:
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= entity %>Serializer
   <%_ } _%>
+<%_ } _%>
