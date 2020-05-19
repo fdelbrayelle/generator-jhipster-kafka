@@ -4,6 +4,7 @@ const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
+const jhipsterUtils = require('generator-jhipster/generators/utils');
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
@@ -140,6 +141,15 @@ module.exports = class extends BaseGenerator {
             this.fs.copyTpl(this.templatePath(source), this.destinationPath(destination), this);
         };
 
+        // function generate kafka application properties
+        this.generateKafkaProperties = function() {
+            let kafkaPropertiesWithEjs;
+            jhipsterUtils.renderContent(this.templatePath('src/main/resources/application-subPartKafka.yml.ejs'), this, this, {}, res => {
+                kafkaPropertiesWithEjs = res;
+            });
+            return kafkaPropertiesWithEjs;
+        };
+
         // read config from .yo-rc.json
         this.baseName = this.jhipsterAppConfig.baseName;
         this.dasherizedBaseName = _.kebabCase(this.baseName);
@@ -211,39 +221,11 @@ module.exports = class extends BaseGenerator {
             this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`);
         }
 
-        let kafkaProperties = `kafka:
-  bootstrap.servers: localhost:9092
-  `;
-        if (this.components.includes('consumer') && this.pollingTimeout) {
-            kafkaProperties += `polling.timeout: ${this.pollingTimeout}
-  `;
-        }
-        let consumersCpt = 0;
-
         this.entities.forEach(entity => {
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
-            this.snakeCaseEntityClass = _.snakeCase(entity);
 
             if (this.components.includes('consumer')) {
-                if (consumersCpt === 0) {
-                    kafkaProperties += 'consumer:';
-                }
-
-                kafkaProperties += `
-    ${this.camelCaseEntityClass}:
-      # This is a template topic naming convention which can be changed.
-      # %3Cmessage_type%3E.%3Capplication_name%3E.%3Centity_name%3E with (all in snake_case):
-      # - %3Cmessage_type%3E: queuing, logging, tracking, etl/db, streaming, push, user...
-      # - %3Capplication_name%3E: the application base name
-      # - %3Centity_name%3E: the entity name which is consumed
-      name: queuing.${this.snakeCaseBaseName}.${this.snakeCaseEntityClass}
-      enabled: true
-      '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': ${this.packageName}.service.kafka.deserializer.${entity}Deserializer
-      '[group.id]': ${this.dasherizedBaseName}
-      '[auto.offset.reset]': earliest`;
-
                 this.template(
                     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                     `${javaDir}service/kafka/consumer/${entity}Consumer.java`
@@ -252,36 +234,14 @@ module.exports = class extends BaseGenerator {
                     'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
                     `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`
                 );
-
-                consumersCpt++;
             }
         });
-
-        let producersCpt = 0;
 
         this.entities.forEach(entity => {
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
-            this.snakeCaseEntityClass = _.snakeCase(entity);
 
             if (this.components.includes('producer')) {
-                if (producersCpt === 0) {
-                    kafkaProperties += `
-  producer:`;
-                }
-
-                kafkaProperties += `
-    ${this.camelCaseEntityClass}:
-      # This is a template topic naming convention which can be changed.
-      # %3Cmessage_type%3E.%3Capplication_name%3E.%3Centity_name%3E with (all in snake_case):
-      # - %3Cmessage_type%3E: queuing, logging, tracking, etl/db, streaming, push, user...
-      # - %3Capplication_name%3E: the application base name
-      # - %3Centity_name%3E: the entity name which is produced
-      name: queuing.${this.snakeCaseBaseName}.${this.snakeCaseEntityClass}
-      enabled: true
-      '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': ${this.packageName}.service.kafka.serializer.${entity}Serializer`;
-
                 this.template(
                     'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                     `${javaDir}service/kafka/producer/${entity}Producer.java`
@@ -290,13 +250,10 @@ module.exports = class extends BaseGenerator {
                     'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
                     `${javaDir}service/kafka/serializer/${entity}Serializer.java`
                 );
-
-                producersCpt++;
             }
         });
 
-        kafkaProperties += '\n';
-
+        const kafkaProperties = this.generateKafkaProperties();
         this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
 
         const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
