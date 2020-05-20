@@ -86,6 +86,32 @@ module.exports = class extends BaseGenerator {
             value: 'producer'
         });
 
+        const javaClassNameCase = entityName => {
+            return _.upperFirst(_.camelCase(entityName));
+        };
+
+        this.extractDefaultPromptValues = kafkaConfiguration => {
+            const defaultComponents = [];
+            const defaultEntities = [];
+            if (kafkaConfiguration) {
+                if (kafkaConfiguration.consumer) {
+                    defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'consumer').value);
+                    Object.keys(kafkaConfiguration.consumer).forEach(function(key) {
+                        defaultEntities.push(`${javaClassNameCase(key)}`);
+                    });
+                }
+                if (kafkaConfiguration.producer) {
+                    defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'producer').value);
+                    Object.keys(kafkaConfiguration.producer).forEach(function(key) {
+                        defaultEntities.push(`${javaClassNameCase(key)}`);
+                    });
+                }
+            }
+            return {
+                components: defaultComponents,
+                entities: defaultEntities
+            };
+        };
         const domainClassesPath = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.jhipsterAppConfig.packageFolder}/domain`;
         const files = shelljs.ls(`${domainClassesPath}/*.java`);
 
@@ -96,43 +122,25 @@ module.exports = class extends BaseGenerator {
                     .split('.')
                     .slice(0, -1)
                     .join('.')
-                    .match(/\w*$/i)[0];
-                entitiesChoices.push({
-                    name: className,
-                    value: className
-                });
+                    .match(/\w*$/i);
+                if (className) {
+                    entitiesChoices.push({
+                        name: className[0],
+                        value: className[0]
+                    });
+                }
             }
         });
 
-        const defaultComponents = [];
-        const defaultEntities = [];
+        const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration());
 
-        const previousData = this.getPreviousConfiguration();
-        if (previousData.kafka) {
-            const kafkaConfiguration = previousData.kafka;
-            if (kafkaConfiguration.consumer) {
-                defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'consumer').value);
-                for (const currentEntityName in kafkaConfiguration.consumer) {
-                    defaultEntities.push(`${_.upperFirst(_.camelCase(currentEntityName))}`);
-                }
-            }
-            if (kafkaConfiguration.producer) {
-                defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'producer').value);
-                for (const entityName in kafkaConfiguration.producer) {
-                    defaultEntities.push(`${_.upperFirst(_.camelCase(entityName))}`);
-                }
-            }
-        }
-
-        this.log(defaultEntities);
-        this.log(defaultComponents);
         const prompts = [
             {
                 type: 'checkbox',
                 name: 'components',
                 message: 'Which Kafka components would you like to generate?',
                 choices: componentsChoices,
-                default: defaultComponents
+                default: defaultValues.components
             },
             {
                 when: response => response.components.includes('consumer') || response.components.includes('producer'),
@@ -140,7 +148,7 @@ module.exports = class extends BaseGenerator {
                 name: 'entities',
                 message: 'For which entity (class name)?',
                 choices: entitiesChoices,
-                default: defaultEntities
+                default: defaultValues.entities
             },
             {
                 when: response => response.components.includes('consumer'),
@@ -159,9 +167,14 @@ module.exports = class extends BaseGenerator {
         });
     }
 
-    getPreviousConfiguration() {
+    getPreviousKafkaConfiguration() {
         try {
-            return jsYaml.safeLoad(fsModule.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8'));
+            const previousGlobalConfiguration = jsYaml.safeLoad(
+                fsModule.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8')
+            );
+            if (previousGlobalConfiguration && previousGlobalConfiguration.kafka) {
+                return previousGlobalConfiguration.kafka;
+            }
         } catch (e) {
             this.log(
                 `${chalk.red.bold(
@@ -180,11 +193,11 @@ module.exports = class extends BaseGenerator {
 
         // function generate kafka application properties
         this.generateKafkaProperties = function() {
-            let kafkaPropertiesWithEjs;
-            jhipsterUtils.renderContent(this.templatePath('src/main/resources/application-subPartKafka.yml.ejs'), this, this, {}, res => {
-                kafkaPropertiesWithEjs = res;
+            let generatedKafkaProperties;
+            jhipsterUtils.renderContent(this.templatePath('src/main/resources/application-kafka.yml.ejs'), this, this, {}, res => {
+                generatedKafkaProperties = res;
             });
-            return kafkaPropertiesWithEjs;
+            return generatedKafkaProperties;
         };
 
         // read config from .yo-rc.json
@@ -211,11 +224,7 @@ module.exports = class extends BaseGenerator {
         this.components = this.props.components;
         this.entities = this.props.entities;
         this.pollingTimeout = this.props.pollingTimeout;
-        // variable from previous states
-        /* //`${resourceDir}config/application.yml`
-        //`${testResourceDir}config/application.yml`
-        this.previousData = jsYaml.load(fsModule.readFileSync(`${resourceDir}config/application.yml`, 'utf8'));
-        this.log(this.previousData); */
+
         // show all variables
         this.log('\n--- some config read from config ---');
         this.log(`baseName=${this.baseName}`);
