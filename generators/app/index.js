@@ -222,7 +222,7 @@ module.exports = class extends BaseGenerator {
 
         // variable from questions
         this.components = this.props.components;
-        this.entities = this.props.entities;
+        this.entities = this.props.entities || [];
         this.pollingTimeout = this.props.pollingTimeout;
 
         // show all variables
