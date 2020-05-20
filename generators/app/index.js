@@ -61,6 +61,32 @@ module.exports = class extends BaseGenerator {
         };
     }
 
+    extractDefaultPromptValues(previousKafkaConfiguration, possibleComponents) {
+        const transformToJavaClassNameCase = entityName => {
+            return _.upperFirst(_.camelCase(entityName));
+        };
+        const defaultComponents = [];
+        const defaultEntities = [];
+        if (previousKafkaConfiguration) {
+            if (previousKafkaConfiguration.consumer) {
+                defaultComponents.push(possibleComponents.find(choice => choice.value === 'consumer').value);
+                Object.keys(previousKafkaConfiguration.consumer).forEach(function(key) {
+                    defaultEntities.push(`${transformToJavaClassNameCase(key)}`);
+                });
+            }
+            if (previousKafkaConfiguration.producer) {
+                defaultComponents.push(possibleComponents.find(choice => choice.value === 'producer').value);
+                Object.keys(previousKafkaConfiguration.producer).forEach(function(key) {
+                    defaultEntities.push(`${transformToJavaClassNameCase(key)}`);
+                });
+            }
+        }
+        return {
+            components: defaultComponents,
+            entities: [...new Set(defaultEntities)] //
+        };
+    }
+
     prompting() {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
@@ -86,32 +112,6 @@ module.exports = class extends BaseGenerator {
             value: 'producer'
         });
 
-        const javaClassNameCase = entityName => {
-            return _.upperFirst(_.camelCase(entityName));
-        };
-
-        this.extractDefaultPromptValues = kafkaConfiguration => {
-            const defaultComponents = [];
-            const defaultEntities = [];
-            if (kafkaConfiguration) {
-                if (kafkaConfiguration.consumer) {
-                    defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'consumer').value);
-                    Object.keys(kafkaConfiguration.consumer).forEach(function(key) {
-                        defaultEntities.push(`${javaClassNameCase(key)}`);
-                    });
-                }
-                if (kafkaConfiguration.producer) {
-                    defaultComponents.push(componentsChoices.find(possibleChoice => possibleChoice.value === 'producer').value);
-                    Object.keys(kafkaConfiguration.producer).forEach(function(key) {
-                        defaultEntities.push(`${javaClassNameCase(key)}`);
-                    });
-                }
-            }
-            return {
-                components: defaultComponents,
-                entities: defaultEntities
-            };
-        };
         const domainClassesPath = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.jhipsterAppConfig.packageFolder}/domain`;
         const files = shelljs.ls(`${domainClassesPath}/*.java`);
 
@@ -132,7 +132,7 @@ module.exports = class extends BaseGenerator {
             }
         });
 
-        const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration());
+        const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
 
         const prompts = [
             {
@@ -193,7 +193,7 @@ module.exports = class extends BaseGenerator {
 
         // function generate kafka application properties
         this.generateKafkaProperties = function() {
-            let generatedKafkaProperties;
+            let generatedKafkaProperties = '';
             jhipsterUtils.renderContent(this.templatePath('src/main/resources/application-kafka.yml.ejs'), this, this, {}, res => {
                 generatedKafkaProperties = res;
             });
@@ -306,7 +306,7 @@ module.exports = class extends BaseGenerator {
         const kafkaProperties = this.generateKafkaProperties();
         this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
 
-        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g; // TODO this approach remove properties set under kafka block.
+        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
         this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
     }
