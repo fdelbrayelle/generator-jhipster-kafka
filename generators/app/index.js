@@ -62,9 +62,8 @@ module.exports = class extends BaseGenerator {
     }
 
     extractDefaultPromptValues(previousKafkaConfiguration, possibleComponents) {
-        const transformToJavaClassNameCase = entityName => {
-            return _.upperFirst(_.camelCase(entityName));
-        };
+        const transformToJavaClassNameCase = entityName => _.upperFirst(_.camelCase(entityName));
+
         const defaultComponents = [];
         const defaultEntities = [];
         if (previousKafkaConfiguration) {
@@ -179,7 +178,7 @@ module.exports = class extends BaseGenerator {
             this.log(
                 `${chalk.red.bold(
                     'WARN!'
-                )} Could not parse the previous kafka configuration, some previous configurations could be overwritten\n`
+                )} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
             );
         }
         return {};
