@@ -114,7 +114,7 @@ module.exports = class extends BaseGenerator {
         try {
             existingEntityNames = fsModule.readdirSync('.jhipster');
         } catch (e) {
-            this.log("Error when reading entities folder : .jhipster");
+            this.log('Error when reading entities folder : .jhipster');
         }
         existingEntityNames.forEach(entry => {
             if (entry.indexOf('.json') !== -1) {
