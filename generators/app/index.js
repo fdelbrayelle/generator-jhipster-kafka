@@ -109,22 +109,21 @@ module.exports = class extends BaseGenerator {
             name: 'Producer',
             value: 'producer'
         });
-        
         const entitiesChoices = [];
         let existingEntityNames = [];
         try {
-          existingEntityNames = fsModule.readdirSync('.jhipster');
+            existingEntityNames = fsModule.readdirSync('.jhipster');
         } catch (e) {
-            this.log(`\nError when reading entities folder : .jhipster`);
+            this.log("Error when reading entities folder : .jhipster");
         }
-        existingEntityNames.forEach((entry) => {
-          if (entry.indexOf('.json') !== -1) {
-            const entityName = entry.replace('.json', '');
-              entitiesChoices.push({
-              name: entityName,
-              value: entityName
-            });
-          }
+        existingEntityNames.forEach(entry => {
+            if (entry.indexOf('.json') !== -1) {
+                const entityName = entry.replace('.json', '');
+                entitiesChoices.push({
+                    name: entityName,
+                    value: entityName
+                });
+            }
         });
         const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
 
