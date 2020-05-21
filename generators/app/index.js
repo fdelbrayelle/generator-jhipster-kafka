@@ -1,5 +1,4 @@
 const chalk = require('chalk');
-const shelljs = require('shelljs');
 const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
@@ -110,16 +109,14 @@ module.exports = class extends BaseGenerator {
             name: 'Producer',
             value: 'producer'
         });
-
-  
+        
         const entitiesChoices = [];
         let existingEntityNames = [];
         try {
           existingEntityNames = fsModule.readdirSync('.jhipster');
         } catch (e) {
-          
+            this.log(`\nError when reading entities folder : .jhipster`);
         }
-
         existingEntityNames.forEach((entry) => {
           if (entry.indexOf('.json') !== -1) {
             const entityName = entry.replace('.json', '');
@@ -129,8 +126,6 @@ module.exports = class extends BaseGenerator {
             });
           }
         });
-        
-        
         const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
 
         const prompts = [
