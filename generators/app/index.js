@@ -1,5 +1,4 @@
 const chalk = require('chalk');
-const shelljs = require('shelljs');
 const _ = require('lodash');
 const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
@@ -110,27 +109,22 @@ module.exports = class extends BaseGenerator {
             name: 'Producer',
             value: 'producer'
         });
-
-        const domainClassesPath = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.jhipsterAppConfig.packageFolder}/domain`;
-        const files = shelljs.ls(`${domainClassesPath}/*.java`);
-
         const entitiesChoices = [];
-        files.forEach(file => {
-            if (shelljs.grep(/^@Entity$/, file) !== '') {
-                const className = file
-                    .split('.')
-                    .slice(0, -1)
-                    .join('.')
-                    .match(/\w*$/i);
-                if (className) {
-                    entitiesChoices.push({
-                        name: className[0],
-                        value: className[0]
-                    });
-                }
+        let existingEntityNames = [];
+        try {
+            existingEntityNames = fsModule.readdirSync('.jhipster');
+        } catch (e) {
+            this.log('Error when reading entities folder : .jhipster');
+        }
+        existingEntityNames.forEach(entry => {
+            if (entry.indexOf('.json') !== -1) {
+                const entityName = entry.replace('.json', '');
+                entitiesChoices.push({
+                    name: entityName,
+                    value: entityName
+                });
             }
         });
-
         const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
 
         const prompts = [
