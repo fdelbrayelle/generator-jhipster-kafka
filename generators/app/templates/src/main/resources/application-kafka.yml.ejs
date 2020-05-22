@@ -19,7 +19,9 @@ kafka:
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= entity %>Deserializer
       '[group.id]': <%= dasherizedBaseName %>
-      '[auto.offset.reset]': earliest
+    <%_ if (autoOffsetResetPolicy) { _%>
+      '[auto.offset.reset]': <%= autoOffsetResetPolicy %>
+    <%_ } _%>
     <%_ } _%>
 <%_ } _%>
 <%_ if (components.includes('producer')) { _%>
