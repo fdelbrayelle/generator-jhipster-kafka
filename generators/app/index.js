@@ -238,7 +238,12 @@ module.exports = class extends BaseGenerator {
         const testDir = `${jhipsterConstants.SERVER_TEST_SRC_DIR + this.packageFolder}/`;
         const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
+
         this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
+        this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
+        this.dockerZookeeper = jhipsterConstants.DOCKER_ZOOKEEPER;
+        this.dockerKafka = jhipsterConstants.DOCKER_KAFKA;
+        this.dockerAkhq = 'tchiotludo/akhq';
 
         // variables from questions
         this.components = this.props.components;
@@ -263,6 +268,10 @@ module.exports = class extends BaseGenerator {
         this.log(`resourceDir=${testResourceDir}`);
         this.log(`webappDir=${webappDir}`);
         this.log(`kafkaVersion=${this.kafkaVersion}`);
+        this.log(`dockerComposeFormatVersion=${this.dockerComposeFormatVersion}`);
+        this.log(`dockerZookeeper=${this.dockerZookeeper}`);
+        this.log(`dockerKafka=${this.dockerKafka}`);
+        this.log(`dockerAkhq=${this.dockerAkhq}`);
 
         this.log('\n--- variables from questions ---');
         this.log(`\ncomponents=${this.components}`);
@@ -332,6 +341,8 @@ module.exports = class extends BaseGenerator {
         const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
         this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
+
+        this.template('src/main/docker/kafka.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/kafka.yml`);
     }
 
     install() {
