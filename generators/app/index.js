@@ -37,7 +37,7 @@ module.exports = class extends BaseGenerator {
                     this.error('Cannot read .yo-rc.json');
                 }
                 if (this.jhipsterAppConfig.messageBroker !== 'kafka') {
-                    this.error('You need to have Kafka as message broker');
+                    this.error('You need to use Kafka as message broker!');
                 }
             },
             displayLogo() {
@@ -114,7 +114,7 @@ module.exports = class extends BaseGenerator {
         try {
             existingEntityNames = fsModule.readdirSync('.jhipster');
         } catch (e) {
-            this.log('Error when reading entities folder : .jhipster');
+            this.log('Error while reading entities folder: .jhipster');
         }
         existingEntityNames.forEach(entry => {
             if (entry.indexOf('.json') !== -1) {
@@ -147,7 +147,7 @@ module.exports = class extends BaseGenerator {
                 when: response => response.components.includes('consumer'),
                 type: 'number',
                 name: 'pollingTimeout',
-                message: 'Define the consumer polling timeout?',
+                message: 'What is the consumer polling timeout (in ms)?',
                 default: '10000'
             }
         ];
