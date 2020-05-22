@@ -96,6 +96,7 @@ module.exports = class extends BaseGenerator {
             // in the main generator (see: 11-generate-entities.sh).
             this.props.entities = [];
             this.props.entities.push('DocumentBankAccount');
+            this.props.autoOffsetResetPolicies = 'earliest';
             return;
         }
 
@@ -109,6 +110,7 @@ module.exports = class extends BaseGenerator {
             name: 'Producer',
             value: 'producer'
         });
+
         const entitiesChoices = [];
         let existingEntityNames = [];
         try {
@@ -125,6 +127,22 @@ module.exports = class extends BaseGenerator {
                 });
             }
         });
+
+        const autoOffsetResetPolicies = [];
+
+        autoOffsetResetPolicies.push({
+            name: 'earliest (automatically reset the offset to the earliest offset)',
+            value: 'earliest'
+        });
+        autoOffsetResetPolicies.push({
+            name: 'latest (automatically reset the offset to the latest offset)',
+            value: 'latest'
+        });
+        autoOffsetResetPolicies.push({
+            name: 'none (throw exception to the consumer if no previous offset is found for the consumer group)',
+            value: 'none'
+        });
+
         const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
 
         const prompts = [
@@ -149,6 +167,15 @@ module.exports = class extends BaseGenerator {
                 name: 'pollingTimeout',
                 message: 'What is the consumer polling timeout (in ms)?',
                 default: '10000'
+            },
+            {
+                when: response => response.components.includes('consumer'),
+                type: 'list',
+                name: 'autoOffsetResetPolicy',
+                message:
+                    'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
+                choices: autoOffsetResetPolicies,
+                default: 'earliest'
             }
         ];
 
@@ -213,10 +240,11 @@ module.exports = class extends BaseGenerator {
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
         this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
 
-        // variable from questions
+        // variables from questions
         this.components = this.props.components;
         this.entities = this.props.entities || [];
         this.pollingTimeout = this.props.pollingTimeout;
+        this.autoOffsetResetPolicy = this.props.autoOffsetResetPolicy;
 
         // show all variables
         this.log('\n--- some config read from config ---');
@@ -239,6 +267,8 @@ module.exports = class extends BaseGenerator {
         this.log('\n--- variables from questions ---');
         this.log(`\ncomponents=${this.components}`);
         this.log(`\nentities=${this.entities}`);
+        this.log(`\npollingTimeout=${this.pollingTimeout}`);
+        this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
         this.log('------\n');
 
         try {
