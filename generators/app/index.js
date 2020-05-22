@@ -338,7 +338,7 @@ module.exports = class extends BaseGenerator {
         const kafkaProperties = this.generateKafkaProperties();
         this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
 
-        const kafkaBlockPattern = /kafka:\n((\s.+)\n)+/g;
+        const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
         this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
 
