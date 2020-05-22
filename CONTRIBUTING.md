@@ -75,10 +75,10 @@ Before you submit your pull request consider the following guidelines:
 - Search [GitHub](https://github.com/fdelbrayelle/generator-jhipster-kafka/pulls?utf8=%E2%9C%93&q=is%3Apr) for an open or closed Pull Request
   that relates to your submission.
 - If you want to modify the JHipster generator, read our [Generator development setup](#setup)
-- Make your changes in a new git branch
+- Make your changes in a new git branch (named after a given issue related to a bug, or a new feature like this : `fix/issues/<issue_number>_short_description` or this : `feat/issues/<issue_number>_short_description`
 
   ```shell
-  git checkout -b my-fix-branch master
+  git checkout -b <issue_type>/issues/<issue_number>_short_description master
   ```
 
 - Create your patch, **including appropriate test cases**.
@@ -109,7 +109,7 @@ Before you submit your pull request consider the following guidelines:
 - Push your branch to GitHub:
 
   ```shell
-  git push origin my-fix-branch
+  git push origin <issue_type>/issues/<issue_number>_short_description
   ```
 
 - In GitHub, send a pull request to `fdelbrayelle/generator-jhipster-kafka:master`.
@@ -165,7 +165,7 @@ from the main (upstream) repository:
 - Delete the remote branch on GitHub either through the GitHub web UI or your local shell as follows:
 
   ```shell
-  git push origin --delete my-fix-branch
+  git push origin --delete <issue_type>/issues/<issue_number>_short_description
   ```
 
 - Check out the master branch:
@@ -177,7 +177,7 @@ from the main (upstream) repository:
 - Delete the local branch:
 
   ```shell
-  git branch -D my-fix-branch
+  git branch -D <issue_type>/issues/<issue_number>_short_description
   ```
 
 - Update your master with the latest upstream version:
