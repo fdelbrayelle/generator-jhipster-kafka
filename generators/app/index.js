@@ -4,9 +4,9 @@ const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
-const jsYaml = require('js-yaml');
-const fs = require('fs');
+
 const packagejs = require('../../package.json');
+const prompts = require('./prompts');
 
 module.exports = class extends BaseGenerator {
     constructor(args, opts) {
@@ -20,7 +20,7 @@ module.exports = class extends BaseGenerator {
             type: Boolean,
             defaults: false
         });
-
+        this.props = {};
         this.setupClientOptions(this);
     }
 
@@ -60,34 +60,10 @@ module.exports = class extends BaseGenerator {
         };
     }
 
-    extractDefaultPromptValues(previousKafkaConfiguration, possibleComponents) {
-        const transformToJavaClassNameCase = entityName => _.upperFirst(_.camelCase(entityName));
-
-        const defaultComponents = [];
-        const defaultEntities = [];
-        if (previousKafkaConfiguration) {
-            if (previousKafkaConfiguration.consumer) {
-                defaultComponents.push(possibleComponents.find(choice => choice.value === 'consumer').value);
-                Object.keys(previousKafkaConfiguration.consumer).forEach(function(key) {
-                    defaultEntities.push(`${transformToJavaClassNameCase(key)}`);
-                });
-            }
-            if (previousKafkaConfiguration.producer) {
-                defaultComponents.push(possibleComponents.find(choice => choice.value === 'producer').value);
-                Object.keys(previousKafkaConfiguration.producer).forEach(function(key) {
-                    defaultEntities.push(`${transformToJavaClassNameCase(key)}`);
-                });
-            }
-        }
-        return {
-            components: defaultComponents,
-            entities: [...new Set(defaultEntities)] //
-        };
-    }
-
     prompting() {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
+            this.props.generationKind = 'bigbang';
             this.log('Skipping prompts...');
             this.props = {};
             this.props.components = [];
@@ -99,110 +75,7 @@ module.exports = class extends BaseGenerator {
             this.props.autoOffsetResetPolicies = 'earliest';
             return;
         }
-
-        const componentsChoices = [];
-
-        componentsChoices.push({
-            name: 'Consumer',
-            value: 'consumer'
-        });
-        componentsChoices.push({
-            name: 'Producer',
-            value: 'producer'
-        });
-
-        const entitiesChoices = [];
-        let existingEntityNames = [];
-        try {
-            existingEntityNames = fs.readdirSync('.jhipster');
-        } catch (e) {
-            this.log('Error while reading entities folder: .jhipster');
-        }
-        existingEntityNames.forEach(entry => {
-            if (entry.indexOf('.json') !== -1) {
-                const entityName = entry.replace('.json', '');
-                entitiesChoices.push({
-                    name: entityName,
-                    value: entityName
-                });
-            }
-        });
-
-        const autoOffsetResetPolicies = [];
-
-        autoOffsetResetPolicies.push({
-            name: 'earliest (automatically reset the offset to the earliest offset)',
-            value: 'earliest'
-        });
-        autoOffsetResetPolicies.push({
-            name: 'latest (automatically reset the offset to the latest offset)',
-            value: 'latest'
-        });
-        autoOffsetResetPolicies.push({
-            name: 'none (throw exception to the consumer if no previous offset is found for the consumer group)',
-            value: 'none'
-        });
-
-        const defaultValues = this.extractDefaultPromptValues(this.getPreviousKafkaConfiguration(), componentsChoices);
-
-        const prompts = [
-            {
-                type: 'checkbox',
-                name: 'components',
-                message: 'Which Kafka components would you like to generate?',
-                choices: componentsChoices,
-                default: defaultValues.components
-            },
-            {
-                when: response => response.components.includes('consumer') || response.components.includes('producer'),
-                type: 'checkbox',
-                name: 'entities',
-                message: 'For which entity (class name)?',
-                choices: entitiesChoices,
-                default: defaultValues.entities
-            },
-            {
-                when: response => response.components.includes('consumer'),
-                type: 'number',
-                name: 'pollingTimeout',
-                message: 'What is the consumer polling timeout (in ms)?',
-                default: '10000'
-            },
-            {
-                when: response => response.components.includes('consumer'),
-                type: 'list',
-                name: 'autoOffsetResetPolicy',
-                message:
-                    'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
-                choices: autoOffsetResetPolicies,
-                default: 'earliest'
-            }
-        ];
-
-        const done = this.async();
-        this.prompt(prompts).then(props => {
-            this.props = props;
-            // To access props later use this.props.someOption;
-            done();
-        });
-    }
-
-    getPreviousKafkaConfiguration() {
-        try {
-            const previousGlobalConfiguration = jsYaml.safeLoad(
-                fs.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8')
-            );
-            if (previousGlobalConfiguration && previousGlobalConfiguration.kafka) {
-                return previousGlobalConfiguration.kafka;
-            }
-        } catch (e) {
-            this.log(
-                `${chalk.red.bold(
-                    'WARN!'
-                )} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
-            );
-        }
-        return {};
+        prompts.askForOperations(this);
     }
 
     writing() {
@@ -270,7 +143,7 @@ module.exports = class extends BaseGenerator {
         this.log(`\npollingTimeout=${this.pollingTimeout}`);
         this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
         this.log('------\n');
-
+        //`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
         try {
             this.registerModule(
                 'generator-jhipster-kafka',
