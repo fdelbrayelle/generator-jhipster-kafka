@@ -1,8 +1,7 @@
-<%# Important : leave the next 2 lines so that this.replaceContent will work %>
 
 
 kafka:
-  bootstrap.servers: localhost:9092
+  bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
 <%_ if (pollingTimeout) { _%>
   polling.timeout: <%= pollingTimeout %>
 <%_ } _%>
@@ -18,13 +17,13 @@ kafka:
 <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
-      enabled: true
+      enabled: <%= enabled %>
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= entity %>Deserializer
       '[group.id]': <%= dasherizedBaseName %>
-    <%_ if (autoOffsetResetPolicy) { _%>
+<%_ if (autoOffsetResetPolicy) { _%>
       '[auto.offset.reset]': <%= autoOffsetResetPolicy %>
-    <%_ } _%>
+<%_ } _%>
 <%_ } _%>
 <%_ } _%>
 <%_ if (components.includes('producer')) { _%>
@@ -32,11 +31,9 @@ kafka:
 <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
-      enabled: true
+      enabled: <%= enabled %>
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= entity %>Serializer
 <%_ } _%>
 <%_ } _%>
 
-
-<%# Important : leave the previous 2 lines so that this.replaceContent will work %>

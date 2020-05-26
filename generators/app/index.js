@@ -206,13 +206,10 @@ module.exports = class extends BaseGenerator {
     }
 
     writing() {
-        // function to use directly template
-        this.template = function(source, destination) {
-            this.fs.copyTpl(this.templatePath(source), this.destinationPath(destination), this);
-        };
-
         // function generate kafka application properties
-        this.generateKafkaProperties = function() {
+        this.generateKafkaProperties = function(enabled) {
+            this.enabled = enabled;
+
             let generatedKafkaProperties = '';
             jhipsterUtils.renderContent(this.templatePath('src/main/resources/application-kafka.yml.ejs'), this, this, {}, res => {
                 generatedKafkaProperties = res;
@@ -296,11 +293,16 @@ module.exports = class extends BaseGenerator {
         this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
 
         if (this.components.includes('consumer') && this.entities.length > 0) {
-            this.template('src/main/java/package/service/kafka/GenericConsumer.java.ejs', `${javaDir}service/kafka/GenericConsumer.java`);
+            this.template(
+                'src/main/java/package/service/kafka/GenericConsumer.java.ejs',
+                `${javaDir}service/kafka/GenericConsumer.java`,
+                null,
+                null
+            );
         }
 
         if (this.components.includes('consumer') || this.components.includes('producer')) {
-            this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`);
+            this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`, null, null);
         }
 
         this.entities.forEach(entity => {
@@ -310,11 +312,15 @@ module.exports = class extends BaseGenerator {
             if (this.components.includes('consumer')) {
                 this.template(
                     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
-                    `${javaDir}service/kafka/consumer/${entity}Consumer.java`
+                    `${javaDir}service/kafka/consumer/${entity}Consumer.java`,
+                    null,
+                    null
                 );
                 this.template(
                     'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
-                    `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`
+                    `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
+                    null,
+                    null
                 );
             }
         });
@@ -326,23 +332,45 @@ module.exports = class extends BaseGenerator {
             if (this.components.includes('producer')) {
                 this.template(
                     'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
-                    `${javaDir}service/kafka/producer/${entity}Producer.java`
+                    `${javaDir}service/kafka/producer/${entity}Producer.java`,
+                    null,
+                    null
                 );
                 this.template(
                     'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
-                    `${javaDir}service/kafka/serializer/${entity}Serializer.java`
+                    `${javaDir}service/kafka/serializer/${entity}Serializer.java`,
+                    null,
+                    null
                 );
             }
         });
 
-        const kafkaProperties = this.generateKafkaProperties();
+        const kafkaProperties = this.generateKafkaProperties(true);
         this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
+
+        const kafkaTestProperties = this.generateKafkaProperties(false);
+        this.log(`kafkaTestProperties=\n\n${kafkaTestProperties}\n\n`);
 
         const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
-        this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
+        this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaTestProperties);
 
-        this.template('src/main/docker/kafka.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/kafka.yml`);
+        this.template('src/main/docker/kafka.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/kafka.yml`, this, null, null);
+
+        // Related to: https://github.com/jhipster/generator-jhipster/issues/11846
+        this.overrideMainGeneratorAppYml();
+    }
+
+    overrideMainGeneratorAppYml() {
+        const appYmlPath = `${jhipsterConstants.MAIN_DIR}docker/app.yml`;
+
+        const kafkaBootstrapServersPattern = /^\s.*KAFKA_BOOTSTRAPSERVERS.*$/gm;
+        const kafkaBootstrapServers = '      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092';
+        this.replaceContent(appYmlPath, kafkaBootstrapServersPattern, kafkaBootstrapServers);
+
+        const kafkaAdvertisedListenersPattern = /^\s.*KAFKA_ADVERTISED_LISTENERS.*$/gm;
+        const kafkaAdvertisedListeners = '      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092';
+        this.replaceContent(appYmlPath, kafkaAdvertisedListenersPattern, kafkaAdvertisedListeners);
     }
 
     install() {
