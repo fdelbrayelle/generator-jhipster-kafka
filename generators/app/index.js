@@ -63,7 +63,7 @@ module.exports = class extends BaseGenerator {
     prompting() {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
-            this.props.generationKind = 'bigbang';
+            this.props.typeOfGeneration = 'bigbang';
             this.log('Skipping prompts...');
             this.props = {};
             this.props.components = [];
@@ -113,8 +113,16 @@ module.exports = class extends BaseGenerator {
         this.dockerAkhq = 'tchiotludo/akhq:0.14.1';
 
         // variables from questions
-        this.components = this.props.components;
-        this.entities = this.props.entities || [];
+        this.typeOfGeneration = this.props.typeOfGeneration;
+
+        if (this.typeOfGeneration === 'bigbang') {
+            this.components = this.props.components;
+            this.entities = this.props.entities || [];
+        } else {
+            this.log('not implemented yet');
+            return;
+        }
+
         this.pollingTimeout = this.props.pollingTimeout;
         this.autoOffsetResetPolicy = this.props.autoOffsetResetPolicy;
 
@@ -143,7 +151,6 @@ module.exports = class extends BaseGenerator {
         this.log(`\npollingTimeout=${this.pollingTimeout}`);
         this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
         this.log('------\n');
-        //`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
         try {
             this.registerModule(
                 'generator-jhipster-kafka',
