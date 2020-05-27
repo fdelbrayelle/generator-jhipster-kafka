@@ -1,5 +1,7 @@
 const fsModule = require('fs');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
+const chalk = require('chalk');
+const _ = require('lodash');
 const { getPreviousKafkaConfiguration, extractEntitiesComponents } = require('./utils.js');
 
 const generationTypeChoices = () => {
@@ -53,7 +55,7 @@ const entitiesChoices = () => {
     try {
         existingEntityNames = fsModule.readdirSync('.jhipster');
     } catch (e) {
-        console.error('Error while reading entities folder: .jhipster'); // eslint-disable-line
+        console.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: .jhipster`); // eslint-disable-line
     }
     existingEntityNames.forEach(entry => {
         if (entry.indexOf('.json') !== -1) {
@@ -132,16 +134,19 @@ function askForBigBangOperations(context, done) {
 }
 
 function askForIncrementalOperations(context, done) {
-    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`);
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices();
         const entitiesComponents = extractEntitiesComponents(previousConfiguration);
         return allEntities.filter(
             entityName =>
-                !entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)
+                (!entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)) &&
+                (!context.props.componentsByEntityConfig[entityName.value] ||
+                    !context.props.componentsByEntityConfig[entityName.value].includes('producer') ||
+                    !context.props.componentsByEntityConfig[entityName.value].includes('consumer'))
         );
     };
 
+    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
     const incrementalPrompt = [
         {
             type: 'list',
@@ -157,6 +162,9 @@ function askForIncrementalOperations(context, done) {
 
         if (props.currentEntity && props.currentEntity.value !== 'none') {
             context.props.currentEntity = props.currentEntity;
+            if (!context.props.entities.includes(props.currentEntity)) {
+                context.props.entities.push(props.currentEntity);
+            }
             askForUnitaryEntityOperations(context, done);
         } else {
             done();
@@ -165,29 +173,38 @@ function askForIncrementalOperations(context, done) {
 }
 
 function askForUnitaryEntityOperations(context, done) {
-    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`);
     const getConcernedComponents = (previousConfiguration, entityName) => {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
         const entitiesComponents = extractEntitiesComponents(previousConfiguration);
-
         if (entitiesComponents) {
-            if (!entitiesComponents.producers.includes(entityName)) {
+            if (
+                !entitiesComponents.producers.includes(entityName) &&
+                (!context.props.componentsByEntityConfig[entityName] ||
+                    !context.props.componentsByEntityConfig[entityName].includes('producer'))
+            ) {
                 availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'producer'));
             }
-            if (!entitiesComponents.consumers.includes(entityName)) {
+            if (
+                !entitiesComponents.consumers.includes(entityName) &&
+                (!context.props.componentsByEntityConfig[entityName] ||
+                    !context.props.componentsByEntityConfig[entityName].includes('consumer'))
+            ) {
                 availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'consumer'));
             }
         }
         return availableComponents;
     };
 
+    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+
     const unitaryEntityOptions = [
         {
             when: context.props.currentEntity,
             type: 'checkbox',
             name: 'currentEntityComponents',
-            message: 'For which entity (class name)?',
+            validate: input => (_.isEmpty(input) ? 'you have to choose at least one component' : true),
+            message: 'Which components do you want to generate?',
             choices: getConcernedComponents(previousConfiguration, context.props.currentEntity),
             default: []
         },
@@ -220,17 +237,18 @@ function askForUnitaryEntityOperations(context, done) {
     ];
     context.prompt(unitaryEntityOptions).then(props => {
         if (context.props.currentEntity) {
-            if (!context.props.addEntityComponents) {
-                context.props.addEntityComponents = [];
+            if (!context.props.componentsByEntityConfig) {
+                context.props.componentsByEntityConfig = [];
             }
-
-            context.props.addEntityComponents.push({
-                name: context.props.currentEntity,
-                components: props.currentEntityComponents
-            });
-
+            if (props.currentEntityComponents && props.currentEntityComponents.length > 0) {
+                if (context.props.componentsByEntityConfig[context.props.currentEntity]) {
+                    context.props.componentsByEntityConfig[context.props.currentEntity].push(...props.currentEntityComponents);
+                } else {
+                    context.props.componentsByEntityConfig[context.props.currentEntity] = [...props.currentEntityComponents];
+                }
+            }
             if (props.pollingTimeout) {
-                context.props.pollingTimeout = props.pollingTimeout;
+                context.props.pollingTimeout = +props.pollingTimeout;
             }
             if (props.autoOffsetResetPolicy) {
                 context.props.autoOffsetResetPolicy = props.autoOffsetResetPolicy;
@@ -238,6 +256,7 @@ function askForUnitaryEntityOperations(context, done) {
             if (props.continueAddingEntitiesComponents) {
                 askForIncrementalOperations(context, done);
             } else {
+                context.props.currentEntity = undefined;
                 done();
             }
         } else {

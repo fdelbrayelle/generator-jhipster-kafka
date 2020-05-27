@@ -11,7 +11,7 @@ function loadPreviousConfiguration(pathOfApplicationYaml) {
     try {
         return jsYaml.safeLoad(fsModule.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
     } catch (err) {
-        this.log(
+        console.log(
             `${chalk.red.bold('WARN!')} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
         );
     }
@@ -21,9 +21,9 @@ function loadPreviousConfiguration(pathOfApplicationYaml) {
 function getPreviousKafkaConfiguration(pathOfApplicationYaml) {
     const previousGlobalConfiguration = loadPreviousConfiguration(pathOfApplicationYaml);
     if (previousGlobalConfiguration.kafka) {
-        return previousGlobalConfiguration.kafka;
+        return { kafka: previousGlobalConfiguration.kafka };
     }
-    return {};
+    return { kafka: {} };
 }
 
 function extractConsumerEntitiesName(previousKafkaConfiguration) {

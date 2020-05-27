@@ -4,9 +4,12 @@ const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
+const jsYaml = require('js-yaml');
 
 const packagejs = require('../../package.json');
-const prompts = require('./prompts');
+const { askForOperations } = require('./prompts');
+const { buildJsonConsumerConfiguration, buildJsonProducerConfiguration } = require('./files');
+const { getPreviousKafkaConfiguration } = require('./utils');
 
 module.exports = class extends BaseGenerator {
     constructor(args, opts) {
@@ -20,7 +23,12 @@ module.exports = class extends BaseGenerator {
             type: Boolean,
             defaults: false
         });
-        this.props = {};
+        // init props
+        this.props = {
+            entities: [],
+            components: [],
+            componentsByEntityConfig: []
+        };
         this.setupClientOptions(this);
     }
 
@@ -63,19 +71,16 @@ module.exports = class extends BaseGenerator {
     prompting() {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
-            this.props.typeOfGeneration = 'bigbang';
             this.log('Skipping prompts...');
-            this.props = {};
-            this.props.components = [];
+            this.props.typeOfGeneration = 'bigbang';
             this.props.components.push('consumer', 'producer');
             // DocumentBankAccount entity is generated for tests purpose
             // in the main generator (see: 11-generate-entities.sh).
-            this.props.entities = [];
             this.props.entities.push('DocumentBankAccount');
             this.props.autoOffsetResetPolicies = 'earliest';
             return;
         }
-        prompts.askForOperations(this);
+        askForOperations(this);
     }
 
     writing() {
@@ -114,15 +119,9 @@ module.exports = class extends BaseGenerator {
 
         // variables from questions
         this.typeOfGeneration = this.props.typeOfGeneration;
-
-        if (this.typeOfGeneration === 'bigbang') {
-            this.components = this.props.components;
-            this.entities = this.props.entities || [];
-        } else {
-            this.log('not implemented yet');
-            return;
-        }
-
+        this.entities = this.props.entities || [];
+        this.components = this.props.components;
+        this.componentsByEntityConfig = this.props.componentsByEntityConfig || [];
         this.pollingTimeout = this.props.pollingTimeout;
         this.autoOffsetResetPolicy = this.props.autoOffsetResetPolicy;
 
@@ -136,7 +135,7 @@ module.exports = class extends BaseGenerator {
 
         this.log('\n--- some function ---');
         this.log(`angularAppName=${this.angularAppName}`);
-
+        // TODO check the writing log when i move some field declaration
         this.log('\n--- some const ---');
         this.log(`javaDir=${javaDir}`);
         this.log(`resourceDir=${resourceDir}`);
@@ -151,22 +150,11 @@ module.exports = class extends BaseGenerator {
         this.log(`\npollingTimeout=${this.pollingTimeout}`);
         this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
         this.log('------\n');
-        try {
-            this.registerModule(
-                'generator-jhipster-kafka',
-                'entity',
-                'post',
-                'entity',
-                'A JHipster module to generate Apache Kafka consumers and producers.'
-            );
-        } catch (err) {
-            this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
-        }
 
-        this.removeFile(`${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`);
-        this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
+        this.registerToEntityPostHook();
+        this.cleanOldFiles(javaDir, testDir);
 
-        if (this.components.includes('consumer') && this.entities.length > 0) {
+        if (this.containsComponent('consumer')) {
             this.template(
                 'src/main/java/package/service/kafka/GenericConsumer.java.ejs',
                 `${javaDir}service/kafka/GenericConsumer.java`,
@@ -175,7 +163,7 @@ module.exports = class extends BaseGenerator {
             );
         }
 
-        if (this.components.includes('consumer') || this.components.includes('producer')) {
+        if (this.containsComponent('consumer') || this.containsComponent('producer')) {
             this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`, null, null);
         }
 
@@ -183,7 +171,7 @@ module.exports = class extends BaseGenerator {
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
 
-            if (this.components.includes('consumer')) {
+            if (this.mustGenerateComponent(entity, 'consumer')) {
                 this.template(
                     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                     `${javaDir}service/kafka/consumer/${entity}Consumer.java`,
@@ -197,13 +185,8 @@ module.exports = class extends BaseGenerator {
                     null
                 );
             }
-        });
 
-        this.entities.forEach(entity => {
-            this.entityClass = entity;
-            this.camelCaseEntityClass = _.camelCase(entity);
-
-            if (this.components.includes('producer')) {
+            if (this.mustGenerateComponent(entity, 'producer')) {
                 this.template(
                     'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                     `${javaDir}service/kafka/producer/${entity}Producer.java`,
@@ -219,20 +202,153 @@ module.exports = class extends BaseGenerator {
             }
         });
 
-        const kafkaProperties = this.generateKafkaProperties(true);
-        this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
+        if (this.typeOfGeneration === 'incremental') {
+            const kafkaPreviousConfiguration = getPreviousKafkaConfiguration(
+                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
+            );
+            const kafkaPreviousTestConfiguration = getPreviousKafkaConfiguration(
+                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`
+            );
 
-        const kafkaTestProperties = this.generateKafkaProperties(false);
-        this.log(`kafkaTestProperties=\n\n${kafkaTestProperties}\n\n`);
+            // eslint-disable-next-line no-template-curly-in-string
+            kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+            // eslint-disable-next-line no-template-curly-in-string
+            kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+            if (this.pollingTimeout) {
+                kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+                kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+            }
 
-        const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
-        this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
-        this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaTestProperties);
+            this.entities.forEach(entity => {
+                if (this.mustGenerateComponent(entity, 'consumer')) {
+                    if (!kafkaPreviousConfiguration.kafka.consumer) {
+                        kafkaPreviousConfiguration.kafka.consumer = {};
+                    }
+                    if (!kafkaPreviousTestConfiguration.kafka.consumer) {
+                        kafkaPreviousTestConfiguration.kafka.consumer = {};
+                    }
+                    kafkaPreviousConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = buildJsonConsumerConfiguration(
+                        this,
+                        entity,
+                        true
+                    );
+                    kafkaPreviousTestConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = buildJsonConsumerConfiguration(
+                        this,
+                        entity,
+                        true
+                    );
+                }
+                if (this.mustGenerateComponent(entity, 'producer')) {
+                    if (!kafkaPreviousConfiguration.kafka.producer) {
+                        kafkaPreviousConfiguration.kafka.producer = {};
+                    }
+                    if (!kafkaPreviousTestConfiguration.kafka.producer) {
+                        kafkaPreviousTestConfiguration.kafka.producer = {};
+                    }
+                    kafkaPreviousConfiguration.kafka.producer[`${_.camelCase(entity)}`] = buildJsonProducerConfiguration(
+                        this,
+                        entity,
+                        false
+                    );
+                    kafkaPreviousTestConfiguration.kafka.producer[`${_.camelCase(entity)}`] = buildJsonProducerConfiguration(
+                        this,
+                        entity,
+                        false
+                    );
+                }
+            });
+
+            const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
+            const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
+            this.replaceContent(`${resourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
+                return kafkaProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4');
+            });
+            this.replaceContent(`${testResourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
+                return kafkaTestProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4');
+            });
+        } else {
+            // big bang properties writing
+            const kafkaProperties = this.generateKafkaProperties(true);
+            this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
+
+            const kafkaTestProperties = this.generateKafkaProperties(false);
+            this.log(`kafkaTestProperties=\n\n${kafkaTestProperties}\n\n`);
+
+            const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
+            this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
+            this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaTestProperties);
+        }
+
+        this.writeKafkaDockerYaml();
+    }
+
+    mustGenerateComponent(entityName, typeOfComponent) {
+        if (this.props.typeOfGeneration === 'bigbang') {
+            return this.props.components.includes(typeOfComponent);
+        }
+        if (this.props.typeOfGeneration === 'incremental') {
+            return this.haveComponentForEntity(entityName, typeOfComponent);
+        }
+        return false;
+    }
+
+    haveComponentForEntity(entityName, typeOfComponent) {
+        return (
+            this.props.componentsByEntityConfig &&
+            this.props.componentsByEntityConfig[entityName] &&
+            this.props.componentsByEntityConfig[entityName].includes(typeOfComponent)
+        );
+    }
+
+    containsComponent(typeOfComponent) {
+        if (this.props.typeOfGeneration === 'bigbang') {
+            return this.props.components.includes(typeOfComponent) && this.entities.length > 0;
+        }
+        if (this.props.typeOfGeneration === 'incremental') {
+            return (
+                this.props.entities.length > 0 &&
+                this.props.entities.find(entityName => this.haveComponentForEntity(entityName, typeOfComponent))
+            );
+        }
+        return false;
+    }
+
+    writeKafkaDockerYaml() {
+        this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
+        this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
+        this.dockerZookeeper = jhipsterConstants.DOCKER_ZOOKEEPER;
+        this.dockerKafka = jhipsterConstants.DOCKER_KAFKA;
+        this.dockerAkhq = 'tchiotludo/akhq';
+
+        this.log(`kafkaVersion=${this.kafkaVersion}`);
+        this.log(`dockerComposeFormatVersion=${this.dockerComposeFormatVersion}`);
+        this.log(`dockerZookeeper=${this.dockerZookeeper}`);
+        this.log(`dockerKafka=${this.dockerKafka}`);
+        this.log(`dockerAkhq=${this.dockerAkhq}`);
 
         this.template('src/main/docker/akhq.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`, this, null, null);
 
         // Related to: https://github.com/jhipster/generator-jhipster/issues/11846
         this.overrideMainGeneratorAppYml();
+    }
+
+    cleanOldFiles(javaDir, testDir) {
+        this.removeFile(`${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`);
+        this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
+    }
+
+    registerToEntityPostHook() {
+        try {
+            this.registerModule(
+                'generator-jhipster-kafka',
+                'entity',
+                'post',
+                'entity',
+                'A JHipster module to generate Apache Kafka consumers and producers.'
+            );
+        } catch (err) {
+            this.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`);
+        }
     }
 
     overrideMainGeneratorAppYml() {
