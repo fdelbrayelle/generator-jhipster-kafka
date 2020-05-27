@@ -237,7 +237,7 @@ module.exports = class extends BaseGenerator {
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
 
         this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
-        this.dockerAkhq = 'tchiotludo/akhq';
+        this.dockerAkhq = 'tchiotludo/akhq:0.14.1';
 
         // variables from questions
         this.components = this.props.components;
