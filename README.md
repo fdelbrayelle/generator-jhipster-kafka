@@ -62,7 +62,7 @@ Generated consumers should not be explicitly used in other classes as each of th
 🚀 [AKHQ (previously known as KafkaHQ)](https://github.com/tchiotludo/akhq) can be used following those steps in the root directory:
 
 1. Run `docker-compose -f src/main/docker/kafka.yml -f src/main/docker/akhq.yml up -d` to launch the ZooKeeper and Kafka services with AKHQ
-1. Go to [http://localhost:8090](http://localhost:8090)
+1. Go to [http://localhost:11817](http://localhost:11817)
 1. Start your application with `./mvnw` to manage your topics and more!
 
 # License
