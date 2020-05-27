@@ -1,2 +1,0 @@
-hello kafka:entity sub generator!
-It's dummy.txt
