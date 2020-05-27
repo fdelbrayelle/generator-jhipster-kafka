@@ -1,0 +1,15 @@
+version: '<%= dockerComposeFormatVersion %>'
+services:
+  akhq:
+    image: <%= dockerAkhq %>
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka:29092"
+    ports:
+      - 8081:8080
+    links:
+      - kafka

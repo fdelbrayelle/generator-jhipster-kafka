@@ -236,10 +236,7 @@ module.exports = class extends BaseGenerator {
         const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
 
-        this.kafkaVersion = jhipsterConstants.KAFKA_VERSION;
         this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
-        this.dockerZookeeper = jhipsterConstants.DOCKER_ZOOKEEPER;
-        this.dockerKafka = jhipsterConstants.DOCKER_KAFKA;
         this.dockerAkhq = 'tchiotludo/akhq';
 
         // variables from questions
@@ -264,10 +261,7 @@ module.exports = class extends BaseGenerator {
         this.log(`resourceDir=${resourceDir}`);
         this.log(`resourceDir=${testResourceDir}`);
         this.log(`webappDir=${webappDir}`);
-        this.log(`kafkaVersion=${this.kafkaVersion}`);
         this.log(`dockerComposeFormatVersion=${this.dockerComposeFormatVersion}`);
-        this.log(`dockerZookeeper=${this.dockerZookeeper}`);
-        this.log(`dockerKafka=${this.dockerKafka}`);
         this.log(`dockerAkhq=${this.dockerAkhq}`);
 
         this.log('\n--- variables from questions ---');
@@ -355,7 +349,7 @@ module.exports = class extends BaseGenerator {
         this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
         this.replaceContent(`${testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaTestProperties);
 
-        this.template('src/main/docker/kafka.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/kafka.yml`, this, null, null);
+        this.template('src/main/docker/akhq.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`, this, null, null);
 
         // Related to: https://github.com/jhipster/generator-jhipster/issues/11846
         this.overrideMainGeneratorAppYml();
