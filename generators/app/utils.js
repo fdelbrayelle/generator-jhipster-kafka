@@ -11,6 +11,7 @@ function loadPreviousConfiguration(pathOfApplicationYaml) {
     try {
         return jsYaml.safeLoad(fsModule.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
     } catch (err) {
+        // eslint-disable-next-line no-console
         console.log(
             `${chalk.red.bold('WARN!')} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
         );

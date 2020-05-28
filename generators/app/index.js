@@ -135,7 +135,7 @@ module.exports = class extends BaseGenerator {
 
         this.log('\n--- some function ---');
         this.log(`angularAppName=${this.angularAppName}`);
-        // TODO check the writing log when i move some field declaration
+
         this.log('\n--- some const ---');
         this.log(`javaDir=${javaDir}`);
         this.log(`resourceDir=${resourceDir}`);
@@ -261,10 +261,12 @@ module.exports = class extends BaseGenerator {
             const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
             const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
             this.replaceContent(`${resourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
-                return kafkaProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4');
+                return kafkaProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4').replace(/^(\s.+)(:)([ ]+null.*)$/gm, '$1$2');
             });
             this.replaceContent(`${testResourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
-                return kafkaTestProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4');
+                return kafkaTestProperties
+                    .replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4')
+                    .replace(/^(\s.+)(:)([ ]+(null).*)$/gm, '$1$2');
             });
         } else {
             // big bang properties writing
