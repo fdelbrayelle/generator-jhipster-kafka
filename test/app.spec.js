@@ -33,6 +33,7 @@ describe('JHipster generator kafka', () => {
                     fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
                 })
                 .withPrompts({
+                    typeOfGeneration: 'bigbang',
                     components: ['consumer', 'producer'],
                     entities: ['Foo']
                 })
@@ -50,6 +51,7 @@ describe('JHipster generator kafka', () => {
                     fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
                 })
                 .withPrompts({
+                    typeOfGeneration: 'bigbang',
                     components: ['consumer', 'producer'],
                     entities: ['Foo'],
                     pollingTimeout: 20000
@@ -73,6 +75,7 @@ describe('JHipster generator kafka', () => {
                     fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
                 })
                 .withPrompts({
+                    typeOfGeneration: 'bigbang',
                     components: ['consumer', 'producer'],
                     entities: ['Foo'],
                     autoOffsetResetPolicy: 'latest'
