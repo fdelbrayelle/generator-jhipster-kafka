@@ -5,7 +5,7 @@ const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
 const jsYaml = require('js-yaml');
-const fsModule = require('fs');
+const fs = require('fs');
 const packagejs = require('../../package.json');
 
 module.exports = class extends BaseGenerator {
@@ -114,7 +114,7 @@ module.exports = class extends BaseGenerator {
         const entitiesChoices = [];
         let existingEntityNames = [];
         try {
-            existingEntityNames = fsModule.readdirSync('.jhipster');
+            existingEntityNames = fs.readdirSync('.jhipster');
         } catch (e) {
             this.log('Error while reading entities folder: .jhipster');
         }
@@ -190,7 +190,7 @@ module.exports = class extends BaseGenerator {
     getPreviousKafkaConfiguration() {
         try {
             const previousGlobalConfiguration = jsYaml.safeLoad(
-                fsModule.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8')
+                fs.readFileSync(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, 'utf8')
             );
             if (previousGlobalConfiguration && previousGlobalConfiguration.kafka) {
                 return previousGlobalConfiguration.kafka;
