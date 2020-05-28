@@ -95,8 +95,6 @@ module.exports = class extends BaseGenerator {
                 this.template = function(source, destination) {
                     this.fs.copyTpl(this.templatePath(source), this.destinationPath(destination), this);
                 };
-
-                this.template('dummy.txt', 'dummy.txt', this, {});
             },
 
             updateConfig() {
