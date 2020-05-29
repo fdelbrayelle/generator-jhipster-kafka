@@ -1,6 +1,12 @@
 const _ = require('lodash');
 
-const buildJsonConsumerConfiguration = (context, entity, enabled) => {
+module.exports = {
+    buildJsonConsumerConfiguration,
+    buildJsonProducerConfiguration,
+    sanitizeProperties
+};
+
+function buildJsonConsumerConfiguration(context, entity, enabled) {
     return {
         name: `queuing.${context.snakeCaseBaseName}.${_.snakeCase(entity)}`,
         enabled,
@@ -9,7 +15,7 @@ const buildJsonConsumerConfiguration = (context, entity, enabled) => {
         '[group.id]': `${context.dasherizedBaseName}`,
         '[auto.offset.reset]': `${context.autoOffsetResetPolicy}`
     };
-};
+}
 
 function buildJsonProducerConfiguration(context, entity, enabled) {
     return {
@@ -26,9 +32,3 @@ function sanitizeProperties(jsyamlGeneratedProperties) {
     const patternNullGeneratedValue = /^(\s.+)(:)([ ]+null.*)$/gm;
     return jsyamlGeneratedProperties.replace(patternContainingSingleQuote, '$1$2$4').replace(patternNullGeneratedValue, '$1$2');
 }
-
-module.exports = {
-    buildJsonConsumerConfiguration,
-    buildJsonProducerConfiguration,
-    sanitizeProperties
-};

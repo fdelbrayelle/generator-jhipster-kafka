@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const chalk = require('chalk');
-const jsYaml = require('js-yaml');
 const fs = require('fs');
+const jsYaml = require('js-yaml');
 
 module.exports = {
     getPreviousKafkaConfiguration,
