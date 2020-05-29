@@ -86,7 +86,7 @@ module.exports = class extends BaseGenerator {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
             this.log('Skipping prompts...');
-            this.props.typeOfGeneration = 'bigbang';
+            this.props.generationType = 'bigbang';
             this.props.components.push('consumer', 'producer');
             // DocumentBankAccount entity is generated for tests purpose
             // in the main generator (see: 11-generate-entities.sh).
@@ -132,7 +132,7 @@ module.exports = class extends BaseGenerator {
         this.dockerAkhq = 'tchiotludo/akhq:0.14.1';
 
         // variables from questions
-        this.typeOfGeneration = this.props.typeOfGeneration;
+        this.generationType = this.props.generationType;
         this.entities = this.props.entities || [];
         this.components = this.props.components;
         this.componentsByEntityConfig = this.props.componentsByEntityConfig || [];
@@ -216,7 +216,7 @@ module.exports = class extends BaseGenerator {
             }
         });
 
-        if (this.typeOfGeneration === 'incremental') {
+        if (this.generationType === 'incremental') {
             const kafkaPreviousConfiguration = getPreviousKafkaConfiguration(
                 `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
                 this.isFirstGeneration
@@ -300,10 +300,10 @@ module.exports = class extends BaseGenerator {
     }
 
     mustGenerateComponent(entityName, typeOfComponent) {
-        if (this.props.typeOfGeneration === 'bigbang') {
+        if (this.props.generationType === 'bigbang') {
             return this.props.components.includes(typeOfComponent);
         }
-        if (this.props.typeOfGeneration === 'incremental') {
+        if (this.props.generationType === 'incremental') {
             return this.haveComponentForEntity(entityName, typeOfComponent);
         }
         return false;
@@ -318,10 +318,10 @@ module.exports = class extends BaseGenerator {
     }
 
     containsComponent(typeOfComponent) {
-        if (this.props.typeOfGeneration === 'bigbang') {
+        if (this.props.generationType === 'bigbang') {
             return this.props.components.includes(typeOfComponent) && this.entities.length > 0;
         }
-        if (this.props.typeOfGeneration === 'incremental') {
+        if (this.props.generationType === 'incremental') {
             return (
                 this.props.entities.length > 0 &&
                 this.props.entities.find(entityName => this.haveComponentForEntity(entityName, typeOfComponent))

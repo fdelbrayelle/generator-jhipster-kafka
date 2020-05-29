@@ -1,4 +1,4 @@
-const fsModule = require('fs');
+const fs = require('fs');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const chalk = require('chalk');
 const _ = require('lodash');
@@ -53,7 +53,7 @@ const entitiesChoices = () => {
     const entitiesChoices = [];
     let existingEntityNames = [];
     try {
-        existingEntityNames = fsModule.readdirSync('.jhipster');
+        existingEntityNames = fs.readdirSync('.jhipster');
     } catch (e) {
         console.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: .jhipster`); // eslint-disable-line
     }
@@ -73,8 +73,8 @@ function askForOperations(context) {
     const prompts = [
         {
             type: 'list',
-            name: 'typeOfGeneration',
-            message: 'Which kind of generation do you want?',
+            name: 'generationType',
+            message: 'Which type of generation do you want?',
             choices: generationTypeChoices(),
             default: ['bigbang']
         }
@@ -82,8 +82,8 @@ function askForOperations(context) {
 
     const done = context.async();
     context.prompt(prompts).then(props => {
-        context.props.typeOfGeneration = props.typeOfGeneration;
-        if (props.typeOfGeneration === 'bigbang') {
+        context.props.generationType = props.generationType;
+        if (props.generationType === 'bigbang') {
             askForBigBangOperations(context, done);
         } else {
             askForIncrementalOperations(context, done);
