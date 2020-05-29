@@ -158,8 +158,10 @@ jhipster:
     contact-email:
     license:
     license-url:
+
 kafka:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  polling.timeout: 10000
   consumer:
     foo:
       name: queuing.message_broker_with_entities.foo
@@ -174,7 +176,6 @@ kafka:
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': com.mycompany.myapp.service.kafka.serializer.FooSerializer
-  polling.timeout: 10000
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

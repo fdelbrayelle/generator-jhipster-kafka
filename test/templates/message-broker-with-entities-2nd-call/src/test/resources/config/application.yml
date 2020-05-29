@@ -107,8 +107,10 @@ jhipster:
     logs: # Reports metrics in the logs
       enabled: true
       report-frequency: 60 # in seconds
+
 kafka:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+  polling.timeout: 10000
   consumer:
     foo:
       name: queuing.message_broker_with_entities.foo
@@ -123,7 +125,6 @@ kafka:
       enabled: false
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': com.mycompany.myapp.service.kafka.serializer.FooSerializer
-  polling.timeout: 10000
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class
