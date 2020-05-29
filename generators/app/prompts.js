@@ -1,61 +1,63 @@
+const _ = require('lodash');
+const chalk = require('chalk');
 const fs = require('fs');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
-const chalk = require('chalk');
-const _ = require('lodash');
-const { getPreviousKafkaConfiguration, extractEntitiesComponents } = require('./utils.js');
+const utils = require('./utils.js');
 
-const generationTypeChoices = () => {
+module.exports = {
+    askForOperations
+};
+
+function generationTypeChoices() {
     return [
         {
-            name: 'Big Bang Mode',
+            name: 'Big Bang Mode (build a configuration from scratch)',
             value: 'bigbang'
         },
         {
-            name: 'Incremental Mode',
+            name: 'Incremental Mode (upgrade an existing configuration)',
             value: 'incremental'
         }
     ];
-};
+}
 
-const offsetChoices = () => {
-    const autoOffsetResetPolicies = [];
+function offsetChoices() {
+    return [
+        {
+            name: 'earliest (automatically reset the offset to the earliest offset)',
+            value: 'earliest'
+        },
+        {
+            name: 'latest (automatically reset the offset to the latest offset)',
+            value: 'latest'
+        },
+        {
+            name: 'none (throw exception to the consumer if no previous offset is found for the consumer group)',
+            value: 'none'
+        }
+    ];
+}
 
-    autoOffsetResetPolicies.push({
-        name: 'earliest (automatically reset the offset to the earliest offset)',
-        value: 'earliest'
-    });
-    autoOffsetResetPolicies.push({
-        name: 'latest (automatically reset the offset to the latest offset)',
-        value: 'latest'
-    });
-    autoOffsetResetPolicies.push({
-        name: 'none (throw exception to the consumer if no previous offset is found for the consumer group)',
-        value: 'none'
-    });
-    return autoOffsetResetPolicies;
-};
+function componentChoices() {
+    return [
+        {
+            name: 'Consumer',
+            value: 'consumer'
+        },
+        {
+            name: 'Producer',
+            value: 'producer'
+        }
+    ];
+}
 
-const componentChoices = () => {
-    const componentsChoices = [];
-
-    componentsChoices.push({
-        name: 'Consumer',
-        value: 'consumer'
-    });
-    componentsChoices.push({
-        name: 'Producer',
-        value: 'producer'
-    });
-    return componentsChoices;
-};
-
-const entitiesChoices = () => {
+function entitiesChoices(context) {
     const entitiesChoices = [];
     let existingEntityNames = [];
     try {
         existingEntityNames = fs.readdirSync('.jhipster');
     } catch (e) {
-        console.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: .jhipster`); // eslint-disable-line
+        context.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: .jhipster`); // eslint-disable-line
     }
     existingEntityNames.forEach(entry => {
         if (entry.indexOf('.json') !== -1) {
@@ -67,7 +69,7 @@ const entitiesChoices = () => {
         }
     });
     return entitiesChoices;
-};
+}
 
 function askForOperations(context) {
     const prompts = [
@@ -83,10 +85,10 @@ function askForOperations(context) {
     const done = context.async();
     context.prompt(prompts).then(props => {
         context.props.generationType = props.generationType;
-        if (props.generationType === 'bigbang') {
-            askForBigBangOperations(context, done);
-        } else {
+        if (props.generationType === 'incremental') {
             askForIncrementalOperations(context, done);
+        } else {
+            askForBigBangOperations(context, done);
         }
     });
 }
@@ -105,7 +107,7 @@ function askForBigBangOperations(context, done) {
             type: 'checkbox',
             name: 'entities',
             message: 'For which entity (class name)?',
-            choices: entitiesChoices(),
+            choices: entitiesChoices(context),
             default: []
         },
         {
@@ -136,7 +138,7 @@ function askForBigBangOperations(context, done) {
 function askForIncrementalOperations(context, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices();
-        const entitiesComponents = extractEntitiesComponents(previousConfiguration);
+        const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
         return allEntities.filter(
             entityName =>
                 (!entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)) &&
@@ -146,7 +148,8 @@ function askForIncrementalOperations(context, done) {
         );
     };
 
-    const previousConfiguration = getPreviousKafkaConfiguration(
+    const previousConfiguration = utils.getPreviousKafkaConfiguration(
+        context,
         `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
         context.isFirstGeneration
     ).kafka;
@@ -179,7 +182,7 @@ function askForUnitaryEntityOperations(context, done) {
     const getConcernedComponents = (previousConfiguration, entityName) => {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
-        const entitiesComponents = extractEntitiesComponents(previousConfiguration);
+        const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
         if (entitiesComponents) {
             if (
                 !entitiesComponents.producers.includes(entityName) &&
@@ -199,7 +202,10 @@ function askForUnitaryEntityOperations(context, done) {
         return availableComponents;
     };
 
-    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+    const previousConfiguration = utils.getPreviousKafkaConfiguration(
+        context,
+        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
+    ).kafka;
 
     const unitaryEntityOptions = [
         {
@@ -267,7 +273,3 @@ function askForUnitaryEntityOperations(context, done) {
         }
     });
 }
-
-module.exports = {
-    askForOperations
-};

@@ -3,24 +3,28 @@ const chalk = require('chalk');
 const jsYaml = require('js-yaml');
 const fs = require('fs');
 
+module.exports = {
+    getPreviousKafkaConfiguration,
+    extractEntitiesComponents
+};
+
 function transformToJavaClassNameCase(entityName) {
     return _.upperFirst(_.camelCase(entityName));
 }
 
-function loadPreviousConfiguration(pathOfApplicationYaml) {
+function loadPreviousConfiguration(context, pathOfApplicationYaml) {
     try {
         return jsYaml.safeLoad(fs.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
     } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(
+        context.log(
             `${chalk.red.bold('WARN!')} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
         );
     }
     return {};
 }
 
-function getPreviousKafkaConfiguration(pathOfApplicationYaml, forceCleanConfiguration = false) {
-    const previousGlobalConfiguration = loadPreviousConfiguration(pathOfApplicationYaml);
+function getPreviousKafkaConfiguration(context, pathOfApplicationYaml, forceCleanConfiguration = false) {
+    const previousGlobalConfiguration = loadPreviousConfiguration(context, pathOfApplicationYaml);
     if (previousGlobalConfiguration.kafka && !forceCleanConfiguration) {
         return { kafka: previousGlobalConfiguration.kafka };
     }
@@ -55,8 +59,3 @@ function extractEntitiesComponents(previousKafkaConfiguration) {
         consumers: extractConsumerEntitiesName(previousKafkaConfiguration)
     };
 }
-
-module.exports = {
-    getPreviousKafkaConfiguration,
-    extractEntitiesComponents
-};

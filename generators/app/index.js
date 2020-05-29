@@ -1,16 +1,16 @@
-const chalk = require('chalk');
 const _ = require('lodash');
-const semver = require('semver');
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
+const chalk = require('chalk');
+const semver = require('semver');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
 const jsYaml = require('js-yaml');
 const shelljs = require('shelljs');
-
 const packagejs = require('../../package.json');
-const { askForOperations } = require('./prompts');
-const { buildJsonConsumerConfiguration, buildJsonProducerConfiguration } = require('./files');
-const { getPreviousKafkaConfiguration } = require('./utils');
+
+const files = require('./files');
+const prompts = require('./prompts');
+const utils = require('./utils');
 
 const JHIPSTER_CONFIG_DIR = '.jhipster';
 const MODULES_HOOK_FILE = `${JHIPSTER_CONFIG_DIR}/modules/jhi-hooks.json`;
@@ -94,7 +94,8 @@ module.exports = class extends BaseGenerator {
             this.props.autoOffsetResetPolicies = 'earliest';
             return;
         }
-        askForOperations(this);
+
+        prompts.askForOperations(this);
     }
 
     writing() {
@@ -217,11 +218,13 @@ module.exports = class extends BaseGenerator {
         });
 
         if (this.generationType === 'incremental') {
-            const kafkaPreviousConfiguration = getPreviousKafkaConfiguration(
+            const kafkaPreviousConfiguration = utils.getPreviousKafkaConfiguration(
+                this,
                 `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
                 this.isFirstGeneration
             );
-            const kafkaPreviousTestConfiguration = getPreviousKafkaConfiguration(
+            const kafkaPreviousTestConfiguration = utils.getPreviousKafkaConfiguration(
+                this,
                 `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
                 this.isFirstGeneration
             );
@@ -239,12 +242,12 @@ module.exports = class extends BaseGenerator {
                     if (!kafkaPreviousTestConfiguration.kafka.consumer) {
                         kafkaPreviousTestConfiguration.kafka.consumer = {};
                     }
-                    kafkaPreviousConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = buildJsonConsumerConfiguration(
+                    kafkaPreviousConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = files.buildJsonConsumerConfiguration(
                         this,
                         entity,
                         true
                     );
-                    kafkaPreviousTestConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = buildJsonConsumerConfiguration(
+                    kafkaPreviousTestConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = files.buildJsonConsumerConfiguration(
                         this,
                         entity,
                         true
@@ -257,12 +260,12 @@ module.exports = class extends BaseGenerator {
                     if (!kafkaPreviousTestConfiguration.kafka.producer) {
                         kafkaPreviousTestConfiguration.kafka.producer = {};
                     }
-                    kafkaPreviousConfiguration.kafka.producer[`${_.camelCase(entity)}`] = buildJsonProducerConfiguration(
+                    kafkaPreviousConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
                         this,
                         entity,
                         false
                     );
-                    kafkaPreviousTestConfiguration.kafka.producer[`${_.camelCase(entity)}`] = buildJsonProducerConfiguration(
+                    kafkaPreviousTestConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
                         this,
                         entity,
                         false
