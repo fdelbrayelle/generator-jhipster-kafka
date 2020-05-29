@@ -32,7 +32,7 @@ describe('JHipster generator kafka', () => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
                         generationType: 'bigbang',
@@ -50,7 +50,7 @@ describe('JHipster generator kafka', () => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
                         generationType: 'bigbang',
@@ -74,7 +74,7 @@ describe('JHipster generator kafka', () => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
                         generationType: 'bigbang',
@@ -100,7 +100,7 @@ describe('JHipster generator kafka', () => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
                         generationType: 'incremental',
@@ -154,7 +154,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -216,7 +216,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -284,7 +284,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -310,7 +310,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -341,7 +341,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-secondCall'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -376,7 +376,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-secondCall'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',
@@ -412,7 +412,7 @@ describe('JHipster generator kafka', () => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
                         .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-secondCall'), dir);
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
                         })
                         .withPrompts({
                             generationType: 'incremental',

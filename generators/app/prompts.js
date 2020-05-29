@@ -115,7 +115,11 @@ function askForBigBangOperations(context, done) {
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
-            default: '10000'
+            default: '10000',
+            validate: input => {
+                if (isNaN(input)) return 'Please enter a number';
+                return true;
+            }
         },
         {
             when: response => response.components.includes('consumer'),
