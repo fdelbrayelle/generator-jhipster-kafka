@@ -137,7 +137,7 @@ function askForBigBangOperations(context, done) {
 
 function askForIncrementalOperations(context, done) {
     const getConcernedEntities = previousConfiguration => {
-        const allEntities = entitiesChoices();
+        const allEntities = entitiesChoices(context);
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
         return allEntities.filter(
             entityName =>
