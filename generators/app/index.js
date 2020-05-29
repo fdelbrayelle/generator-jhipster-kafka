@@ -5,18 +5,23 @@ const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jhipsterUtils = require('generator-jhipster/generators/utils');
 const jsYaml = require('js-yaml');
+const shelljs = require('shelljs');
 
 const packagejs = require('../../package.json');
 const { askForOperations } = require('./prompts');
 const { buildJsonConsumerConfiguration, buildJsonProducerConfiguration } = require('./files');
 const { getPreviousKafkaConfiguration } = require('./utils');
 
+const JHIPSTER_CONFIG_DIR = '.jhipster';
+const MODULES_HOOK_FILE = `${JHIPSTER_CONFIG_DIR}/modules/jhi-hooks.json`;
+const MODULE_NAME = 'generator-jhipster-kafka';
+
 module.exports = class extends BaseGenerator {
     constructor(args, opts) {
         super(args, opts);
 
         this.configOptions = this.options.configOptions || {};
-
+        this.isFirstGeneration = false;
         // This adds support for a `--skip-prompts` flag
         this.option('skip-prompts', {
             desc: 'Generate pre-existing configuration',
@@ -38,6 +43,7 @@ module.exports = class extends BaseGenerator {
                 if (args === 'default') {
                     // do something when argument is 'default'
                 }
+                this.isFirstGeneration = !this.hasKafkaModuleAlreadyUsed();
             },
             readConfig() {
                 this.jhipsterAppConfig = this.getAllJhipsterConfig();
@@ -66,6 +72,14 @@ module.exports = class extends BaseGenerator {
                 }
             }
         };
+    }
+
+    hasKafkaModuleAlreadyUsed() {
+        if (!shelljs.test('-f', MODULES_HOOK_FILE)) {
+            return false;
+        }
+
+        return shelljs.cat(MODULES_HOOK_FILE).match(MODULE_NAME) !== null;
     }
 
     prompting() {
@@ -204,20 +218,18 @@ module.exports = class extends BaseGenerator {
 
         if (this.typeOfGeneration === 'incremental') {
             const kafkaPreviousConfiguration = getPreviousKafkaConfiguration(
-                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
+                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                this.isFirstGeneration
             );
             const kafkaPreviousTestConfiguration = getPreviousKafkaConfiguration(
-                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`
+                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                this.isFirstGeneration
             );
 
             // eslint-disable-next-line no-template-curly-in-string
             kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
             // eslint-disable-next-line no-template-curly-in-string
             kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
-            if (this.pollingTimeout) {
-                kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
-                kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
-            }
 
             this.entities.forEach(entity => {
                 if (this.mustGenerateComponent(entity, 'consumer')) {
@@ -257,7 +269,10 @@ module.exports = class extends BaseGenerator {
                     );
                 }
             });
-
+            if (this.pollingTimeout) {
+                kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+                kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+            }
             const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
             const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
             this.replaceContent(`${resourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
@@ -342,7 +357,7 @@ module.exports = class extends BaseGenerator {
     registerToEntityPostHook() {
         try {
             this.registerModule(
-                'generator-jhipster-kafka',
+                MODULE_NAME,
                 'entity',
                 'post',
                 'entity',

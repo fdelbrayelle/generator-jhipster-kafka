@@ -146,7 +146,10 @@ function askForIncrementalOperations(context, done) {
         );
     };
 
-    const previousConfiguration = getPreviousKafkaConfiguration(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+    const previousConfiguration = getPreviousKafkaConfiguration(
+        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+        context.isFirstGeneration
+    ).kafka;
     const incrementalPrompt = [
         {
             type: 'list',

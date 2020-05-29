@@ -2,8 +2,8 @@
 
 kafka:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
-  consumer:
 <%_ if (components.includes('consumer')) { _%>
+  consumer:
 <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
@@ -16,8 +16,8 @@ kafka:
 <%_ } _%>
 <%_ } _%>
 <%_ } _%>
-  producer:
 <%_ if (components.includes('producer')) { _%>
+  producer:
 <%_ for (entity of entities) { _%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
@@ -29,6 +29,7 @@ kafka:
 <%_ if (pollingTimeout) { _%>
   polling.timeout: <%= pollingTimeout %>
 <%_ } _%>
+
 
 
 

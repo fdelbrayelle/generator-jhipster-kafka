@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const chalk = require('chalk');
 const jsYaml = require('js-yaml');
-const fsModule = require('fs');
+const fs = require('fs');
 
 function transformToJavaClassNameCase(entityName) {
     return _.upperFirst(_.camelCase(entityName));
@@ -9,7 +9,7 @@ function transformToJavaClassNameCase(entityName) {
 
 function loadPreviousConfiguration(pathOfApplicationYaml) {
     try {
-        return jsYaml.safeLoad(fsModule.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
+        return jsYaml.safeLoad(fs.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
     } catch (err) {
         // eslint-disable-next-line no-console
         console.log(
@@ -19,12 +19,14 @@ function loadPreviousConfiguration(pathOfApplicationYaml) {
     return {};
 }
 
-function getPreviousKafkaConfiguration(pathOfApplicationYaml) {
+function getPreviousKafkaConfiguration(pathOfApplicationYaml, forceCleanConfiguration = false) {
     const previousGlobalConfiguration = loadPreviousConfiguration(pathOfApplicationYaml);
-    if (previousGlobalConfiguration.kafka) {
+    if (previousGlobalConfiguration.kafka && !forceCleanConfiguration) {
         return { kafka: previousGlobalConfiguration.kafka };
     }
-    return { kafka: {} };
+    return {
+        kafka: {}
+    };
 }
 
 function extractConsumerEntitiesName(previousKafkaConfiguration) {
