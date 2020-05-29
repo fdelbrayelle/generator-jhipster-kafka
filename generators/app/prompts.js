@@ -240,7 +240,7 @@ function askForUnitaryEntityOperations(context, done) {
         {
             type: 'confirm',
             name: 'continueAddingEntitiesComponents',
-            message: 'Do you want to continue of adding Consumer or Producer?',
+            message: 'Do you want to continue adding consumers or producers?',
             default: false
         }
     ];
