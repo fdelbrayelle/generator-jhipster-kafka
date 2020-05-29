@@ -276,16 +276,17 @@ module.exports = class extends BaseGenerator {
                 kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
                 kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
             }
+
             const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
             const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
-            this.replaceContent(`${resourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
-                return kafkaProperties.replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4').replace(/^(\s.+)(:)([ ]+null.*)$/gm, '$1$2');
-            });
-            this.replaceContent(`${testResourceDir}config/application.yml`, /^kafka:\n(?:^[ ]+.*\n?)*$/gm, () => {
-                return kafkaTestProperties
-                    .replace(/^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm, '$1$2$4')
-                    .replace(/^(\s.+)(:)([ ]+(null).*)$/gm, '$1$2');
-            });
+
+            const kafkaBlockPattern = /^kafka:\n(?:^[ ]+.*\n?)*$/gm;
+            this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, files.sanitizeProperties(kafkaProperties));
+            this.replaceContent(
+                `${testResourceDir}config/application.yml`,
+                kafkaBlockPattern,
+                files.sanitizeProperties(kafkaTestProperties)
+            );
         } else {
             // big bang properties writing
             const kafkaProperties = this.generateKafkaProperties(true);

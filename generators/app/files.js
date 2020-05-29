@@ -19,8 +19,16 @@ function buildJsonProducerConfiguration(context, entity, enabled) {
         '[value.serializer]': `${context.packageName}.service.kafka.serializer.${entity}Serializer`
     };
 }
+function sanitizeProperties(jsyamlGeneratedProperties) {
+    // related to https://github.com/nodeca/js-yaml/issues/470
+    const patternContainingSingleQuote = /^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm;
+    // related to https://github.com/nodeca/js-yaml/issues/478
+    const patternNullGeneratedValue = /^(\s.+)(:)([ ]+null.*)$/gm;
+    return jsyamlGeneratedProperties.replace(patternContainingSingleQuote, '$1$2$4').replace(patternNullGeneratedValue, '$1$2');
+}
 
 module.exports = {
     buildJsonConsumerConfiguration,
-    buildJsonProducerConfiguration
+    buildJsonProducerConfiguration,
+    sanitizeProperties
 };
