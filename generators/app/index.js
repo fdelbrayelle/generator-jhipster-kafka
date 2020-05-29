@@ -344,7 +344,7 @@ module.exports = class extends BaseGenerator {
     }
 
     /**
-     *
+     * Search in dedicated incremental structure if a type of component must be generated for an entity.
      * @param entityName
      * @param componentType
      * @returns {*}
