@@ -250,7 +250,7 @@ module.exports = class extends BaseGenerator {
                     kafkaPreviousTestConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = files.buildJsonConsumerConfiguration(
                         this,
                         entity,
-                        true
+                        false
                     );
                 }
                 if (this.mustGenerateComponent(entity, 'producer')) {
@@ -263,7 +263,7 @@ module.exports = class extends BaseGenerator {
                     kafkaPreviousConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
                         this,
                         entity,
-                        false
+                        true
                     );
                     kafkaPreviousTestConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
                         this,
