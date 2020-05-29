@@ -74,14 +74,6 @@ module.exports = class extends BaseGenerator {
         };
     }
 
-    hasKafkaModuleAlreadyUsed() {
-        if (!shelljs.test('-f', MODULES_HOOK_FILE)) {
-            return false;
-        }
-
-        return shelljs.cat(MODULES_HOOK_FILE).match(MODULE_NAME) !== null;
-    }
-
     prompting() {
         // To generate a consumer and a producer for CI tests
         if (this.options['skip-prompts']) {
@@ -236,7 +228,10 @@ module.exports = class extends BaseGenerator {
             kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
             // eslint-disable-next-line no-template-curly-in-string
             kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
-
+            if (this.pollingTimeout) {
+                kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+                kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
+            }
             this.entities.forEach(entity => {
                 if (this.mustGenerateComponent(entity, 'consumer')) {
                     if (!kafkaPreviousConfiguration.kafka.consumer) {
@@ -275,10 +270,6 @@ module.exports = class extends BaseGenerator {
                     );
                 }
             });
-            if (this.pollingTimeout) {
-                kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
-                kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
-            }
 
             const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
             const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
@@ -306,6 +297,24 @@ module.exports = class extends BaseGenerator {
         this.writeKafkaDockerYaml();
     }
 
+    /**
+     * Define in this module has been already use, thanks to hookFile
+     * @returns {boolean}
+     */
+    hasKafkaModuleAlreadyUsed() {
+        if (!shelljs.test('-f', MODULES_HOOK_FILE)) {
+            return false;
+        }
+
+        return shelljs.cat(MODULES_HOOK_FILE).match(MODULE_NAME) !== null;
+    }
+
+    /**
+     * Search if a type of component must be generated for an entity.
+     * @param entityName
+     * @param componentType - Producer or Consumer
+     * @returns {boolean|*}
+     */
     mustGenerateComponent(entityName, componentType) {
         if (this.props.generationType === 'bigbang') {
             return this.props.components.includes(componentType);
@@ -316,14 +325,11 @@ module.exports = class extends BaseGenerator {
         return false;
     }
 
-    haveComponentForEntity(entityName, componentType) {
-        return (
-            this.props.componentsByEntityConfig &&
-            this.props.componentsByEntityConfig[entityName] &&
-            this.props.componentsByEntityConfig[entityName].includes(componentType)
-        );
-    }
-
+    /**
+     * Search if a type component is present at least once in the asked generations.
+     * @param componentType
+     * @returns {boolean|boolean|*}
+     */
     containsComponent(componentType) {
         if (this.props.generationType === 'bigbang') {
             return this.props.components.includes(componentType) && this.entities.length > 0;
@@ -335,6 +341,20 @@ module.exports = class extends BaseGenerator {
             );
         }
         return false;
+    }
+
+    /**
+     *
+     * @param entityName
+     * @param componentType
+     * @returns {*}
+     */
+    haveComponentForEntity(entityName, componentType) {
+        return (
+            this.props.componentsByEntityConfig &&
+            this.props.componentsByEntityConfig[entityName] &&
+            this.props.componentsByEntityConfig[entityName].includes(componentType)
+        );
     }
 
     writeKafkaDockerYaml() {

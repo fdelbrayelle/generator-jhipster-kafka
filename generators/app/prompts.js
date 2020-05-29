@@ -51,6 +51,12 @@ function componentChoices() {
     ];
 }
 
+/**
+ * Retrieve from .jhipster metadata, the list of all project entities.
+ *
+ * @param context - execution context (ex:generator)
+ * @returns {[]} - all entities choices possible
+ */
 function entitiesChoices(context) {
     const entitiesChoices = [];
     let existingEntityNames = [];
@@ -132,8 +138,8 @@ function askForBigBangOperations(context, done) {
         }
     ];
 
-    context.prompt(bigbangPrompt).then(props => {
-        context.props = { ...context.props, ...props };
+    context.prompt(bigbangPrompt).then(answers => {
+        context.props = { ...context.props, ...answers };
         // To access props later use this.props.someOption;
         done();
     });
@@ -143,6 +149,8 @@ function askForIncrementalOperations(context, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices(context);
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+        // exclude entities found in the previous configuration
+        // and those already store for this instance execution {@see context.props}
         return allEntities.filter(
             entityName =>
                 (!entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)) &&
@@ -157,6 +165,7 @@ function askForIncrementalOperations(context, done) {
         `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
         context.isFirstGeneration
     ).kafka;
+
     const incrementalPrompt = [
         {
             type: 'list',
@@ -167,13 +176,13 @@ function askForIncrementalOperations(context, done) {
         }
     ];
 
-    context.prompt(incrementalPrompt).then(props => {
+    context.prompt(incrementalPrompt).then(answers => {
         context.props.currentEntity = undefined;
 
-        if (props.currentEntity && props.currentEntity.value !== 'none') {
-            context.props.currentEntity = props.currentEntity;
-            if (!context.props.entities.includes(props.currentEntity)) {
-                context.props.entities.push(props.currentEntity);
+        if (answers.currentEntity && answers.currentEntity.value !== 'none') {
+            context.props.currentEntity = answers.currentEntity;
+            if (!context.props.entities.includes(answers.currentEntity)) {
+                context.props.entities.push(answers.currentEntity);
             }
             askForUnitaryEntityOperations(context, done);
         } else {
@@ -187,6 +196,9 @@ function askForUnitaryEntityOperations(context, done) {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+
+        // exclude components found in the previous configuration
+        // and those already store for this instance execution {@see context.props}
         if (entitiesComponents) {
             if (
                 !entitiesComponents.producers.includes(entityName) &&
@@ -211,7 +223,7 @@ function askForUnitaryEntityOperations(context, done) {
         `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
     ).kafka;
 
-    const unitaryEntityOptions = [
+    const unitaryEntityPrompt = [
         {
             when: context.props.currentEntity,
             type: 'checkbox',
@@ -248,28 +260,28 @@ function askForUnitaryEntityOperations(context, done) {
             default: false
         }
     ];
-    context.prompt(unitaryEntityOptions).then(props => {
+
+    context.prompt(unitaryEntityPrompt).then(answers => {
         if (context.props.currentEntity) {
             if (!context.props.componentsByEntityConfig) {
                 context.props.componentsByEntityConfig = [];
             }
-            if (props.currentEntityComponents && props.currentEntityComponents.length > 0) {
+            if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
                 if (context.props.componentsByEntityConfig[context.props.currentEntity]) {
-                    context.props.componentsByEntityConfig[context.props.currentEntity].push(...props.currentEntityComponents);
+                    context.props.componentsByEntityConfig[context.props.currentEntity].push(...answers.currentEntityComponents);
                 } else {
-                    context.props.componentsByEntityConfig[context.props.currentEntity] = [...props.currentEntityComponents];
+                    context.props.componentsByEntityConfig[context.props.currentEntity] = [...answers.currentEntityComponents];
                 }
             }
-            if (props.pollingTimeout) {
-                context.props.pollingTimeout = +props.pollingTimeout;
+            if (answers.pollingTimeout) {
+                context.props.pollingTimeout = +answers.pollingTimeout; // force conversion to int
             }
-            if (props.autoOffsetResetPolicy) {
-                context.props.autoOffsetResetPolicy = props.autoOffsetResetPolicy;
+            if (answers.autoOffsetResetPolicy) {
+                context.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
             }
-            if (props.continueAddingEntitiesComponents) {
+            if (answers.continueAddingEntitiesComponents) {
                 askForIncrementalOperations(context, done);
             } else {
-                context.props.currentEntity = undefined;
                 done();
             }
         } else {

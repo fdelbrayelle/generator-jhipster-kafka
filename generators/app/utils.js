@@ -23,6 +23,15 @@ function loadPreviousConfiguration(context, pathOfApplicationYaml) {
     return {};
 }
 
+/**
+ * Return the kafka configuration as a Json Object from properties at #{param pathOfApplicationYaml}
+ * or return an empty configuration.
+ *
+ * @param {Object} context - the Execution context (ex: generator).
+ * @param pathOfApplicationYaml - the path to yaml file {@see jsYaml}
+ * @param boolean forceCleanConfiguration - to retrieve an empty configuration.
+ * @return {Object} - Json object representing all kafka yaml block. {@see jsYaml#safeLoad}
+ */
 function getPreviousKafkaConfiguration(context, pathOfApplicationYaml, forceCleanConfiguration = false) {
     const previousGlobalConfiguration = loadPreviousConfiguration(context, pathOfApplicationYaml);
     if (previousGlobalConfiguration.kafka && !forceCleanConfiguration) {
@@ -33,6 +42,12 @@ function getPreviousKafkaConfiguration(context, pathOfApplicationYaml, forceClea
     };
 }
 
+/**
+ * Extract from {Object} previousKafkaConfiguration all consumers.
+ *
+ * @param {Object} previousKafkaConfiguration - the previous kafka configuration as Json {@see jsYaml}
+ * @return [Array] - array listing all entities having a consumers.
+ */
 function extractConsumerEntitiesName(previousKafkaConfiguration) {
     const consumerEntities = [];
     if (previousKafkaConfiguration && previousKafkaConfiguration.consumer) {
@@ -42,7 +57,12 @@ function extractConsumerEntitiesName(previousKafkaConfiguration) {
     }
     return consumerEntities;
 }
-
+/**
+ * Extract from {Object} previousKafkaConfiguration all producers.
+ *
+ * @param {Object} previousKafkaConfiguration - the previous kafka configuration as Json {@see jsYaml}
+ * @return [Array] - array listing all entities having a producers.
+ */
 function extractProducerEntitiesName(previousKafkaConfiguration) {
     const producerEntities = [];
     if (previousKafkaConfiguration && previousKafkaConfiguration.producer) {
@@ -52,7 +72,12 @@ function extractProducerEntitiesName(previousKafkaConfiguration) {
     }
     return producerEntities;
 }
-
+/**
+ * Construct an object with all producers and consumers by entity
+ *
+ * @param {Object} previousKafkaConfiguration - the previous kafka configuration as Json {@see jsYaml}
+ * @return {producers:[],consumers:[]} - object listing all entities having a producers or/and a consumer.
+ */
 function extractEntitiesComponents(previousKafkaConfiguration) {
     return {
         producers: extractProducerEntitiesName(previousKafkaConfiguration),
