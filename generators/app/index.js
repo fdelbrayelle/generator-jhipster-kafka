@@ -168,6 +168,9 @@ module.exports = class extends BaseGenerator {
 
         this.registerToEntityPostHook();
         this.cleanOldFiles(javaDir, testDir);
+        if (this.generationType === 'bigbang') {
+            shelljs.rm('-rf', `${javaDir}service/kafka/`);
+        }
 
         if (this.containsComponent('consumer')) {
             this.template(
