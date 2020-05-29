@@ -139,7 +139,7 @@ function askForBigBangOperations(context, done) {
     ];
 
     context.prompt(bigbangPrompt).then(answers => {
-        context.props = { ...context.props, ...answers };
+        context.props = _.merge(context.props, answers);
         // To access props later use this.props.someOption;
         done();
     });

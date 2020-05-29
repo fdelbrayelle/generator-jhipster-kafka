@@ -2,6 +2,9 @@
 
 kafka:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+<%_ if (pollingTimeout) { _%>
+  polling.timeout: <%= pollingTimeout %>
+<%_ } _%>
 <%_ if (components.includes('consumer')) { _%>
   consumer:
 <%_ for (entity of entities) { _%>
@@ -25,8 +28,5 @@ kafka:
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= entity %>Serializer
 <%_ } _%>
-<%_ } _%>
-<%_ if (pollingTimeout) { _%>
-  polling.timeout: <%= pollingTimeout %>
 <%_ } _%>
 
