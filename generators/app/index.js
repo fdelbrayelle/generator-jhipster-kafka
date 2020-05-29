@@ -303,32 +303,32 @@ module.exports = class extends BaseGenerator {
         this.writeKafkaDockerYaml();
     }
 
-    mustGenerateComponent(entityName, typeOfComponent) {
+    mustGenerateComponent(entityName, componentType) {
         if (this.props.generationType === 'bigbang') {
-            return this.props.components.includes(typeOfComponent);
+            return this.props.components.includes(componentType);
         }
         if (this.props.generationType === 'incremental') {
-            return this.haveComponentForEntity(entityName, typeOfComponent);
+            return this.haveComponentForEntity(entityName, componentType);
         }
         return false;
     }
 
-    haveComponentForEntity(entityName, typeOfComponent) {
+    haveComponentForEntity(entityName, componentType) {
         return (
             this.props.componentsByEntityConfig &&
             this.props.componentsByEntityConfig[entityName] &&
-            this.props.componentsByEntityConfig[entityName].includes(typeOfComponent)
+            this.props.componentsByEntityConfig[entityName].includes(componentType)
         );
     }
 
-    containsComponent(typeOfComponent) {
+    containsComponent(componentType) {
         if (this.props.generationType === 'bigbang') {
-            return this.props.components.includes(typeOfComponent) && this.entities.length > 0;
+            return this.props.components.includes(componentType) && this.entities.length > 0;
         }
         if (this.props.generationType === 'incremental') {
             return (
                 this.props.entities.length > 0 &&
-                this.props.entities.find(entityName => this.haveComponentForEntity(entityName, typeOfComponent))
+                this.props.entities.find(entityName => this.haveComponentForEntity(entityName, componentType))
             );
         }
         return false;
