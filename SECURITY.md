@@ -2,13 +2,8 @@
 
 ## Supported Versions
 
-These versions of the project are currently being supported with security updates.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 0.2.0   | :white_check_mark: |
-| 0.1.0   | :x:                |
+Only the latest version of Kafka module for JHipster is supported with security updates.
 
 ## Reporting a Vulnerability
 
-How to report a vulnerability? Please leave [a new issue](https://github.com/fdelbrayelle/generator-jhipster-kafka/issues/new) explaining what is the vulnerability and how to fix it.
+Please do not report security issues to the public issue tracker. Please send security issues to fdelbrayelle@gmail.com. We will do our best to get back to you as soon as possible.
