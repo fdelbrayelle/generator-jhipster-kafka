@@ -274,12 +274,16 @@ module.exports = class extends BaseGenerator {
             const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
             const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
 
-            const kafkaBlockPattern = /^kafka:\n(?:^[ ]+.*\n?)*$/gm;
-            this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, files.sanitizeProperties(kafkaProperties));
+            const kafkaBlockPattern = /^(\n)?^kafka:\n(?:^[ ]+.*\n?)*$/gm;
+            this.replaceContent(
+                `${resourceDir}config/application.yml`,
+                kafkaBlockPattern,
+                `\n${files.sanitizeProperties(kafkaProperties)}`
+            );
             this.replaceContent(
                 `${testResourceDir}config/application.yml`,
                 kafkaBlockPattern,
-                files.sanitizeProperties(kafkaTestProperties)
+                `\n${files.sanitizeProperties(kafkaTestProperties)}`
             );
         } else {
             // big bang properties writing
