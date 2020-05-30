@@ -159,7 +159,8 @@ module.exports = class extends BaseGenerator {
         this.log('------\n');
 
         this.registerToEntityPostHook();
-        this.cleanOldFiles(javaDir, testDir);
+        this.cleanMainGeneratorKafkaFiles(javaDir, testDir);
+
         if (this.generationType === 'bigbang') {
             shelljs.rm('-rf', `${javaDir}service/kafka/`);
         }
@@ -380,7 +381,7 @@ module.exports = class extends BaseGenerator {
         this.overrideMainGeneratorAppYml();
     }
 
-    cleanOldFiles(javaDir, testDir) {
+    cleanMainGeneratorKafkaFiles(javaDir, testDir) {
         this.removeFile(`${javaDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResource.java`);
         this.removeFile(`${testDir}web/rest/${this.upperFirstCamelCase(this.baseName)}KafkaResourceIT.java`);
     }
