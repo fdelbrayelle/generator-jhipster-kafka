@@ -1,5 +1,6 @@
 package com.mycompany.myapp.service.kafka;
 
+import io.vavr.control.Either;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -14,15 +15,16 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public abstract class GenericConsumer<T> implements Runnable {
+import com.mycompany.myapp.service.kafka.deserializer.DeserializationError;
 
+public abstract class GenericConsumer<T> implements Runnable {
 
     private final Logger log = LoggerFactory.getLogger(GenericConsumer.class);
 
     private final AtomicBoolean closed = new AtomicBoolean(false);
 
-    private final KafkaConsumer<String, T> consumer;
-    private String topicName;
+    private final KafkaConsumer<String, Either<DeserializationError, T>> consumer;
+    private final String topicName;
     private final int pollingTimeout;
 
     public GenericConsumer(final String topicName, final Map<String, Object> properties, final int pollingTimeout) {
@@ -46,8 +48,8 @@ public abstract class GenericConsumer<T> implements Runnable {
         try {
             consumer.subscribe(Collections.singleton(topicName));
             while (!closed.get()) {
-                final ConsumerRecords<String, T> records = consumer.poll(Duration.ofMillis(pollingTimeout));
-                for (final ConsumerRecord<String, T> record : records) {
+                final ConsumerRecords<String, Either<DeserializationError, T>> records = consumer.poll(Duration.ofMillis(pollingTimeout));
+                for (final ConsumerRecord<String, Either<DeserializationError, T>> record : records) {
                     handleMessage(record);
                 }
                 consumer.commitSync();
@@ -68,5 +70,5 @@ public abstract class GenericConsumer<T> implements Runnable {
         consumer.wakeup();
     }
 
-    protected abstract void handleMessage(ConsumerRecord<String, T> record);
+    protected abstract void handleMessage(ConsumerRecord<String, Either<DeserializationError, T>> record);
 }

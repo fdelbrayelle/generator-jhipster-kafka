@@ -18,7 +18,7 @@ public class FooProducer {
 
     private final KafkaProducer<String, Foo> kafkaProducer;
 
-    private String topicName;
+    private final String topicName;
 
     public FooProducer(@Value("${kafka.producer.foo.name}") final String topicName, final KafkaProperties kafkaProperties) {
         this.topicName = topicName;

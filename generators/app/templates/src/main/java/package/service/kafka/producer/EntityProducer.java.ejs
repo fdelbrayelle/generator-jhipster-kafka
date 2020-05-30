@@ -36,7 +36,7 @@ public class <%= entityClass %>Producer {
 
     private final KafkaProducer<String, <%= entityClass %>> kafkaProducer;
 
-    private String topicName;
+    private final String topicName;
 
     public <%= entityClass %>Producer(@Value("${kafka.producer.<%= camelCaseEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
         this.topicName = topicName;
