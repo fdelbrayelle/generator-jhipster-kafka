@@ -5,13 +5,6 @@ kafka:
 <%_ if (pollingTimeout) { _%>
   polling.timeout: <%= pollingTimeout %>
 <%_ } _%>
-<%_ if (components.includes('consumer') || components.includes('producer')) { _%>
-  # There is a template topic naming convention below which can be changed.
-  # %3Cmessage_type%3E.%3Capplication_name%3E.%3Centity_name%3E with (all in snake_case):
-  # - %3Cmessage_type%3E: queuing, logging, tracking, etl/db, streaming, push, user...
-  # - %3Capplication_name%3E: the application base name
-  # - %3Centity_name%3E: the entity name which is consumed
-<%_ } _%>
 <%_ if (components.includes('consumer')) { _%>
   consumer:
 <%_ for (entity of entities) { _%>

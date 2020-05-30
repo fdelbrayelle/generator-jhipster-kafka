@@ -12,6 +12,7 @@
     "quotes": [2, "single"],
     "semi": [2, "always"],
     "eqeqeq": [2, "smart"],
+    "no-restricted-globals": ["off"],
     "no-use-before-define": [2, "nofunc"],
     "no-unused-vars": [2, { "vars": "local", "args": "none" }],
     "no-multi-str": 2,
