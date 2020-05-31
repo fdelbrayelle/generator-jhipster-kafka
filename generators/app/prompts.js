@@ -60,6 +60,9 @@ function componentChoices() {
 function entitiesChoices(context) {
     const entitiesChoices = [];
     let existingEntityNames = [];
+
+    entitiesChoices.push({ name: 'No entity (will be typed String)', value: 'no_entity' });
+
     try {
         existingEntityNames = fs.readdirSync('.jhipster');
     } catch (e) {
@@ -117,6 +120,16 @@ function askForBigBangOperations(context, done) {
             default: []
         },
         {
+            when: response => response.entities.includes('no_entity'),
+            type: 'input',
+            name: 'noEntityPrefix',
+            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
+            validate: input => {
+                if (input === '') return 'Please enter a value';
+                return true;
+            }
+        },
+        {
             when: response => response.components.includes('consumer'),
             type: 'number',
             name: 'pollingTimeout',
@@ -171,7 +184,7 @@ function askForIncrementalOperations(context, done) {
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration), { name: 'None', value: undefined }],
+            choices: [...getConcernedEntities(previousConfiguration), { name: 'None (leave incremental mode)', value: undefined }],
             default: []
         }
     ];
@@ -179,7 +192,7 @@ function askForIncrementalOperations(context, done) {
     context.prompt(incrementalPrompt).then(answers => {
         context.props.currentEntity = undefined;
 
-        if (answers.currentEntity && answers.currentEntity.value !== 'none') {
+        if (answers.currentEntity) {
             context.props.currentEntity = answers.currentEntity;
             if (!context.props.entities.includes(answers.currentEntity)) {
                 context.props.entities.push(answers.currentEntity);

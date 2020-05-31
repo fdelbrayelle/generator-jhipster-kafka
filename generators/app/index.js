@@ -133,6 +133,7 @@ module.exports = class extends BaseGenerator {
         // variables from questions
         this.generationType = this.props.generationType;
         this.entities = this.props.entities || [];
+        this.noEntityPrefix = this.props.noEntityPrefix;
         this.components = this.props.components;
         this.componentsByEntityConfig = this.props.componentsByEntityConfig || [];
         this.pollingTimeout = this.props.pollingTimeout;
@@ -185,6 +186,10 @@ module.exports = class extends BaseGenerator {
         }
 
         this.entities.forEach(entity => {
+            if (entity === 'no_entity' && this.noEntityPrefix) {
+                entity = utils.transformToJavaClassNameCase(this.noEntityPrefix);
+            }
+
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
 
@@ -241,10 +246,12 @@ module.exports = class extends BaseGenerator {
             kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
             // eslint-disable-next-line no-template-curly-in-string
             kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+
             if (this.pollingTimeout) {
                 kafkaPreviousConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
                 kafkaPreviousTestConfiguration.kafka['polling.timeout'] = this.pollingTimeout;
             }
+
             this.entities.forEach(entity => {
                 if (this.mustGenerateComponent(entity, 'consumer')) {
                     if (!kafkaPreviousConfiguration.kafka.consumer) {
