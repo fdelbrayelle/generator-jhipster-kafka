@@ -91,6 +91,12 @@ module.exports = class extends BaseGenerator {
     }
 
     writing() {
+        const vavrVersion = '0.10.3';
+        this.addMavenProperty('vavr.version', vavrVersion);
+        this.addGradleProperty('vavr_version', vavrVersion);
+        this.addMavenDependency('io.vavr', 'vavr', '${vavr.version}'); // eslint-disable-line no-template-curly-in-string
+        this.addGradleDependency('implementation', 'io.vavr', 'vavr', '${vavr_version}'); // eslint-disable-line no-template-curly-in-string
+
         // function generate kafka application properties
         this.generateKafkaProperties = function(enabled) {
             this.enabled = enabled;
@@ -192,6 +198,12 @@ module.exports = class extends BaseGenerator {
                 this.template(
                     'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
                     `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
+                    null,
+                    null
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/deserializer/DeserializationError.java.ejs',
+                    `${javaDir}service/kafka/deserializer/DeserializationError.java`,
                     null,
                     null
                 );

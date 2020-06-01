@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
 import org.apache.kafka.common.serialization.Serializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.mycompany.myapp.domain.Foo;
 
 import java.io.ByteArrayOutputStream;
@@ -20,9 +21,7 @@ public class FooSerializer implements Serializer<Foo> {
 
     private final Logger log = LoggerFactory.getLogger(FooSerializer.class);
 
-    private String encoding = "UTF8";
-
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public FooSerializer() {
         this.objectMapper =

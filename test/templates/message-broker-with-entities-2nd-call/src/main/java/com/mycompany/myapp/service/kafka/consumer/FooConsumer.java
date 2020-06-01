@@ -1,5 +1,6 @@
 package com.mycompany.myapp.service.kafka.consumer;
 
+import io.vavr.control.Either;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import com.mycompany.myapp.config.KafkaProperties;
 import com.mycompany.myapp.domain.Foo;
 import com.mycompany.myapp.service.kafka.GenericConsumer;
+import com.mycompany.myapp.service.kafka.deserializer.DeserializationError;
 
 @Service
 public class FooConsumer extends GenericConsumer<Foo> {
@@ -21,10 +23,15 @@ public class FooConsumer extends GenericConsumer<Foo> {
     }
 
     @Override
-    protected void handleMessage(final ConsumerRecord<String, Foo> record) {
-        log.info("Handling message for Foo record: {}", record.value());
+    protected void handleMessage(final ConsumerRecord<String, Either<DeserializationError, Foo>> record) {
+        final Either<DeserializationError, Foo> value = record.value();
+        if (value.isLeft()) {
+            log.error("Deserialization record failure: {}", value.getLeft());
+        } else {
+            log.info("Handling record: {}", value.get());
+        }
 
-        // TODO: Here is where you can add specific code to handle your messages
+        // TODO: Here is where you can handle your messages
     }
 
     @Bean

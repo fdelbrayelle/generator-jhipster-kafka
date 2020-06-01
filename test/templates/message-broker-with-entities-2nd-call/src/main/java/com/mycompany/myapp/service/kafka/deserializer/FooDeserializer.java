@@ -8,22 +8,20 @@ import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
-import io.jsonwebtoken.io.SerializationException;
+import io.vavr.control.Either;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import com.mycompany.myapp.domain.Foo;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 
-public class FooDeserializer implements Deserializer<Foo> {
+public class FooDeserializer implements Deserializer<Either<DeserializationError, Foo>> {
 
     private final Logger log = LoggerFactory.getLogger(FooDeserializer.class);
 
-    private String encoding = "UTF8";
-
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     public FooDeserializer() {
         this.objectMapper =
@@ -38,18 +36,11 @@ public class FooDeserializer implements Deserializer<Foo> {
     }
 
     @Override
-    public Foo deserialize(final String topicName, final byte[] data) {
-        Foo foo = null;
+    public Either<DeserializationError, Foo> deserialize(final String topicName, final byte[] data) {
         try {
-            final String dataString = data == null ? null : new String(data, this.encoding);
-            foo = objectMapper.readValue(dataString, Foo.class);
-        } catch (final UnsupportedEncodingException var4) {
-            throw new SerializationException(
-                "Error when deserializing byte[] to string due to unsupported encoding " + this.encoding
-            );
+            return Either.right(objectMapper.readValue(data, Foo.class));
         } catch (final IOException e) {
-            log.error("Cannot read value from " + topicName + " topic", e);
+            return Either.left(new DeserializationError(data, e));
         }
-        return foo;
     }
 }
