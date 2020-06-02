@@ -32,7 +32,8 @@ module.exports = class extends BaseGenerator {
         this.props = {
             entities: [],
             components: [],
-            componentsByEntityConfig: []
+            componentsByEntityConfig: [],
+            noEntityPrefixes: []
         };
         this.setupClientOptions(this);
     }
@@ -127,13 +128,11 @@ module.exports = class extends BaseGenerator {
         const testResourceDir = jhipsterConstants.SERVER_TEST_RES_DIR;
         const webappDir = jhipsterConstants.CLIENT_MAIN_SRC_DIR;
 
-        this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
-        this.dockerAkhq = 'tchiotludo/akhq:0.14.1';
-
         // variables from questions
         this.generationType = this.props.generationType;
         this.entities = this.props.entities || [];
-        this.noEntityPrefix = this.props.noEntityPrefix;
+        this.noEntityPrefix = this.props.noEntityPrefix; // bigbang mode
+        this.noEntityPrefixes = this.props.noEntityPrefixes || []; // incremental mode
         this.components = this.props.components;
         this.componentsByEntityConfig = this.props.componentsByEntityConfig || [];
         this.pollingTimeout = this.props.pollingTimeout;
@@ -161,6 +160,8 @@ module.exports = class extends BaseGenerator {
         this.log('\n--- variables from questions ---');
         this.log(`\ncomponents=${this.components}`);
         this.log(`\nentities=${this.entities}`);
+        this.log(`\nnoEntityPrefix=${this.noEntityPrefix}`);
+        this.log(`\nnoEntityPrefixes=${this.noEntityPrefixes}`);
         this.log(`\npollingTimeout=${this.pollingTimeout}`);
         this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
         this.log('------\n');
@@ -186,10 +187,52 @@ module.exports = class extends BaseGenerator {
         }
 
         this.entities.forEach(entity => {
-            if (entity === 'no_entity' && this.noEntityPrefix) {
-                entity = utils.transformToJavaClassNameCase(this.noEntityPrefix);
+            if (entity === 'no_entity') {
+                return;
             }
 
+            this.entityClass = entity;
+            this.camelCaseEntityClass = _.camelCase(entity);
+
+            if (this.mustGenerateComponent(entity, 'consumer')) {
+                this.template(
+                    'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
+                    `${javaDir}service/kafka/consumer/${entity}Consumer.java`,
+                    null,
+                    null
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
+                    `${javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
+                    null,
+                    null
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/deserializer/DeserializationError.java.ejs',
+                    `${javaDir}service/kafka/deserializer/DeserializationError.java`,
+                    null,
+                    null
+                );
+            }
+
+            if (this.mustGenerateComponent(entity, 'producer')) {
+                this.template(
+                    'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
+                    `${javaDir}service/kafka/producer/${entity}Producer.java`,
+                    null,
+                    null
+                );
+                this.template(
+                    'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
+                    `${javaDir}service/kafka/serializer/${entity}Serializer.java`,
+                    null,
+                    null
+                );
+            }
+        });
+
+        this.noEntityPrefixes.forEach(prefix => {
+            const entity = utils.transformToJavaClassNameCase(prefix);
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
 
@@ -253,6 +296,10 @@ module.exports = class extends BaseGenerator {
             }
 
             this.entities.forEach(entity => {
+                if (entity === 'no_entity') {
+                    return;
+                }
+
                 if (this.mustGenerateComponent(entity, 'consumer')) {
                     if (!kafkaPreviousConfiguration.kafka.consumer) {
                         kafkaPreviousConfiguration.kafka.consumer = {};
@@ -271,6 +318,48 @@ module.exports = class extends BaseGenerator {
                         false
                     );
                 }
+
+                if (this.mustGenerateComponent(entity, 'producer')) {
+                    if (!kafkaPreviousConfiguration.kafka.producer) {
+                        kafkaPreviousConfiguration.kafka.producer = {};
+                    }
+                    if (!kafkaPreviousTestConfiguration.kafka.producer) {
+                        kafkaPreviousTestConfiguration.kafka.producer = {};
+                    }
+                    kafkaPreviousConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
+                        this,
+                        entity,
+                        true
+                    );
+                    kafkaPreviousTestConfiguration.kafka.producer[`${_.camelCase(entity)}`] = files.buildJsonProducerConfiguration(
+                        this,
+                        entity,
+                        false
+                    );
+                }
+            });
+
+            this.noEntityPrefixes.forEach(prefix => {
+                const entity = utils.transformToJavaClassNameCase(prefix);
+                if (this.mustGenerateComponent(entity, 'consumer')) {
+                    if (!kafkaPreviousConfiguration.kafka.consumer) {
+                        kafkaPreviousConfiguration.kafka.consumer = {};
+                    }
+                    if (!kafkaPreviousTestConfiguration.kafka.consumer) {
+                        kafkaPreviousTestConfiguration.kafka.consumer = {};
+                    }
+                    kafkaPreviousConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = files.buildJsonConsumerConfiguration(
+                        this,
+                        entity,
+                        true
+                    );
+                    kafkaPreviousTestConfiguration.kafka.consumer[`${_.camelCase(entity)}`] = files.buildJsonConsumerConfiguration(
+                        this,
+                        entity,
+                        false
+                    );
+                }
+
                 if (this.mustGenerateComponent(entity, 'producer')) {
                     if (!kafkaPreviousConfiguration.kafka.producer) {
                         kafkaPreviousConfiguration.kafka.producer = {};
@@ -390,7 +479,7 @@ module.exports = class extends BaseGenerator {
         this.dockerComposeFormatVersion = jhipsterConstants.DOCKER_COMPOSE_FORMAT_VERSION;
         this.dockerZookeeper = jhipsterConstants.DOCKER_ZOOKEEPER;
         this.dockerKafka = jhipsterConstants.DOCKER_KAFKA;
-        this.dockerAkhq = 'tchiotludo/akhq';
+        this.dockerAkhq = 'tchiotludo/akhq:0.14.1';
 
         this.log(`kafkaVersion=${this.kafkaVersion}`);
         this.log(`dockerComposeFormatVersion=${this.dockerComposeFormatVersion}`);

@@ -109,7 +109,8 @@ function askForBigBangOperations(context, done) {
             name: 'components',
             message: 'Which Kafka components would you like to generate?',
             choices: componentChoices(),
-            default: []
+            default: [],
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
         },
         {
             when: response => response.components.includes('consumer') || response.components.includes('producer'),
@@ -117,7 +118,8 @@ function askForBigBangOperations(context, done) {
             name: 'entities',
             message: 'For which entity (class name)?',
             choices: entitiesChoices(context),
-            default: []
+            default: [],
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
         },
         {
             when: response => response.entities.includes('no_entity'),
@@ -169,7 +171,8 @@ function askForIncrementalOperations(context, done) {
                 (!entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)) &&
                 (!context.props.componentsByEntityConfig[entityName.value] ||
                     !context.props.componentsByEntityConfig[entityName.value].includes('producer') ||
-                    !context.props.componentsByEntityConfig[entityName.value].includes('consumer'))
+                    !context.props.componentsByEntityConfig[entityName.value].includes('consumer') ||
+                    entityName.value === 'no_entity')
         );
     };
 
@@ -186,6 +189,16 @@ function askForIncrementalOperations(context, done) {
             message: 'For which entity (class name)?',
             choices: [...getConcernedEntities(previousConfiguration), { name: 'None (leave incremental mode)', value: undefined }],
             default: []
+        },
+        {
+            when: response => response.currentEntity === 'no_entity',
+            type: 'input',
+            name: 'currentEntityPrefix',
+            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
+            validate: input => {
+                if (input === '') return 'Please enter a value';
+                return true;
+            }
         }
     ];
 
@@ -194,8 +207,12 @@ function askForIncrementalOperations(context, done) {
 
         if (answers.currentEntity) {
             context.props.currentEntity = answers.currentEntity;
-            if (!context.props.entities.includes(answers.currentEntity)) {
+            context.props.currentEntityPrefix = answers.currentEntityPrefix;
+            if (!context.props.entities.includes(answers.currentEntity) || answers.currentEntity !== 'no_entity') {
                 context.props.entities.push(answers.currentEntity);
+            }
+            if (answers.currentEntityPrefix && !context.props.noEntityPrefixes.includes(answers.currentEntityPrefix)) {
+                context.props.noEntityPrefixes.push(answers.currentEntityPrefix);
             }
             askForUnitaryEntityOperations(context, done);
         } else {
@@ -214,18 +231,20 @@ function askForUnitaryEntityOperations(context, done) {
         // and those already store for this instance execution {@see context.props}
         if (entitiesComponents) {
             if (
-                !entitiesComponents.producers.includes(entityName) &&
-                (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes('producer'))
-            ) {
-                availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'producer'));
-            }
-            if (
-                !entitiesComponents.consumers.includes(entityName) &&
-                (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes('consumer'))
+                (!entitiesComponents.consumers.includes(entityName) &&
+                    (!context.props.componentsByEntityConfig[entityName] ||
+                        !context.props.componentsByEntityConfig[entityName].includes('consumer'))) ||
+                entityName === 'no_entity'
             ) {
                 availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'consumer'));
+            }
+            if (
+                (!entitiesComponents.producers.includes(entityName) &&
+                    (!context.props.componentsByEntityConfig[entityName] ||
+                        !context.props.componentsByEntityConfig[entityName].includes('producer'))) ||
+                entityName === 'no_entity'
+            ) {
+                availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'producer'));
             }
         }
         return availableComponents;
@@ -241,7 +260,7 @@ function askForUnitaryEntityOperations(context, done) {
             when: context.props.currentEntity,
             type: 'checkbox',
             name: 'currentEntityComponents',
-            validate: input => (_.isEmpty(input) ? 'you have to choose at least one component' : true),
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components do you want to generate?',
             choices: getConcernedComponents(previousConfiguration, context.props.currentEntity),
             default: []
@@ -280,10 +299,10 @@ function askForUnitaryEntityOperations(context, done) {
                 context.props.componentsByEntityConfig = [];
             }
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
-                if (context.props.componentsByEntityConfig[context.props.currentEntity]) {
-                    context.props.componentsByEntityConfig[context.props.currentEntity].push(...answers.currentEntityComponents);
+                if (context.props.currentEntity === 'no_entity') {
+                    pushComponentsByEntity(context, answers, utils.transformToJavaClassNameCase(context.props.currentEntityPrefix));
                 } else {
-                    context.props.componentsByEntityConfig[context.props.currentEntity] = [...answers.currentEntityComponents];
+                    pushComponentsByEntity(context, answers, context.props.currentEntity);
                 }
             }
             if (answers.pollingTimeout) {
@@ -301,4 +320,13 @@ function askForUnitaryEntityOperations(context, done) {
             done();
         }
     });
+}
+
+function pushComponentsByEntity(context, answers, entity) {
+    context.props.componentsByEntityConfig.push(entity);
+    if (context.props.componentsByEntityConfig[entity]) {
+        context.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
+    } else {
+        context.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+    }
 }
