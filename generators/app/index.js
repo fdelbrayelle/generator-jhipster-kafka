@@ -284,8 +284,12 @@ module.exports = class extends BaseGenerator {
                 }
             });
 
-            const kafkaProperties = jsYaml.dump(kafkaPreviousConfiguration, { lineWidth: -1, sortKeys: false });
-            const kafkaTestProperties = jsYaml.dump(kafkaPreviousTestConfiguration, { lineWidth: -1, sortKeys: false });
+            const kafkaProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousConfiguration), {
+                lineWidth: -1
+            });
+            const kafkaTestProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousTestConfiguration), {
+                lineWidth: -1
+            });
 
             const kafkaBlockPattern = /^(\n)?^kafka:\n(?:^[ ]+.*\n?)*$/gm;
             this.replaceContent(

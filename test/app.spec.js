@@ -370,6 +370,12 @@ describe('JHipster generator kafka', () => {
                     assertMinimalConsumerProperties(applicationYml, testApplicationYml, 'AwesomeEntity');
                     assertMinimalProducerProperties(applicationYml, testApplicationYml, 'Foo');
                 });
+
+                it('should order properties to put root properties at top', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertThatKafkaPropertiesAreOrdered(applicationYml);
+                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+                });
             });
             describe('asking for a new entity producer', () => {
                 before(done => {
@@ -406,6 +412,12 @@ describe('JHipster generator kafka', () => {
                     assertMinimalProducerProperties(applicationYml, testApplicationYml, 'AwesomeEntity');
                     assertMinimalProducerProperties(applicationYml, testApplicationYml, 'Foo');
                 });
+
+                it('should order properties to put root properties at top', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertThatKafkaPropertiesAreOrdered(applicationYml);
+                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+                });
             });
             describe('asking for a new entity producer and consumer', () => {
                 before(done => {
@@ -438,6 +450,11 @@ describe('JHipster generator kafka', () => {
                     assertMinimalConsumerProperties(applicationYml, testApplicationYml, 'AwesomeEntity');
                     assertMinimalProducerProperties(applicationYml, testApplicationYml, 'Foo');
                     assertMinimalProducerProperties(applicationYml, testApplicationYml, 'AwesomeEntity');
+                });
+                it('should order properties to put root properties at top', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertThatKafkaPropertiesAreOrdered(applicationYml);
+                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
                 });
             });
         });
@@ -496,4 +513,12 @@ function assertMinimalConsumerProperties(applicationYml, testApplicationYml, ent
     assert.textEqual(entityYmlConsumerBlock.enabled.toString(), 'true');
     assert.textEqual(entityTestYmlConsumerBlock.name, `queuing.message_broker_with_entities.${_.snakeCase(entityName)}`);
     assert.textEqual(entityTestYmlConsumerBlock.enabled.toString(), 'false');
+}
+
+function assertThatKafkaPropertiesAreOrdered(applicationYml) {
+    const applicationYmlKeys = Object.keys(applicationYml.kafka);
+
+    assert.ok(applicationYmlKeys.indexOf('bootstrap.servers') < applicationYmlKeys.indexOf('polling.timeout'));
+    assert.ok(applicationYmlKeys.indexOf('polling.timeout') < applicationYmlKeys.indexOf('consumer'));
+    assert.ok(applicationYmlKeys.indexOf('consumer') < applicationYmlKeys.indexOf('producer'));
 }

@@ -5,7 +5,8 @@ const jsYaml = require('js-yaml');
 
 module.exports = {
     getPreviousKafkaConfiguration,
-    extractEntitiesComponents
+    extractEntitiesComponents,
+    orderKafkaProperties
 };
 
 function transformToJavaClassNameCase(entityName) {
@@ -83,4 +84,29 @@ function extractEntitiesComponents(previousKafkaConfiguration) {
         producers: extractProducerEntitiesName(previousKafkaConfiguration),
         consumers: extractConsumerEntitiesName(previousKafkaConfiguration)
     };
+}
+
+function orderKafkaProperties(properties = {}) {
+    if (!properties.kafka) {
+        return {};
+    }
+    const kafkaOrderedProperties = { kafka: {} };
+
+    Object.entries(properties.kafka)
+        .sort((a, b) => {
+            // sort by type of values, put complex type at the end
+            if (typeof a[1] === 'object' && typeof b[1] !== 'object') {
+                return 1;
+            }
+            if (typeof a[1] !== 'object' && typeof b[1] === 'object') {
+                return -1;
+            }
+            // then compare by key
+            return a[0].localeCompare(b[0]);
+        })
+        .forEach(currentProps => {
+            kafkaOrderedProperties.kafka[currentProps[0]] = currentProps[1];
+        });
+
+    return kafkaOrderedProperties;
 }
