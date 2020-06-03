@@ -117,8 +117,7 @@ module.exports = class extends BaseGenerator {
         // variables from questions
         this.generationType = this.props.generationType;
         this.entities = this.props.entities || [];
-        this.componentPrefix = this.props.componentPrefix; // bigbang mode
-        this.componentsPrefixes = this.props.componentsPrefixes || []; // incremental mode
+        this.componentsPrefixes = this.props.componentsPrefixes || [];
         this.components = this.props.components;
         this.componentsByEntityConfig = this.props.componentsByEntityConfig || [];
         this.pollingTimeout = this.props.pollingTimeout;
@@ -146,7 +145,6 @@ module.exports = class extends BaseGenerator {
         this.log('\n--- variables from questions ---');
         this.log(`\ncomponents=${this.components}`);
         this.log(`\nentities=${this.entities}`);
-        this.log(`\ncomponentPrefix=${this.componentPrefix}`);
         this.log(`\ncomponentsPrefixes=${this.componentsPrefixes}`);
         this.log(`\npollingTimeout=${this.pollingTimeout}`);
         this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
@@ -165,11 +163,67 @@ module.exports = class extends BaseGenerator {
             return generatedKafkaProperties;
         };
 
+        /**
+         * Search in dedicated incremental structure if a type of component must be generated for an entity.
+         * @param entityName
+         * @param componentType
+         * @returns {*}
+         */
+        const haveComponentForEntity = (entityName, componentType) => {
+            return (
+                this.props.componentsByEntityConfig &&
+                this.props.componentsByEntityConfig[entityName] &&
+                this.props.componentsByEntityConfig[entityName].includes(componentType)
+            );
+        };
+
+        /**
+         * Search if a type component is present at least once in the asked generations.
+         * @param componentType
+         * @returns {boolean|boolean|*}
+         */
+        const containsComponent = componentType => {
+            if (this.props.generationType === constants.BIGBANG_MODE) {
+                return this.props.components.includes(componentType) && this.entities.length > 0;
+            }
+
+            if (this.props.generationType === constants.INCREMENTAL_MODE) {
+                let haveComponentWithoutEntity = false;
+                this.props.componentsPrefixes.forEach(prefix => {
+                    haveComponentWithoutEntity = haveComponentForEntity(prefix, componentType);
+                });
+
+                return (
+                    haveComponentWithoutEntity ||
+                    (this.props.entities.length > 0 &&
+                        this.props.entities.find(entityName => haveComponentForEntity(entityName, componentType)))
+                );
+            }
+
+            return false;
+        };
+
+        /**
+         * Search if a type of component must be generated for an entity.
+         * @param entityName
+         * @param componentType - Producer or Consumer
+         * @returns {boolean|*}
+         */
+        const mustGenerateComponent = (entityName, componentType) => {
+            if (this.props.generationType === constants.BIGBANG_MODE) {
+                return this.props.components.includes(componentType);
+            }
+            if (this.props.generationType === constants.INCREMENTAL_MODE) {
+                return haveComponentForEntity(entityName, componentType);
+            }
+            return false;
+        };
+
         const writeComponents = entity => {
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
 
-            if (this.mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
+            if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
                 this.template(
                     'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                     `${javaDir}service/kafka/consumer/${entity}Consumer.java`,
@@ -190,7 +244,7 @@ module.exports = class extends BaseGenerator {
                 );
             }
 
-            if (this.mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
+            if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
                 this.template(
                     'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                     `${javaDir}service/kafka/producer/${entity}Producer.java`,
@@ -207,7 +261,7 @@ module.exports = class extends BaseGenerator {
         };
 
         const writeProperties = (kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, entity) => {
-            if (this.mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
+            if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
                 if (!kafkaPreviousConfiguration.kafka.consumer) {
                     kafkaPreviousConfiguration.kafka.consumer = {};
                 }
@@ -226,7 +280,7 @@ module.exports = class extends BaseGenerator {
                 );
             }
 
-            if (this.mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
+            if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
                 if (!kafkaPreviousConfiguration.kafka.producer) {
                     kafkaPreviousConfiguration.kafka.producer = {};
                 }
@@ -250,7 +304,7 @@ module.exports = class extends BaseGenerator {
             shelljs.rm('-rf', `${javaDir}service/kafka/`);
         }
 
-        if (this.containsComponent(constants.CONSUMER_COMPONENT)) {
+        if (containsComponent(constants.CONSUMER_COMPONENT)) {
             this.template(
                 'src/main/java/package/service/kafka/GenericConsumer.java.ejs',
                 `${javaDir}service/kafka/GenericConsumer.java`,
@@ -259,7 +313,7 @@ module.exports = class extends BaseGenerator {
             );
         }
 
-        if (this.containsComponent(constants.CONSUMER_COMPONENT) || this.containsComponent(constants.PRODUCER_COMPONENT)) {
+        if (containsComponent(constants.CONSUMER_COMPONENT) || containsComponent(constants.PRODUCER_COMPONENT)) {
             this.template('src/main/java/package/config/KafkaProperties.java.ejs', `${javaDir}config/KafkaProperties.java`, null, null);
         }
 
@@ -353,54 +407,6 @@ module.exports = class extends BaseGenerator {
         }
 
         return shelljs.cat(constants.MODULES_HOOK_FILE).match(constants.MODULE_NAME) !== null;
-    }
-
-    /**
-     * Search if a type of component must be generated for an entity.
-     * @param entityName
-     * @param componentType - Producer or Consumer
-     * @returns {boolean|*}
-     */
-    mustGenerateComponent(entityName, componentType) {
-        if (this.props.generationType === constants.BIGBANG_MODE) {
-            return this.props.components.includes(componentType);
-        }
-        if (this.props.generationType === constants.INCREMENTAL_MODE) {
-            return this.haveComponentForEntity(entityName, componentType);
-        }
-        return false;
-    }
-
-    /**
-     * Search if a type component is present at least once in the asked generations.
-     * @param componentType
-     * @returns {boolean|boolean|*}
-     */
-    containsComponent(componentType) {
-        if (this.props.generationType === constants.BIGBANG_MODE) {
-            return this.props.components.includes(componentType) && this.entities.length > 0;
-        }
-        if (this.props.generationType === constants.INCREMENTAL_MODE) {
-            return (
-                this.props.entities.length > 0 &&
-                this.props.entities.find(entityName => this.haveComponentForEntity(entityName, componentType))
-            );
-        }
-        return false;
-    }
-
-    /**
-     * Search in dedicated incremental structure if a type of component must be generated for an entity.
-     * @param entityName
-     * @param componentType
-     * @returns {*}
-     */
-    haveComponentForEntity(entityName, componentType) {
-        return (
-            this.props.componentsByEntityConfig &&
-            this.props.componentsByEntityConfig[entityName] &&
-            this.props.componentsByEntityConfig[entityName].includes(componentType)
-        );
     }
 
     writeKafkaDockerYaml() {

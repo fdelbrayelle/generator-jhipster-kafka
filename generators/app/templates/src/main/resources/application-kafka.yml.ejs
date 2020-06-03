@@ -8,8 +8,8 @@ kafka:
 <%_ if (components.includes('consumer')) { _%>
   consumer:
 <%_ for (entity of entities) {
-        if (entity === 'no_entity' && componentPrefix) {
-            entity = componentPrefix;
+        if (entity === 'no_entity' && componentsPrefixes.length > 0 && componentsPrefixes[0]) {
+            entity = componentsPrefixes[0];
         }
 _%>
     <%= _.camelCase(entity) _%>:
@@ -26,8 +26,8 @@ _%>
 <%_ if (components.includes('producer')) { _%>
   producer:
 <%_ for (entity of entities) {
-        if (entity === 'no_entity' && componentPrefix) {
-            entity = componentPrefix;
+        if (entity === 'no_entity' && componentsPrefixes.length > 0 && componentsPrefixes[0]) {
+            entity = componentsPrefixes[0];
         }
 _%>
     <%= _.camelCase(entity) _%>:
