@@ -6,9 +6,12 @@ module.exports = {
     sanitizeProperties
 };
 
+// This is a default topic naming convention which can be updated (see also application-kafka.yml.ejs)
+const topicNamingFormat = (context, entity) => `queuing.${context.snakeCaseBaseName}.${_.snakeCase(entity)}`;
+
 function buildJsonConsumerConfiguration(context, entity, enabled) {
     return {
-        name: `queuing.${context.snakeCaseBaseName}.${_.snakeCase(entity)}`,
+        name: topicNamingFormat(context, entity),
         enabled,
         '[key.deserializer]': 'org.apache.kafka.common.serialization.StringDeserializer',
         '[value.deserializer]': `${context.packageName}.service.kafka.deserializer.${entity}Deserializer`,
@@ -19,7 +22,7 @@ function buildJsonConsumerConfiguration(context, entity, enabled) {
 
 function buildJsonProducerConfiguration(context, entity, enabled) {
     return {
-        name: `queuing.${context.snakeCaseBaseName}.${_.snakeCase(entity)}`,
+        name: topicNamingFormat(context, entity),
         enabled,
         '[key.serializer]': 'org.apache.kafka.common.serialization.StringSerializer',
         '[value.serializer]': `${context.packageName}.service.kafka.serializer.${entity}Serializer`

@@ -7,7 +7,11 @@ kafka:
 <%_ } _%>
 <%_ if (components.includes('consumer')) { _%>
   consumer:
-<%_ for (entity of entities) { _%>
+<%_ for (entity of entities) {
+        if (entity === 'no_entity' && componentsPrefixes.length > 0 && componentsPrefixes[0]) {
+            entity = componentsPrefixes[0];
+        }
+_%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
@@ -21,7 +25,11 @@ kafka:
 <%_ } _%>
 <%_ if (components.includes('producer')) { _%>
   producer:
-<%_ for (entity of entities) { _%>
+<%_ for (entity of entities) {
+        if (entity === 'no_entity' && componentsPrefixes.length > 0 && componentsPrefixes[0]) {
+            entity = componentsPrefixes[0];
+        }
+_%>
     <%= _.camelCase(entity) _%>:
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
@@ -29,3 +37,4 @@ kafka:
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= entity %>Serializer
 <%_ } _%>
 <%_ } _%>
+

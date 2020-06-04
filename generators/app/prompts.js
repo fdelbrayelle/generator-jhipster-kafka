@@ -2,21 +2,26 @@ const _ = require('lodash');
 const chalk = require('chalk');
 const fs = require('fs');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
+
+const constants = require('../constants');
 const utils = require('./utils.js');
 
 module.exports = {
     askForOperations
 };
 
+const previousConfiguration = context =>
+    utils.getPreviousKafkaConfiguration(context, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+
 function generationTypeChoices() {
     return [
         {
             name: 'Big Bang Mode (build a configuration from scratch)',
-            value: 'bigbang'
+            value: constants.BIGBANG_MODE
         },
         {
             name: 'Incremental Mode (upgrade an existing configuration)',
-            value: 'incremental'
+            value: constants.INCREMENTAL_MODE
         }
     ];
 }
@@ -25,15 +30,15 @@ function offsetChoices() {
     return [
         {
             name: 'earliest (automatically reset the offset to the earliest offset)',
-            value: 'earliest'
+            value: constants.EARLIEST_OFFSET
         },
         {
             name: 'latest (automatically reset the offset to the latest offset)',
-            value: 'latest'
+            value: constants.LATEST_OFFSET
         },
         {
             name: 'none (throw exception to the consumer if no previous offset is found for the consumer group)',
-            value: 'none'
+            value: constants.NONE_OFFSET
         }
     ];
 }
@@ -42,11 +47,11 @@ function componentChoices() {
     return [
         {
             name: 'Consumer',
-            value: 'consumer'
+            value: constants.CONSUMER_COMPONENT
         },
         {
             name: 'Producer',
-            value: 'producer'
+            value: constants.PRODUCER_COMPONENT
         }
     ];
 }
@@ -60,14 +65,17 @@ function componentChoices() {
 function entitiesChoices(context) {
     const entitiesChoices = [];
     let existingEntityNames = [];
+
+    entitiesChoices.push({ name: 'No entity (will be typed String)', value: constants.NO_ENTITY });
+
     try {
-        existingEntityNames = fs.readdirSync('.jhipster');
+        existingEntityNames = fs.readdirSync(constants.JHIPSTER_CONFIG_DIR);
     } catch (e) {
-        context.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: .jhipster`); // eslint-disable-line
+        context.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: ${constants.JHIPSTER_CONFIG_DIR}`); // eslint-disable-line
     }
     existingEntityNames.forEach(entry => {
-        if (entry.indexOf('.json') !== -1) {
-            const entityName = entry.replace('.json', '');
+        if (entry.indexOf(constants.JSON_EXTENSION) !== -1) {
+            const entityName = entry.replace(constants.JSON_EXTENSION, constants.EMPTY_STRING);
             entitiesChoices.push({
                 name: entityName,
                 value: entityName
@@ -84,14 +92,14 @@ function askForOperations(context) {
             name: 'generationType',
             message: 'Which type of generation do you want?',
             choices: generationTypeChoices(),
-            default: ['bigbang']
+            default: [constants.BIGBANG_MODE]
         }
     ];
 
     const done = context.async();
     context.prompt(prompts).then(props => {
         context.props.generationType = props.generationType;
-        if (props.generationType === 'incremental') {
+        if (props.generationType === constants.INCREMENTAL_MODE) {
             askForIncrementalOperations(context, done);
         } else {
             askForBigBangOperations(context, done);
@@ -106,39 +114,55 @@ function askForBigBangOperations(context, done) {
             name: 'components',
             message: 'Which Kafka components would you like to generate?',
             choices: componentChoices(),
-            default: []
+            default: [],
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
         },
         {
-            when: response => response.components.includes('consumer') || response.components.includes('producer'),
+            when: response =>
+                response.components.includes(constants.CONSUMER_COMPONENT) || response.components.includes(constants.PRODUCER_COMPONENT),
             type: 'checkbox',
             name: 'entities',
             message: 'For which entity (class name)?',
             choices: entitiesChoices(context),
-            default: []
+            default: [],
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
         },
         {
-            when: response => response.components.includes('consumer'),
-            type: 'number',
-            name: 'pollingTimeout',
-            message: 'What is the consumer polling timeout (in ms)?',
-            default: '10000',
+            when: response => response.entities.includes(constants.NO_ENTITY),
+            type: 'input',
+            name: 'componentPrefix',
+            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
             validate: input => {
-                if (isNaN(input)) return 'Please enter a number';
+                if (_.isEmpty(input)) return 'Please enter a value';
+                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                    return 'This name is already taken by an entity generated with JHipster';
+                }
                 return true;
             }
         },
         {
-            when: response => response.components.includes('consumer'),
+            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
+            type: 'number',
+            name: 'pollingTimeout',
+            message: 'What is the consumer polling timeout (in ms)?',
+            default: '10000',
+            validate: input => (isNaN(input) ? 'Please enter a number' : true)
+        },
+        {
+            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
             type: 'list',
             name: 'autoOffsetResetPolicy',
             message:
                 'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
             choices: offsetChoices(),
-            default: 'earliest'
+            default: constants.EARLIEST_OFFSET
         }
     ];
 
     context.prompt(bigbangPrompt).then(answers => {
+        if (answers.componentPrefix) {
+            context.props.componentsPrefixes.push(answers.componentPrefix);
+        }
         context.props = _.merge(context.props, answers);
         // To access props later use this.props.someOption;
         done();
@@ -153,36 +177,53 @@ function askForIncrementalOperations(context, done) {
         // and those already store for this instance execution {@see context.props}
         return allEntities.filter(
             entityName =>
-                (!entitiesComponents.producers.includes(entityName.value) || !entitiesComponents.consumers.includes(entityName.value)) &&
+                (!entitiesComponents.consumers.includes(entityName.value) || !entitiesComponents.producers.includes(entityName.value)) &&
                 (!context.props.componentsByEntityConfig[entityName.value] ||
-                    !context.props.componentsByEntityConfig[entityName.value].includes('producer') ||
-                    !context.props.componentsByEntityConfig[entityName.value].includes('consumer'))
+                    !context.props.componentsByEntityConfig[entityName.value].includes(constants.CONSUMER_COMPONENT) ||
+                    !context.props.componentsByEntityConfig[entityName.value].includes(constants.PRODUCER_COMPONENT) ||
+                    entityName.value === constants.NO_ENTITY)
         );
     };
-
-    const previousConfiguration = utils.getPreviousKafkaConfiguration(
-        context,
-        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-        context.isFirstGeneration
-    ).kafka;
 
     const incrementalPrompt = [
         {
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration), { name: 'None', value: undefined }],
+            choices: [...getConcernedEntities(previousConfiguration(context)), { name: 'None (leave incremental mode)', value: undefined }],
             default: []
+        },
+        {
+            when: response => response.currentEntity === constants.NO_ENTITY,
+            type: 'input',
+            name: 'currentPrefix',
+            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
+            validate: input => {
+                if (_.isEmpty(input)) return 'Please enter a value';
+
+                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                    return 'This name is already taken by an entity generated with JHipster';
+                }
+
+                const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context), input);
+                if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
+
+                return true;
+            }
         }
     ];
 
     context.prompt(incrementalPrompt).then(answers => {
         context.props.currentEntity = undefined;
 
-        if (answers.currentEntity && answers.currentEntity.value !== 'none') {
+        if (answers.currentEntity) {
             context.props.currentEntity = answers.currentEntity;
-            if (!context.props.entities.includes(answers.currentEntity)) {
+            context.props.currentPrefix = answers.currentPrefix;
+            if (!context.props.entities.includes(answers.currentEntity) || answers.currentEntity !== constants.NO_ENTITY) {
                 context.props.entities.push(answers.currentEntity);
+            }
+            if (answers.currentPrefix && !context.props.componentsPrefixes.includes(answers.currentPrefix)) {
+                context.props.componentsPrefixes.push(answers.currentPrefix);
             }
             askForUnitaryEntityOperations(context, done);
         } else {
@@ -191,51 +232,79 @@ function askForIncrementalOperations(context, done) {
     });
 }
 
+function getAvailableComponentsWithoutEntity(context, previousConfiguration, prefix) {
+    const availableComponents = [];
+    const allComponentChoices = componentChoices();
+    const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+    const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
+    if (context.props.componentsByEntityConfig) {
+        const componentForPrefix = context.props.componentsByEntityConfig[prefixJavaClassName];
+        if (
+            !entitiesComponents.consumers.includes(prefixJavaClassName) &&
+            (!componentForPrefix || !componentForPrefix.includes(constants.CONSUMER_COMPONENT))
+        ) {
+            availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT));
+        }
+        if (
+            !entitiesComponents.producers.includes(prefixJavaClassName) &&
+            (!componentForPrefix || !componentForPrefix.includes(constants.PRODUCER_COMPONENT))
+        ) {
+            availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT));
+        }
+    }
+    return availableComponents;
+}
+
 function askForUnitaryEntityOperations(context, done) {
-    const getConcernedComponents = (previousConfiguration, entityName) => {
+    const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+
+        if (entityName === constants.NO_ENTITY) {
+            return getAvailableComponentsWithoutEntity(context, previousConfiguration, currentPrefix);
+        }
 
         // exclude components found in the previous configuration
         // and those already store for this instance execution {@see context.props}
         if (entitiesComponents) {
             if (
-                !entitiesComponents.producers.includes(entityName) &&
-                (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes('producer'))
-            ) {
-                availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'producer'));
-            }
-            if (
                 !entitiesComponents.consumers.includes(entityName) &&
                 (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes('consumer'))
+                    !context.props.componentsByEntityConfig[entityName].includes(constants.CONSUMER_COMPONENT))
             ) {
-                availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === 'consumer'));
+                availableComponents.push(
+                    allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT)
+                );
+            }
+            if (
+                !entitiesComponents.producers.includes(entityName) &&
+                (!context.props.componentsByEntityConfig[entityName] ||
+                    !context.props.componentsByEntityConfig[entityName].includes(constants.PRODUCER_COMPONENT))
+            ) {
+                availableComponents.push(
+                    allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT)
+                );
             }
         }
         return availableComponents;
     };
-
-    const previousConfiguration = utils.getPreviousKafkaConfiguration(
-        context,
-        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
-    ).kafka;
 
     const unitaryEntityPrompt = [
         {
             when: context.props.currentEntity,
             type: 'checkbox',
             name: 'currentEntityComponents',
-            validate: input => (_.isEmpty(input) ? 'you have to choose at least one component' : true),
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components do you want to generate?',
-            choices: getConcernedComponents(previousConfiguration, context.props.currentEntity),
+            choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity, context.props.currentPrefix),
             default: []
         },
         {
             when: response =>
-                response.currentEntityComponents.includes('consumer') && context.props.currentEntity && !context.props.pollingTimeout,
+                response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
+                context.props.currentEntity &&
+                !context.props.pollingTimeout,
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
@@ -243,7 +312,7 @@ function askForUnitaryEntityOperations(context, done) {
         },
         {
             when: response =>
-                response.currentEntityComponents.includes('consumer') &&
+                response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
                 context.props.currentEntity &&
                 !context.props.autoOffsetResetPolicy,
             type: 'list',
@@ -251,7 +320,7 @@ function askForUnitaryEntityOperations(context, done) {
             message:
                 'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
             choices: offsetChoices(),
-            default: 'earliest'
+            default: constants.EARLIEST_OFFSET
         },
         {
             type: 'confirm',
@@ -267,10 +336,10 @@ function askForUnitaryEntityOperations(context, done) {
                 context.props.componentsByEntityConfig = [];
             }
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
-                if (context.props.componentsByEntityConfig[context.props.currentEntity]) {
-                    context.props.componentsByEntityConfig[context.props.currentEntity].push(...answers.currentEntityComponents);
+                if (context.props.currentEntity === constants.NO_ENTITY) {
+                    pushComponentsByEntity(context, answers, utils.transformToJavaClassNameCase(context.props.currentPrefix));
                 } else {
-                    context.props.componentsByEntityConfig[context.props.currentEntity] = [...answers.currentEntityComponents];
+                    pushComponentsByEntity(context, answers, context.props.currentEntity);
                 }
             }
             if (answers.pollingTimeout) {
@@ -288,4 +357,13 @@ function askForUnitaryEntityOperations(context, done) {
             done();
         }
     });
+}
+
+function pushComponentsByEntity(context, answers, entity) {
+    context.props.componentsByEntityConfig.push(entity);
+    if (context.props.componentsByEntityConfig[entity]) {
+        context.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
+    } else {
+        context.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+    }
 }

@@ -6,7 +6,8 @@ const jsYaml = require('js-yaml');
 module.exports = {
     getPreviousKafkaConfiguration,
     extractEntitiesComponents,
-    orderKafkaProperties
+    orderKafkaProperties,
+    transformToJavaClassNameCase
 };
 
 function transformToJavaClassNameCase(entityName) {
