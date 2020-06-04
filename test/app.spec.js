@@ -13,6 +13,7 @@ const constants = require('../generators/constants');
 const FOO_ENTITY = 'Foo';
 const AWESOME_ENTITY = 'AwesomeEntity';
 const COMPONENT_PREFIX = 'ComponentsWithoutEntity';
+const COMPONENTS_CHOSEN = Object.freeze({ all: 1, consumer: 2, producer: 3 });
 
 describe('JHipster generator kafka', () => {
     describe('with no message broker', () => {
@@ -68,6 +69,7 @@ describe('JHipster generator kafka', () => {
             });
 
             itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
+            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
         });
 
         describe('with a consumer and a producer without entity and for a single entity', () => {
@@ -88,6 +90,7 @@ describe('JHipster generator kafka', () => {
 
             itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
             itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
+            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
         });
 
         describe('with a given polling timeout', () => {
@@ -402,8 +405,8 @@ describe('JHipster generator kafka', () => {
                 });
 
                 itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
-
                 itShouldUpdatesPropertiesWithDefaultValue();
+                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
             });
 
             describe('with a given offset and polling timeout', () => {
@@ -608,6 +611,8 @@ describe('JHipster generator kafka', () => {
                     assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
                     assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
                 });
+
+                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.consumer);
             });
 
             describe('asking for a producer without entity', () => {
@@ -650,6 +655,8 @@ describe('JHipster generator kafka', () => {
                     assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
                     assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
                 });
+
+                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.producer);
             });
 
             describe('asking for a producer and consumer without entity', () => {
@@ -688,6 +695,8 @@ describe('JHipster generator kafka', () => {
                     assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
                     assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
                 });
+
+                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
             });
         });
     });
@@ -744,6 +753,32 @@ function itShouldUpdatesPropertiesWithDefaultValue() {
     it('should update application.yml kafka.auto.offset.reset with default value', () => {
         assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: earliest/);
         assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: earliest/);
+    });
+}
+
+function itShouldTypeClassesWithClass(prefix, clazz, chosenComponents) {
+    it('should type classes with String', () => {
+        if (chosenComponents === COMPONENTS_CHOSEN.all || chosenComponents === COMPONENTS_CHOSEN.consumer) {
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${prefix}Consumer.java`,
+                new RegExp(`GenericConsumer<${clazz}>`, 'g')
+            );
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${prefix}Deserializer.java`,
+                new RegExp(`Deserializer<Either<DeserializationError, ${clazz}>>`, 'g')
+            );
+        }
+
+        if (chosenComponents === COMPONENTS_CHOSEN.all || chosenComponents === COMPONENTS_CHOSEN.producer) {
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${prefix}Producer.java`,
+                new RegExp(`private final KafkaProducer<String, ${clazz}> kafkaProducer;`, 'g')
+            );
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${prefix}Serializer.java`,
+                new RegExp(`Serializer<${clazz}>`, 'g')
+            );
+        }
     });
 }
 

@@ -27,14 +27,16 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 
 import <%= packageName %>.config.KafkaProperties;
+<%_ if (type !== 'String') { _%>
 import <%= packageName %>.domain.<%= entityClass %>;
+<%_ } _%>
 
 @Service
 public class <%= entityClass %>Producer {
 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Producer.class);
 
-    private final KafkaProducer<String, <%= entityClass %>> kafkaProducer;
+    private final KafkaProducer<String, <%= type %>> kafkaProducer;
 
     private final String topicName;
 
@@ -48,8 +50,8 @@ public class <%= entityClass %>Producer {
         Runtime.getRuntime().addShutdownHook(new Thread(this::shutdown));
     }
 
-    public void send(final <%= entityClass %> message) {
-        final ProducerRecord<String, <%= entityClass %>> record = new ProducerRecord<>(topicName, message);
+    public void send(final <%= type %> message) {
+        final ProducerRecord<String, <%= type %>> record = new ProducerRecord<>(topicName, message);
         try {
             kafkaProducer.send(record);
         } catch (final Exception e) {

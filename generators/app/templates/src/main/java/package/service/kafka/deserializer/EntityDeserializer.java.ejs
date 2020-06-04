@@ -31,11 +31,13 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import <%= packageName %>.domain.<%= entityClass %>;
-
 import java.io.IOException;
 
-public class <%= entityClass %>Deserializer implements Deserializer<Either<DeserializationError, <%= entityClass %>>> {
+<%_ if (type !== 'String') { _%>
+import <%= packageName %>.domain.<%= entityClass %>;
+
+<%_ } _%>
+public class <%= entityClass %>Deserializer implements Deserializer<Either<DeserializationError, <%= type %>>> {
 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Deserializer.class);
 
@@ -54,9 +56,9 @@ public class <%= entityClass %>Deserializer implements Deserializer<Either<Deser
     }
 
     @Override
-    public Either<DeserializationError, <%= entityClass %>> deserialize(final String topicName, final byte[] data) {
+    public Either<DeserializationError, <%= type %>> deserialize(final String topicName, final byte[] data) {
         try {
-            return Either.right(objectMapper.readValue(data, <%= entityClass %>.class));
+            return Either.right(objectMapper.readValue(data, <%= type %>.class));
         } catch (final IOException e) {
             return Either.left(new DeserializationError(data, e));
         }

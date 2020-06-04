@@ -27,22 +27,24 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import <%= packageName %>.config.KafkaProperties;
+<%_ if (type !== 'String') { _%>
 import <%= packageName %>.domain.<%= entityClass %>;
+<%_ } _%>
 import <%= packageName %>.service.kafka.GenericConsumer;
 import <%= packageName %>.service.kafka.deserializer.DeserializationError;
 
 @Service
-public class <%= entityClass %>Consumer extends GenericConsumer<<%= entityClass %>> {
+public class <%= entityClass %>Consumer extends GenericConsumer<<%= type %>> {
 
-    private final Logger log = LoggerFactory.getLogger(<%= entityClass %>.class);
+    private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Consumer.class);
 
     public <%= entityClass %>Consumer(@Value("${kafka.consumer.<%= camelCaseEntityClass %>.name}") final String topicName, final KafkaProperties kafkaProperties) {
         super(topicName, kafkaProperties.getConsumer().get("<%= camelCaseEntityClass %>"), kafkaProperties.getPollingTimeout());
     }
 
     @Override
-    protected void handleMessage(final ConsumerRecord<String, Either<DeserializationError, <%= entityClass %>>> record) {
-        final Either<DeserializationError, <%= entityClass %>> value = record.value();
+    protected void handleMessage(final ConsumerRecord<String, Either<DeserializationError, <%= type %>>> record) {
+        final Either<DeserializationError, <%= type %>> value = record.value();
         if (value.isLeft()) {
             log.error("Deserialization record failure: {}", value.getLeft());
         } else {

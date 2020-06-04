@@ -219,9 +219,14 @@ module.exports = class extends BaseGenerator {
             return false;
         };
 
-        const writeComponents = entity => {
+        const writeComponents = (entity, useEntityAsType) => {
+            if (entity === constants.NO_ENTITY) {
+                return;
+            }
+
             this.entityClass = entity;
             this.camelCaseEntityClass = _.camelCase(entity);
+            this.type = useEntityAsType ? entity : 'String';
 
             if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
                 this.template(
@@ -261,6 +266,10 @@ module.exports = class extends BaseGenerator {
         };
 
         const writeProperties = (kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, entity) => {
+            if (entity === constants.NO_ENTITY) {
+                return;
+            }
+
             if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
                 if (!kafkaPreviousConfiguration.kafka.consumer) {
                     kafkaPreviousConfiguration.kafka.consumer = {};
@@ -318,15 +327,11 @@ module.exports = class extends BaseGenerator {
         }
 
         this.entities.forEach(entity => {
-            if (entity === constants.NO_ENTITY) {
-                return;
-            }
-
-            writeComponents(entity);
+            writeComponents(entity, true);
         });
 
         this.componentsPrefixes.forEach(prefix => {
-            writeComponents(utils.transformToJavaClassNameCase(prefix));
+            writeComponents(utils.transformToJavaClassNameCase(prefix), false);
         });
 
         if (this.generationType === constants.INCREMENTAL_MODE) {
@@ -352,10 +357,6 @@ module.exports = class extends BaseGenerator {
             }
 
             this.entities.forEach(entity => {
-                if (entity === constants.NO_ENTITY) {
-                    return;
-                }
-
                 writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, entity);
             });
 

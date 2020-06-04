@@ -132,7 +132,13 @@ function askForBigBangOperations(context, done) {
             type: 'input',
             name: 'componentPrefix',
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
-            validate: input => (_.isEmpty(input) ? 'Please enter a value' : true)
+            validate: input => {
+                if (_.isEmpty(input)) return 'Please enter a value';
+                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                    return 'This name is already taken by an entity generated with JHipster';
+                }
+                return true;
+            }
         },
         {
             when: response => response.components.includes(constants.CONSUMER_COMPONENT),
@@ -194,6 +200,10 @@ function askForIncrementalOperations(context, done) {
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
             validate: input => {
                 if (_.isEmpty(input)) return 'Please enter a value';
+
+                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                    return 'This name is already taken by an entity generated with JHipster';
+                }
 
                 const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context), input);
                 if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
