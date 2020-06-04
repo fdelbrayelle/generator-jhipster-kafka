@@ -132,10 +132,7 @@ function askForBigBangOperations(context, done) {
             type: 'input',
             name: 'componentPrefix',
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
-            validate: input => {
-                if (input === constants.EMPTY_STRING) return 'Please enter a value';
-                return true;
-            }
+            validate: input => (_.isEmpty(input) ? 'Please enter a value' : true)
         },
         {
             when: response => response.components.includes(constants.CONSUMER_COMPONENT),
@@ -143,10 +140,7 @@ function askForBigBangOperations(context, done) {
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
             default: '10000',
-            validate: input => {
-                if (isNaN(input)) return 'Please enter a number';
-                return true;
-            }
+            validate: input => (isNaN(input) ? 'Please enter a number' : true)
         },
         {
             when: response => response.components.includes(constants.CONSUMER_COMPONENT),
@@ -197,9 +191,11 @@ function askForIncrementalOperations(context, done) {
             name: 'currentPrefix',
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
             validate: input => {
-                if (input === constants.EMPTY_STRING) return 'Please enter a value';
-                const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context));
+                if (_.isEmpty(input)) return 'Please enter a value';
+
+                const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context), input);
                 if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
+
                 return true;
             }
         }
@@ -224,43 +220,37 @@ function askForIncrementalOperations(context, done) {
     });
 }
 
-function getAvailableComponentsWithoutEntity(context, previousConfiguration) {
+function getAvailableComponentsWithoutEntity(context, previousConfiguration, prefix) {
     const availableComponents = [];
     const allComponentChoices = componentChoices();
     const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
-    context.props.componentsPrefixes.forEach(prefix => {
-        const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
-        if (context.props.componentsByEntityConfig) {
-            const componentForPrefix = context.props.componentsByEntityConfig[prefixJavaClassName];
-            if (
-                !entitiesComponents.consumers.includes(prefixJavaClassName) &&
-                (!componentForPrefix || !componentForPrefix.includes(constants.CONSUMER_COMPONENT))
-            ) {
-                availableComponents.push(
-                    allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT)
-                );
-            }
-            if (
-                !entitiesComponents.producers.includes(prefixJavaClassName) &&
-                (!componentForPrefix || !componentForPrefix.includes(constants.PRODUCER_COMPONENT))
-            ) {
-                availableComponents.push(
-                    allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT)
-                );
-            }
+    const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
+    if (context.props.componentsByEntityConfig) {
+        const componentForPrefix = context.props.componentsByEntityConfig[prefixJavaClassName];
+        if (
+            !entitiesComponents.consumers.includes(prefixJavaClassName) &&
+            (!componentForPrefix || !componentForPrefix.includes(constants.CONSUMER_COMPONENT))
+        ) {
+            availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT));
         }
-    });
+        if (
+            !entitiesComponents.producers.includes(prefixJavaClassName) &&
+            (!componentForPrefix || !componentForPrefix.includes(constants.PRODUCER_COMPONENT))
+        ) {
+            availableComponents.push(allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT));
+        }
+    }
     return availableComponents;
 }
 
 function askForUnitaryEntityOperations(context, done) {
-    const getConcernedComponents = (previousConfiguration, entityName) => {
+    const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
 
         if (entityName === constants.NO_ENTITY) {
-            return getAvailableComponentsWithoutEntity(context, previousConfiguration);
+            return getAvailableComponentsWithoutEntity(context, previousConfiguration, currentPrefix);
         }
 
         // exclude components found in the previous configuration
@@ -295,7 +285,7 @@ function askForUnitaryEntityOperations(context, done) {
             name: 'currentEntityComponents',
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components do you want to generate?',
-            choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity),
+            choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity, context.props.currentPrefix),
             default: []
         },
         {
