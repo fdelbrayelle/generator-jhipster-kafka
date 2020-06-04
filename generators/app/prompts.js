@@ -10,6 +10,9 @@ module.exports = {
     askForOperations
 };
 
+const previousConfiguration = context =>
+    utils.getPreviousKafkaConfiguration(context, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+
 function generationTypeChoices() {
     return [
         {
@@ -180,18 +183,12 @@ function askForIncrementalOperations(context, done) {
         );
     };
 
-    const previousConfiguration = utils.getPreviousKafkaConfiguration(
-        context,
-        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-        context.isFirstGeneration
-    ).kafka;
-
     const incrementalPrompt = [
         {
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration), { name: 'None (leave incremental mode)', value: undefined }],
+            choices: [...getConcernedEntities(previousConfiguration(context)), { name: 'None (leave incremental mode)', value: undefined }],
             default: []
         },
         {
@@ -201,6 +198,8 @@ function askForIncrementalOperations(context, done) {
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
             validate: input => {
                 if (input === constants.EMPTY_STRING) return 'Please enter a value';
+                const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context));
+                if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
                 return true;
             }
         }
@@ -225,30 +224,61 @@ function askForIncrementalOperations(context, done) {
     });
 }
 
-function askForUnitaryEntityOperations(context, done) {
-    const getConcernedComponents = (previousConfiguration, entityName) => {
-        const availableComponents = [];
-        const allComponentChoices = componentChoices();
-        const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
-
-        // exclude components found in the previous configuration
-        // and those already store for this instance execution {@see context.props}
-        if (entitiesComponents) {
+function getAvailableComponentsWithoutEntity(context, previousConfiguration) {
+    const availableComponents = [];
+    const allComponentChoices = componentChoices();
+    const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+    context.props.componentsPrefixes.forEach(prefix => {
+        const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
+        if (context.props.componentsByEntityConfig) {
+            const componentForPrefix = context.props.componentsByEntityConfig[prefixJavaClassName];
             if (
-                (!entitiesComponents.consumers.includes(entityName) &&
-                    (!context.props.componentsByEntityConfig[entityName] ||
-                        !context.props.componentsByEntityConfig[entityName].includes(constants.CONSUMER_COMPONENT))) ||
-                entityName === constants.NO_ENTITY
+                !entitiesComponents.consumers.includes(prefixJavaClassName) &&
+                (!componentForPrefix || !componentForPrefix.includes(constants.CONSUMER_COMPONENT))
             ) {
                 availableComponents.push(
                     allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT)
                 );
             }
             if (
-                (!entitiesComponents.producers.includes(entityName) &&
-                    (!context.props.componentsByEntityConfig[entityName] ||
-                        !context.props.componentsByEntityConfig[entityName].includes(constants.PRODUCER_COMPONENT))) ||
-                entityName === constants.NO_ENTITY
+                !entitiesComponents.producers.includes(prefixJavaClassName) &&
+                (!componentForPrefix || !componentForPrefix.includes(constants.PRODUCER_COMPONENT))
+            ) {
+                availableComponents.push(
+                    allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT)
+                );
+            }
+        }
+    });
+    return availableComponents;
+}
+
+function askForUnitaryEntityOperations(context, done) {
+    const getConcernedComponents = (previousConfiguration, entityName) => {
+        const availableComponents = [];
+        const allComponentChoices = componentChoices();
+        const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
+
+        if (entityName === constants.NO_ENTITY) {
+            return getAvailableComponentsWithoutEntity(context, previousConfiguration);
+        }
+
+        // exclude components found in the previous configuration
+        // and those already store for this instance execution {@see context.props}
+        if (entitiesComponents) {
+            if (
+                !entitiesComponents.consumers.includes(entityName) &&
+                (!context.props.componentsByEntityConfig[entityName] ||
+                    !context.props.componentsByEntityConfig[entityName].includes(constants.CONSUMER_COMPONENT))
+            ) {
+                availableComponents.push(
+                    allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT)
+                );
+            }
+            if (
+                !entitiesComponents.producers.includes(entityName) &&
+                (!context.props.componentsByEntityConfig[entityName] ||
+                    !context.props.componentsByEntityConfig[entityName].includes(constants.PRODUCER_COMPONENT))
             ) {
                 availableComponents.push(
                     allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT)
@@ -258,11 +288,6 @@ function askForUnitaryEntityOperations(context, done) {
         return availableComponents;
     };
 
-    const previousConfiguration = utils.getPreviousKafkaConfiguration(
-        context,
-        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`
-    ).kafka;
-
     const unitaryEntityPrompt = [
         {
             when: context.props.currentEntity,
@@ -270,7 +295,7 @@ function askForUnitaryEntityOperations(context, done) {
             name: 'currentEntityComponents',
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components do you want to generate?',
-            choices: getConcernedComponents(previousConfiguration, context.props.currentEntity),
+            choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity),
             default: []
         },
         {
