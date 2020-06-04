@@ -435,7 +435,7 @@ describe('JHipster generator kafka', () => {
         });
 
         describe('with a previous generation done', () => {
-            describe('asking for a new entity consumer', () => {
+            describe('with only a consumer for a single entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
@@ -482,7 +482,7 @@ describe('JHipster generator kafka', () => {
                 });
             });
 
-            describe('asking for a new entity producer', () => {
+            describe('with only a producer for a single entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
@@ -529,7 +529,7 @@ describe('JHipster generator kafka', () => {
                 });
             });
 
-            describe('asking for a new entity producer and consumer', () => {
+            describe('with a consumer and a producer for a single entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
@@ -571,7 +571,7 @@ describe('JHipster generator kafka', () => {
                 });
             });
 
-            describe('asking for a consumer without entity', () => {
+            describe('with only a consumer without entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
@@ -615,7 +615,7 @@ describe('JHipster generator kafka', () => {
                 itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.consumer);
             });
 
-            describe('asking for a producer without entity', () => {
+            describe('with only a producer without entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
@@ -659,7 +659,7 @@ describe('JHipster generator kafka', () => {
                 itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.producer);
             });
 
-            describe('asking for a producer and consumer without entity', () => {
+            describe('with a producer and consumer without entity', () => {
                 before(done => {
                     helpers
                         .run(path.join(__dirname, '../generators/app'))
