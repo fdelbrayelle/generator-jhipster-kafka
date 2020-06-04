@@ -154,7 +154,9 @@ function askForBigBangOperations(context, done) {
     ];
 
     context.prompt(bigbangPrompt).then(answers => {
-        context.props.componentsPrefixes.push(answers.componentPrefix);
+        if (answers.componentPrefix) {
+            context.props.componentsPrefixes.push(answers.componentPrefix);
+        }
         context.props = _.merge(context.props, answers);
         // To access props later use this.props.someOption;
         done();
