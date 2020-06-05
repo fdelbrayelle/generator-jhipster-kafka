@@ -53,6 +53,7 @@ public class <%= entityClass %>Producer {
     public void send(final <%= type %> message) {
         final ProducerRecord<String, <%= type %>> record = new ProducerRecord<>(topicName, message);
         try {
+            log.info("Sending asynchronously a <%= type %> record to topic: '" + topicName + "'");
             kafkaProducer.send(record);
         } catch (final Exception e) {
             log.error(e.getMessage(), e);

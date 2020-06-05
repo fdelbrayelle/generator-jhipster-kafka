@@ -262,6 +262,12 @@ module.exports = class extends BaseGenerator {
                     null,
                     null
                 );
+                this.template(
+                    'src/main/java/package/web/rest/kafka/EntityKafkaResource.java.ejs',
+                    `${javaDir}web/rest/kafka/${entity}KafkaResource.java`,
+                    null,
+                    null
+                );
             }
         };
 
@@ -310,7 +316,7 @@ module.exports = class extends BaseGenerator {
         };
 
         if (this.generationType === constants.BIGBANG_MODE) {
-            shelljs.rm('-rf', `${javaDir}service/kafka/`);
+            shelljs.rm('-rf', `${javaDir}service/kafka/`, `${javaDir}web/rest/kafka/`);
         }
 
         if (containsComponent(constants.CONSUMER_COMPONENT)) {
