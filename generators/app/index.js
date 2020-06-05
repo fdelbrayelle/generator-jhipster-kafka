@@ -21,7 +21,7 @@ module.exports = class extends BaseGenerator {
         this.isFirstGeneration = false;
         // This adds support for a `--skip-prompts` flag
         this.option('skip-prompts', {
-            desc: 'Generate pre-existing configuration',
+            desc: 'Generate configuration with default values',
             type: Boolean,
             defaults: false
         });
@@ -73,18 +73,6 @@ module.exports = class extends BaseGenerator {
     }
 
     prompting() {
-        // To generate a consumer and a producer for CI tests
-        if (this.options['skip-prompts']) {
-            this.log('Skipping prompts...');
-            this.props.generationType = constants.BIGBANG_MODE;
-            this.props.components.push(constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT);
-            // DocumentBankAccount entity is generated for tests purpose
-            // in the main generator (see: 11-generate-entities.sh).
-            this.props.entities.push('DocumentBankAccount');
-            this.props.autoOffsetResetPolicies = constants.EARLIEST_OFFSET;
-            return;
-        }
-
         prompts.askForOperations(this);
     }
 
@@ -142,12 +130,17 @@ module.exports = class extends BaseGenerator {
         this.log(`dockerComposeFormatVersion=${this.dockerComposeFormatVersion}`);
         this.log(`dockerAkhq=${this.dockerAkhq}`);
 
-        this.log('\n--- variables from questions ---');
-        this.log(`\ncomponents=${this.components}`);
-        this.log(`\nentities=${this.entities}`);
-        this.log(`\ncomponentsPrefixes=${this.componentsPrefixes}`);
-        this.log(`\npollingTimeout=${this.pollingTimeout}`);
-        this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
+        if (this.options['skip-prompts']) {
+            this.log('\n------');
+            this.log('Skipping prompts...');
+        } else {
+            this.log('\n--- variables from questions ---');
+            this.log(`\ncomponents=${this.components}`);
+            this.log(`\nentities=${this.entities}`);
+            this.log(`\ncomponentsPrefixes=${this.componentsPrefixes}`);
+            this.log(`\npollingTimeout=${this.pollingTimeout}`);
+            this.log(`\nautoOffsetResetPolicy=${this.autoOffsetResetPolicy}`);
+        }
         this.log('------\n');
 
         this.registerToEntityPostHook();
@@ -241,12 +234,6 @@ module.exports = class extends BaseGenerator {
                     null,
                     null
                 );
-                this.template(
-                    'src/main/java/package/service/kafka/deserializer/DeserializationError.java.ejs',
-                    `${javaDir}service/kafka/deserializer/DeserializationError.java`,
-                    null,
-                    null
-                );
             }
 
             if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
@@ -319,10 +306,16 @@ module.exports = class extends BaseGenerator {
             shelljs.rm('-rf', `${javaDir}service/kafka/`, `${javaDir}web/rest/kafka/`);
         }
 
-        if (containsComponent(constants.CONSUMER_COMPONENT)) {
+        if (this.options['skip-prompts'] || containsComponent(constants.CONSUMER_COMPONENT)) {
             this.template(
                 'src/main/java/package/service/kafka/GenericConsumer.java.ejs',
                 `${javaDir}service/kafka/GenericConsumer.java`,
+                null,
+                null
+            );
+            this.template(
+                'src/main/java/package/service/kafka/deserializer/DeserializationError.java.ejs',
+                `${javaDir}service/kafka/deserializer/DeserializationError.java`,
                 null,
                 null
             );
@@ -391,10 +384,10 @@ module.exports = class extends BaseGenerator {
         } else {
             // big bang properties writing
             const kafkaProperties = generateKafkaProperties(true);
-            this.log(`kafkaProperties=\n\n${kafkaProperties}\n\n`);
+            this.log(`application.yml (src/main/resources) kafka block will be updated like this:${kafkaProperties}`);
 
             const kafkaTestProperties = generateKafkaProperties(false);
-            this.log(`kafkaTestProperties=\n\n${kafkaTestProperties}\n\n`);
+            this.log(`application.yml (src/test/resources) kafka block will be updated like this:${kafkaTestProperties}`);
 
             const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
             this.replaceContent(`${resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
