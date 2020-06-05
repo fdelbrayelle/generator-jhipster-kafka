@@ -41,7 +41,7 @@ public class FooSerializer implements Serializer<Foo> {
         try {
             objectMapper.writeValue(os, foo);
         } catch (final IOException e) {
-            log.error("Cannot write value from " + topicName + " topic", e);
+            log.error("Cannot write value from '" + topicName + "' topic", e);
         }
         return os.toByteArray();
     }

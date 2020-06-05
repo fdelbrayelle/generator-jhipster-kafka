@@ -28,6 +28,7 @@ public class FooConsumer extends GenericConsumer<Foo> {
         if (value.isLeft()) {
             log.error("Deserialization record failure: {}", value.getLeft());
         } else {
+            // Maybe you could delete the next log.info(...) to avoid disclosing personal user information
             log.info("Handling record: {}", value.get());
         }
 

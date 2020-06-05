@@ -190,7 +190,7 @@ function askForIncrementalOperations(context, done) {
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration(context)), { name: 'None (leave incremental mode)', value: undefined }],
+            choices: [...getConcernedEntities(previousConfiguration(context))],
             default: []
         },
         {
