@@ -1,12 +1,12 @@
 /* eslint-disable no-unused-expressions */
+const _ = require('lodash');
 const assert = require('yeoman-assert');
-const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const expect = require('chai').expect;
 const fse = require('fs-extra');
 const helpers = require('yeoman-test');
+const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
 const jsYaml = require('js-yaml');
 const path = require('path');
-const _ = require('lodash');
 
 const constants = require('../generators/constants');
 
@@ -40,7 +40,8 @@ describe('JHipster generator kafka', () => {
                 .inTmpDir(dir => {
                     fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                 })
-                .withOptions({ force: true, skipPrompts: true })
+                // RunContext from run-context.js (yeoman-test) have 'force' option by default
+                .withOptions({ skipPrompts: true })
                 .on('end', done);
         });
 
