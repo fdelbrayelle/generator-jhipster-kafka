@@ -119,7 +119,7 @@ function askForBigBangOperations(context, done) {
             when: !context.options['skip-prompts'],
             type: 'checkbox',
             name: 'components',
-            message: 'Which Kafka components would you like to generate?',
+            message: 'Which components would you like to generate?',
             choices: componentChoices(),
             default: [],
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
@@ -309,7 +309,7 @@ function askForUnitaryEntityOperations(context, done) {
             type: 'checkbox',
             name: 'currentEntityComponents',
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
-            message: 'Which components do you want to generate?',
+            message: 'Which components would you like to generate?',
             choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity, context.props.currentPrefix),
             default: []
         },
@@ -317,7 +317,7 @@ function askForUnitaryEntityOperations(context, done) {
             when: response =>
                 response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
                 context.props.currentEntity &&
-                !context.props.pollingTimeout,
+                !context.props.pollingTimeout, // as it's defined for all consumers once for the moment
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
@@ -327,7 +327,7 @@ function askForUnitaryEntityOperations(context, done) {
             when: response =>
                 response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
                 context.props.currentEntity &&
-                !context.props.autoOffsetResetPolicy,
+                !context.props.autoOffsetResetPolicy, // as it's defined for all consumers once for the moment
             type: 'list',
             name: 'autoOffsetResetPolicy',
             message:
