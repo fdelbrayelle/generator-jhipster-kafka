@@ -31,17 +31,21 @@ import org.apache.kafka.common.serialization.Deserializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+<%_ if (type !== 'String') { _%>
 import java.io.IOException;
 
-<%_ if (type !== 'String') { _%>
 import <%= packageName %>.domain.<%= entityClass %>;
-
+<%_ } else { _%>
+import java.io.UnsupportedEncodingException;
 <%_ } _%>
+
 public class <%= entityClass %>Deserializer implements Deserializer<Either<DeserializationError, <%= type %>>> {
 
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Deserializer.class);
 
     private final ObjectMapper objectMapper;
+
+    private String encoding = "UTF8";
 
     public <%= entityClass %>Deserializer() {
         this.objectMapper =
@@ -58,9 +62,20 @@ public class <%= entityClass %>Deserializer implements Deserializer<Either<Deser
     @Override
     public Either<DeserializationError, <%= type %>> deserialize(final String topicName, final byte[] data) {
         try {
-            return Either.right(objectMapper.readValue(data, <%= type %>.class));
+<%_ if (type !== 'String') { _%>
+            final <%= type %> value = objectMapper.readValue(data, <%= type %>.class);
+<%_ } else { _%>
+            final <%= type %> value = data == null ? null : new String(data, this.encoding);
+<%_ } _%>
+            return Either.right(value);
+<%_ if (type !== 'String') { _%>
         } catch (final IOException e) {
             return Either.left(new DeserializationError(data, e));
         }
+<%_ } else { _%>
+        } catch (final UnsupportedEncodingException e) {
+            return Either.left(new DeserializationError(data, e));
+        }
+<%_ } _%>
     }
 }
