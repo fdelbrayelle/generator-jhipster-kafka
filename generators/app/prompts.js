@@ -104,6 +104,7 @@ function askForOperations(context) {
         } else {
             askForBigBangOperations(context, done);
         }
+        done();
     });
 }
 
