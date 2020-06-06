@@ -33,7 +33,7 @@ describe('JHipster generator kafka', () => {
         });
     });
 
-    describe('with the big bang mode only', () => {
+    describe('with the big bang mode', () => {
         describe('with a consumer and a producer for a single entity', () => {
             before(done => {
                 helpers
@@ -142,7 +142,7 @@ describe('JHipster generator kafka', () => {
         });
     });
 
-    describe('with the incremental mode only', () => {
+    describe('with the incremental mode', () => {
         describe('with only a producer for a single entity', () => {
             before(done => {
                 helpers
@@ -437,7 +437,7 @@ describe('JHipster generator kafka', () => {
             });
         });
 
-        describe('with a previous generation done', () => {
+        describe('with an existing previous generation', () => {
             describe('with only a consumer for a single entity', () => {
                 before(done => {
                     helpers

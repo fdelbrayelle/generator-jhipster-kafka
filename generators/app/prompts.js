@@ -97,15 +97,19 @@ function askForOperations(context) {
     ];
 
     const done = context.async();
-    context.prompt(prompts).then(props => {
-        context.props.generationType = props.generationType;
-        if (props.generationType === constants.INCREMENTAL_MODE) {
-            askForIncrementalOperations(context, done);
-        } else {
-            askForBigBangOperations(context, done);
-        }
+    try {
+        context.prompt(prompts).then(props => {
+            context.props.generationType = props.generationType;
+            if (props.generationType === constants.INCREMENTAL_MODE) {
+                askForIncrementalOperations(context, done);
+            } else {
+                askForBigBangOperations(context, done);
+            }
+        });
+    } catch (e) {
+        context.error('An error occurred while asking for operations', e);
         done();
-    });
+    }
 }
 
 function askForBigBangOperations(context, done) {
