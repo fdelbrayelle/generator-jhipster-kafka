@@ -23,15 +23,24 @@ public class FooConsumer extends GenericConsumer<Foo> {
 
     @Override
     protected void handleMessage(final ConsumerRecord<String, Either<DeserializationError, Foo>> record) {
+
+        // TODO /!\ Maybe you could delete the next log calls to avoid disclosing personal user information
+
         final Either<DeserializationError, Foo> value = record.value();
-        if (value.isLeft()) {
-            log.error("Deserialization record failure: {}", value.getLeft());
-        } else {
-            // Maybe you could delete the next log.info(...) to avoid disclosing personal user information
-            log.info("Handling record: {}", value.get());
+
+        if (value == null) {
+            log.error("Null value in record {}", record);
+            return;
         }
 
-        // TODO: Here is where you can handle your messages
+        if (value.isLeft()) {
+            log.error("Deserialization record failure: {}", value.getLeft());
+            return;
+        }
+
+        log.info("Handling record: {}", value.get());
+
+        // TODO: Here is where you can handle your records
     }
 
     @Bean
