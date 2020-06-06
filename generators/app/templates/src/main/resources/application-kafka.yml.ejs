@@ -16,7 +16,7 @@ _%>
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= entity %>Deserializer
+      '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= _.upperFirst(_.camelCase(entity)) %>Deserializer
       '[group.id]': <%= dasherizedBaseName %>
 <%_ if (autoOffsetResetPolicy) { _%>
       '[auto.offset.reset]': <%= autoOffsetResetPolicy %>
@@ -34,7 +34,7 @@ _%>
       name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= entity %>Serializer
+      '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= _.upperFirst(_.camelCase(entity)) %>Serializer
 <%_ } _%>
 <%_ } _%>
 
