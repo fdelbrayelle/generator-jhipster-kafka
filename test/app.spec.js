@@ -33,6 +33,40 @@ describe('JHipster generator kafka', () => {
         });
     });
 
+    describe('with --force --skip-prompts options', () => {
+        before(done => {
+            helpers
+                .run(path.join(__dirname, '../generators/app'))
+                .inTmpDir(dir => {
+                    fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                })
+                .withOptions({ force: true, skipPrompts: true })
+                .on('end', done);
+        });
+
+        it('should generate generic consumer and akhq.yml', () => {
+            const expectedFiles = [
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/GenericConsumer.java`,
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/DeserializationError.java`,
+                `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
+            ];
+
+            assert.file(expectedFiles);
+        });
+
+        it('should update application.yml', () => {
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+            );
+
+            assert.fileContent(
+                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+            );
+        });
+    });
+
     describe('with the big bang mode', () => {
         describe('with a consumer and a producer for a single entity', () => {
             before(done => {
@@ -720,7 +754,8 @@ function itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(entityNam
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${entityName}Deserializer.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${entityName}Producer.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${entityName}Serializer.java`,
-            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${entityName}KafkaResource.java`
+            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${entityName}KafkaResource.java`,
+            `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
         ];
         assert.file(expectedFiles);
     });

@@ -28,6 +28,7 @@ const NO_ENTITY = 'no_entity';
 const EARLIEST_OFFSET = 'earliest';
 const LATEST_OFFSET = 'latest';
 const NONE_OFFSET = 'none';
+const DEFAULT_POLLING_TIMEOUT = '10000';
 const JSON_EXTENSION = '.json';
 const EMPTY_STRING = '';
 
@@ -35,16 +36,17 @@ const constants = {
     JHIPSTER_CONFIG_DIR,
     MODULES_HOOK_FILE,
     MODULE_NAME,
-    CONSUMER_COMPONENT,
-    PRODUCER_COMPONENT,
     BIGBANG_MODE,
     INCREMENTAL_MODE,
+    CONSUMER_COMPONENT,
+    PRODUCER_COMPONENT,
     NO_ENTITY,
-    JSON_EXTENSION,
-    EMPTY_STRING,
     EARLIEST_OFFSET,
     LATEST_OFFSET,
-    NONE_OFFSET
+    NONE_OFFSET,
+    DEFAULT_POLLING_TIMEOUT,
+    JSON_EXTENSION,
+    EMPTY_STRING
 };
 
 module.exports = constants;

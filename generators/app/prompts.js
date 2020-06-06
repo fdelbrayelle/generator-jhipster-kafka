@@ -88,6 +88,7 @@ function entitiesChoices(context) {
 function askForOperations(context) {
     const prompts = [
         {
+            when: !context.options['skip-prompts'],
             type: 'list',
             name: 'generationType',
             message: 'Which type of generation do you want?',
@@ -100,10 +101,10 @@ function askForOperations(context) {
     try {
         context.prompt(prompts).then(props => {
             context.props.generationType = props.generationType;
-            if (props.generationType === constants.INCREMENTAL_MODE) {
-                askForIncrementalOperations(context, done);
-            } else {
+            if (!props.generationType || props.generationType === constants.BIGBANG_MODE) {
                 askForBigBangOperations(context, done);
+            } else if (props.generationType === constants.INCREMENTAL_MODE) {
+                askForIncrementalOperations(context, done);
             }
         });
     } catch (e) {
@@ -115,6 +116,7 @@ function askForOperations(context) {
 function askForBigBangOperations(context, done) {
     const bigbangPrompt = [
         {
+            when: !context.options['skip-prompts'],
             type: 'checkbox',
             name: 'components',
             message: 'Which Kafka components would you like to generate?',
@@ -129,7 +131,7 @@ function askForBigBangOperations(context, done) {
             name: 'entities',
             message: 'For which entity (class name)?',
             choices: entitiesChoices(context),
-            default: [],
+            default: constants.NO_ENTITY,
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
         },
         {
@@ -150,7 +152,7 @@ function askForBigBangOperations(context, done) {
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
-            default: '10000',
+            default: constants.DEFAULT_POLLING_TIMEOUT,
             validate: input => (isNaN(input) ? 'Please enter a number' : true)
         },
         {
@@ -164,12 +166,18 @@ function askForBigBangOperations(context, done) {
         }
     ];
 
+    if (context.options['skip-prompts']) {
+        context.props = _.merge(context.props, bigbangPrompt.map(prompt => prompt.default));
+        done();
+        return;
+    }
+
     context.prompt(bigbangPrompt).then(answers => {
         if (answers.componentPrefix) {
             context.props.componentsPrefixes.push(answers.componentPrefix);
         }
+
         context.props = _.merge(context.props, answers);
-        // To access props later use this.props.someOption;
         done();
     });
 }
@@ -196,7 +204,7 @@ function askForIncrementalOperations(context, done) {
             name: 'currentEntity',
             message: 'For which entity (class name)?',
             choices: [...getConcernedEntities(previousConfiguration(context))],
-            default: []
+            default: constants.NO_ENTITY
         },
         {
             when: response => response.currentEntity === constants.NO_ENTITY,
@@ -313,7 +321,7 @@ function askForUnitaryEntityOperations(context, done) {
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
-            default: '10000'
+            default: constants.DEFAULT_POLLING_TIMEOUT
         },
         {
             when: response =>
