@@ -14,12 +14,15 @@ function transformToJavaClassNameCase(entityName) {
     return _.upperFirst(_.camelCase(entityName));
 }
 
-function loadPreviousConfiguration(context, pathOfApplicationYaml) {
+function loadPreviousConfiguration(generator, pathOfApplicationYaml) {
     try {
         return jsYaml.safeLoad(fs.readFileSync(`${pathOfApplicationYaml}`, 'utf8'));
-    } catch (err) {
-        context.log(
-            `${chalk.red.bold('WARN!')} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`
+    } catch (e) {
+        generator.log(
+            `${chalk.red.bold(
+                'WARN!'
+            )} Could not parse the previous Kafka configuration, the previous configuration could be overwritten\n`,
+            e
         );
     }
     return {};
@@ -29,13 +32,13 @@ function loadPreviousConfiguration(context, pathOfApplicationYaml) {
  * Return the kafka configuration as a Json Object from properties at #{param pathOfApplicationYaml}
  * or return an empty configuration.
  *
- * @param {Object} context - the Execution context (ex: generator).
+ * @param {Object} generator
  * @param pathOfApplicationYaml - the path to yaml file {@see jsYaml}
  * @param boolean forceCleanConfiguration - to retrieve an empty configuration.
  * @return {Object} - Json object representing all kafka yaml block. {@see jsYaml#safeLoad}
  */
-function getPreviousKafkaConfiguration(context, pathOfApplicationYaml, forceCleanConfiguration = false) {
-    const previousGlobalConfiguration = loadPreviousConfiguration(context, pathOfApplicationYaml);
+function getPreviousKafkaConfiguration(generator, pathOfApplicationYaml, forceCleanConfiguration = false) {
+    const previousGlobalConfiguration = loadPreviousConfiguration(generator, pathOfApplicationYaml);
     if (previousGlobalConfiguration.kafka && !forceCleanConfiguration) {
         return { kafka: previousGlobalConfiguration.kafka };
     }

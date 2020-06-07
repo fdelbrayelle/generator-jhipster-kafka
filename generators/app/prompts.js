@@ -10,8 +10,8 @@ module.exports = {
     askForOperations
 };
 
-const previousConfiguration = context =>
-    utils.getPreviousKafkaConfiguration(context, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+const previousConfiguration = generator =>
+    utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
 
 function generationTypeChoices() {
     return [
@@ -59,10 +59,10 @@ function componentChoices() {
 /**
  * Retrieve from .jhipster metadata, the list of all project entities.
  *
- * @param context - execution context (ex:generator)
+ * @param generator
  * @returns {[]} - all entities choices possible
  */
-function entitiesChoices(context) {
+function entitiesChoices(generator) {
     const entitiesChoices = [];
     let existingEntityNames = [];
 
@@ -71,7 +71,7 @@ function entitiesChoices(context) {
     try {
         existingEntityNames = fs.readdirSync(constants.JHIPSTER_CONFIG_DIR);
     } catch (e) {
-        context.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: ${constants.JHIPSTER_CONFIG_DIR}`); // eslint-disable-line
+        generator.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: ${constants.JHIPSTER_CONFIG_DIR}`, e);
     }
     existingEntityNames.forEach(entry => {
         if (entry.indexOf(constants.JSON_EXTENSION) !== -1) {
@@ -85,10 +85,10 @@ function entitiesChoices(context) {
     return entitiesChoices;
 }
 
-function askForOperations(context) {
+function askForOperations(generator) {
     const prompts = [
         {
-            when: !context.options['skip-prompts'],
+            when: !generator.options['skip-prompts'],
             type: 'list',
             name: 'generationType',
             message: 'Which type of generation do you want?',
@@ -97,26 +97,26 @@ function askForOperations(context) {
         }
     ];
 
-    const done = context.async();
+    const done = generator.async();
     try {
-        context.prompt(prompts).then(props => {
-            context.props.generationType = props.generationType;
+        generator.prompt(prompts).then(props => {
+            generator.props.generationType = props.generationType;
             if (!props.generationType || props.generationType === constants.BIGBANG_MODE) {
-                askForBigBangOperations(context, done);
+                askForBigBangOperations(generator, done);
             } else if (props.generationType === constants.INCREMENTAL_MODE) {
-                askForIncrementalOperations(context, done);
+                askForIncrementalOperations(generator, done);
             }
         });
     } catch (e) {
-        context.error('An error occurred while asking for operations', e);
+        generator.error('An error occurred while asking for operations', e);
         done();
     }
 }
 
-function askForBigBangOperations(context, done) {
+function askForBigBangOperations(generator, done) {
     const bigbangPrompt = [
         {
-            when: !context.options['skip-prompts'],
+            when: !generator.options['skip-prompts'],
             type: 'checkbox',
             name: 'components',
             message: 'Which components would you like to generate?',
@@ -130,7 +130,7 @@ function askForBigBangOperations(context, done) {
             type: 'checkbox',
             name: 'entities',
             message: 'For which entity (class name)?',
-            choices: entitiesChoices(context),
+            choices: entitiesChoices(generator),
             default: constants.NO_ENTITY,
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
         },
@@ -141,7 +141,7 @@ function askForBigBangOperations(context, done) {
             message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
             validate: input => {
                 if (_.isEmpty(input)) return 'Please enter a value';
-                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                if (entitiesChoices(generator).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
                     return 'This name is already taken by an entity generated with JHipster';
                 }
                 return true;
@@ -166,34 +166,34 @@ function askForBigBangOperations(context, done) {
         }
     ];
 
-    if (context.options['skip-prompts']) {
-        context.props = _.merge(context.props, bigbangPrompt.map(prompt => prompt.default));
+    if (generator.options['skip-prompts']) {
+        generator.props = _.merge(generator.props, bigbangPrompt.map(prompt => prompt.default));
         done();
         return;
     }
 
-    context.prompt(bigbangPrompt).then(answers => {
+    generator.prompt(bigbangPrompt).then(answers => {
         if (answers.componentPrefix) {
-            context.props.componentsPrefixes.push(answers.componentPrefix);
+            generator.props.componentsPrefixes.push(answers.componentPrefix);
         }
 
-        context.props = _.merge(context.props, answers);
+        generator.props = _.merge(generator.props, answers);
         done();
     });
 }
 
-function askForIncrementalOperations(context, done) {
+function askForIncrementalOperations(generator, done) {
     const getConcernedEntities = previousConfiguration => {
-        const allEntities = entitiesChoices(context);
+        const allEntities = entitiesChoices(generator);
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
         // exclude entities found in the previous configuration
-        // and those already store for this instance execution {@see context.props}
+        // and those already store for this instance execution {@see generator.props}
         return allEntities.filter(
             entityName =>
                 (!entitiesComponents.consumers.includes(entityName.value) || !entitiesComponents.producers.includes(entityName.value)) &&
-                (!context.props.componentsByEntityConfig[entityName.value] ||
-                    !context.props.componentsByEntityConfig[entityName.value].includes(constants.CONSUMER_COMPONENT) ||
-                    !context.props.componentsByEntityConfig[entityName.value].includes(constants.PRODUCER_COMPONENT) ||
+                (!generator.props.componentsByEntityConfig[entityName.value] ||
+                    !generator.props.componentsByEntityConfig[entityName.value].includes(constants.CONSUMER_COMPONENT) ||
+                    !generator.props.componentsByEntityConfig[entityName.value].includes(constants.PRODUCER_COMPONENT) ||
                     entityName.value === constants.NO_ENTITY)
         );
     };
@@ -203,7 +203,7 @@ function askForIncrementalOperations(context, done) {
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration(context))],
+            choices: [...getConcernedEntities(previousConfiguration(generator))],
             default: constants.NO_ENTITY
         },
         {
@@ -214,11 +214,11 @@ function askForIncrementalOperations(context, done) {
             validate: input => {
                 if (_.isEmpty(input)) return 'Please enter a value';
 
-                if (entitiesChoices(context).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
+                if (entitiesChoices(generator).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
                     return 'This name is already taken by an entity generated with JHipster';
                 }
 
-                const availableComponents = getAvailableComponentsWithoutEntity(context, previousConfiguration(context), input);
+                const availableComponents = getAvailableComponentsWithoutEntity(generator, previousConfiguration(generator), input);
                 if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
 
                 return true;
@@ -226,32 +226,32 @@ function askForIncrementalOperations(context, done) {
         }
     ];
 
-    context.prompt(incrementalPrompt).then(answers => {
-        context.props.currentEntity = undefined;
+    generator.prompt(incrementalPrompt).then(answers => {
+        generator.props.currentEntity = undefined;
 
         if (answers.currentEntity) {
-            context.props.currentEntity = answers.currentEntity;
-            context.props.currentPrefix = answers.currentPrefix;
-            if (!context.props.entities.includes(answers.currentEntity) || answers.currentEntity !== constants.NO_ENTITY) {
-                context.props.entities.push(answers.currentEntity);
+            generator.props.currentEntity = answers.currentEntity;
+            generator.props.currentPrefix = answers.currentPrefix;
+            if (!generator.props.entities.includes(answers.currentEntity) || answers.currentEntity !== constants.NO_ENTITY) {
+                generator.props.entities.push(answers.currentEntity);
             }
-            if (answers.currentPrefix && !context.props.componentsPrefixes.includes(answers.currentPrefix)) {
-                context.props.componentsPrefixes.push(answers.currentPrefix);
+            if (answers.currentPrefix && !generator.props.componentsPrefixes.includes(answers.currentPrefix)) {
+                generator.props.componentsPrefixes.push(answers.currentPrefix);
             }
-            askForUnitaryEntityOperations(context, done);
+            askForUnitaryEntityOperations(generator, done);
         } else {
             done();
         }
     });
 }
 
-function getAvailableComponentsWithoutEntity(context, previousConfiguration, prefix) {
+function getAvailableComponentsWithoutEntity(generator, previousConfiguration, prefix) {
     const availableComponents = [];
     const allComponentChoices = componentChoices();
     const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
     const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
-    if (context.props.componentsByEntityConfig) {
-        const componentForPrefix = context.props.componentsByEntityConfig[prefixJavaClassName];
+    if (generator.props.componentsByEntityConfig) {
+        const componentForPrefix = generator.props.componentsByEntityConfig[prefixJavaClassName];
         if (
             !entitiesComponents.consumers.includes(prefixJavaClassName) &&
             (!componentForPrefix || !componentForPrefix.includes(constants.CONSUMER_COMPONENT))
@@ -268,23 +268,23 @@ function getAvailableComponentsWithoutEntity(context, previousConfiguration, pre
     return availableComponents;
 }
 
-function askForUnitaryEntityOperations(context, done) {
+function askForUnitaryEntityOperations(generator, done) {
     const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentChoices();
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
 
         if (entityName === constants.NO_ENTITY) {
-            return getAvailableComponentsWithoutEntity(context, previousConfiguration, currentPrefix);
+            return getAvailableComponentsWithoutEntity(generator, previousConfiguration, currentPrefix);
         }
 
         // exclude components found in the previous configuration
-        // and those already store for this instance execution {@see context.props}
+        // and those already store for this instance execution {@see generator.props}
         if (entitiesComponents) {
             if (
                 !entitiesComponents.consumers.includes(entityName) &&
-                (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes(constants.CONSUMER_COMPONENT))
+                (!generator.props.componentsByEntityConfig[entityName] ||
+                    !generator.props.componentsByEntityConfig[entityName].includes(constants.CONSUMER_COMPONENT))
             ) {
                 availableComponents.push(
                     allComponentChoices.find(componentChoice => componentChoice.value === constants.CONSUMER_COMPONENT)
@@ -292,8 +292,8 @@ function askForUnitaryEntityOperations(context, done) {
             }
             if (
                 !entitiesComponents.producers.includes(entityName) &&
-                (!context.props.componentsByEntityConfig[entityName] ||
-                    !context.props.componentsByEntityConfig[entityName].includes(constants.PRODUCER_COMPONENT))
+                (!generator.props.componentsByEntityConfig[entityName] ||
+                    !generator.props.componentsByEntityConfig[entityName].includes(constants.PRODUCER_COMPONENT))
             ) {
                 availableComponents.push(
                     allComponentChoices.find(componentChoice => componentChoice.value === constants.PRODUCER_COMPONENT)
@@ -305,19 +305,19 @@ function askForUnitaryEntityOperations(context, done) {
 
     const unitaryEntityPrompt = [
         {
-            when: context.props.currentEntity,
+            when: generator.props.currentEntity,
             type: 'checkbox',
             name: 'currentEntityComponents',
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components would you like to generate?',
-            choices: getConcernedComponents(previousConfiguration(context), context.props.currentEntity, context.props.currentPrefix),
+            choices: getConcernedComponents(previousConfiguration(generator), generator.props.currentEntity, generator.props.currentPrefix),
             default: []
         },
         {
             when: response =>
                 response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
-                context.props.currentEntity &&
-                !context.props.pollingTimeout, // as it's defined for all consumers once for the moment
+                generator.props.currentEntity &&
+                !generator.props.pollingTimeout, // as it's defined for all consumers once for the moment
             type: 'number',
             name: 'pollingTimeout',
             message: 'What is the consumer polling timeout (in ms)?',
@@ -326,8 +326,8 @@ function askForUnitaryEntityOperations(context, done) {
         {
             when: response =>
                 response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) &&
-                context.props.currentEntity &&
-                !context.props.autoOffsetResetPolicy, // as it's defined for all consumers once for the moment
+                generator.props.currentEntity &&
+                !generator.props.autoOffsetResetPolicy, // as it's defined for all consumers once for the moment
             type: 'list',
             name: 'autoOffsetResetPolicy',
             message:
@@ -343,26 +343,26 @@ function askForUnitaryEntityOperations(context, done) {
         }
     ];
 
-    context.prompt(unitaryEntityPrompt).then(answers => {
-        if (context.props.currentEntity) {
-            if (!context.props.componentsByEntityConfig) {
-                context.props.componentsByEntityConfig = [];
+    generator.prompt(unitaryEntityPrompt).then(answers => {
+        if (generator.props.currentEntity) {
+            if (!generator.props.componentsByEntityConfig) {
+                generator.props.componentsByEntityConfig = [];
             }
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
-                if (context.props.currentEntity === constants.NO_ENTITY) {
-                    pushComponentsByEntity(context, answers, utils.transformToJavaClassNameCase(context.props.currentPrefix));
+                if (generator.props.currentEntity === constants.NO_ENTITY) {
+                    pushComponentsByEntity(generator, answers, utils.transformToJavaClassNameCase(generator.props.currentPrefix));
                 } else {
-                    pushComponentsByEntity(context, answers, context.props.currentEntity);
+                    pushComponentsByEntity(generator, answers, generator.props.currentEntity);
                 }
             }
             if (answers.pollingTimeout) {
-                context.props.pollingTimeout = +answers.pollingTimeout; // force conversion to int
+                generator.props.pollingTimeout = +answers.pollingTimeout; // force conversion to int
             }
             if (answers.autoOffsetResetPolicy) {
-                context.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
+                generator.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
             }
             if (answers.continueAddingEntitiesComponents) {
-                askForIncrementalOperations(context, done);
+                askForIncrementalOperations(generator, done);
             } else {
                 done();
             }
@@ -372,11 +372,11 @@ function askForUnitaryEntityOperations(context, done) {
     });
 }
 
-function pushComponentsByEntity(context, answers, entity) {
-    context.props.componentsByEntityConfig.push(entity);
-    if (context.props.componentsByEntityConfig[entity]) {
-        context.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
+function pushComponentsByEntity(generator, answers, entity) {
+    generator.props.componentsByEntityConfig.push(entity);
+    if (generator.props.componentsByEntityConfig[entity]) {
+        generator.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
     } else {
-        context.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+        generator.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
     }
 }
