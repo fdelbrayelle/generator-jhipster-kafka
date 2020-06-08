@@ -12,9 +12,6 @@ module.exports = {
     writeFiles
 };
 
-// This is a default topic naming convention which can be updated (see also application-kafka.yml.ejs)
-const topicNamingFormat = (generator, entity) => `queuing.${generator.snakeCaseBaseName}.${_.snakeCase(entity)}`;
-
 function initVariables(generator) {
     const vavrVersion = '0.10.3';
     generator.addMavenProperty('vavr.version', vavrVersion);
@@ -47,6 +44,7 @@ function initVariables(generator) {
     generator.componentsPrefixes = generator.props.componentsPrefixes || [];
     generator.components = generator.props.components;
     generator.componentsByEntityConfig = generator.props.componentsByEntityConfig || [];
+    generator.topics = generator.props.topics;
     generator.pollingTimeout = generator.props.pollingTimeout;
     generator.autoOffsetResetPolicy = generator.props.autoOffsetResetPolicy;
 
@@ -320,6 +318,19 @@ function writeFiles(generator) {
             writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, utils.transformToJavaClassNameCase(prefix));
         });
 
+        if (!kafkaPreviousConfiguration.kafka.topic) {
+            kafkaPreviousConfiguration.kafka.topic = {};
+        }
+
+        if (!kafkaPreviousTestConfiguration.kafka.topic) {
+            kafkaPreviousTestConfiguration.kafka.topic = {};
+        }
+
+        generator.topics.forEach(topic => {
+            kafkaPreviousConfiguration.kafka.topic[topic.key] = topic.value;
+            kafkaPreviousTestConfiguration.kafka.topic[topic.key] = topic.value;
+        });
+
         const kafkaProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousConfiguration), {
             lineWidth: -1
         });
@@ -356,7 +367,6 @@ function writeFiles(generator) {
 
 function buildJsonConsumerConfiguration(generator, entity, enabled) {
     return {
-        name: topicNamingFormat(generator, entity),
         enabled,
         '[key.deserializer]': 'org.apache.kafka.common.serialization.StringDeserializer',
         '[value.deserializer]': `${generator.packageName}.service.kafka.deserializer.${entity}Deserializer`,
@@ -367,16 +377,15 @@ function buildJsonConsumerConfiguration(generator, entity, enabled) {
 
 function buildJsonProducerConfiguration(generator, entity, enabled) {
     return {
-        name: topicNamingFormat(generator, entity),
         enabled,
         '[key.serializer]': 'org.apache.kafka.common.serialization.StringSerializer',
         '[value.serializer]': `${generator.packageName}.service.kafka.serializer.${entity}Serializer`
     };
 }
 function sanitizeProperties(jsyamlGeneratedProperties) {
-    // related to https://github.com/nodeca/js-yaml/issues/470
+    // Related to: https://github.com/nodeca/js-yaml/issues/470
     const patternContainingSingleQuote = /^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm;
-    // related to https://github.com/nodeca/js-yaml/issues/478
+    // Related to: https://github.com/nodeca/js-yaml/issues/478
     const patternNullGeneratedValue = /^(\s.+)(:)([ ]+null.*)$/gm;
     return jsyamlGeneratedProperties.replace(patternContainingSingleQuote, '$1$2$4').replace(patternNullGeneratedValue, '$1$2');
 }
@@ -407,7 +416,7 @@ function registerToEntityPostHook(generator) {
             'entity',
             'post',
             'entity',
-            'A JHipster module to generate Apache Kafka consumers and producers.'
+            'A JHipster module that generates Apache Kafka consumers and producers and more!'
         );
     } catch (e) {
         generator.log(`${chalk.red.bold('WARN!')} Could not register as a jhipster entity post creation hook...\n`, e);

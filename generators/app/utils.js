@@ -7,8 +7,14 @@ module.exports = {
     getPreviousKafkaConfiguration,
     extractEntitiesComponents,
     orderKafkaProperties,
-    transformToJavaClassNameCase
+    transformToJavaClassNameCase,
+    topicNamingFormat
 };
+
+// This is a default topic naming convention which can be updated (see also application-kafka.yml.ejs)
+function topicNamingFormat(baseName, name) {
+    return `queuing.${baseName}.${name}`;
+}
 
 function transformToJavaClassNameCase(entityName) {
     return _.upperFirst(_.camelCase(entityName));

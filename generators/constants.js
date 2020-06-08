@@ -31,6 +31,11 @@ const NONE_OFFSET = 'none';
 const DEFAULT_POLLING_TIMEOUT = '10000';
 const JSON_EXTENSION = '.json';
 const EMPTY_STRING = '';
+const DEFAULT_TOPIC = 'default_topic';
+const CUSTOM_TOPIC = 'custom_topic';
+
+// Related to: https://github.com/apache/kafka/commit/ad3dfc6ab25c3f80d2425e24e72ae732b850dc60
+const TOPIC_NAME_MAX_SIZE = 249;
 
 const constants = {
     JHIPSTER_CONFIG_DIR,
@@ -46,7 +51,10 @@ const constants = {
     NONE_OFFSET,
     DEFAULT_POLLING_TIMEOUT,
     JSON_EXTENSION,
-    EMPTY_STRING
+    EMPTY_STRING,
+    DEFAULT_TOPIC,
+    CUSTOM_TOPIC,
+    TOPIC_NAME_MAX_SIZE
 };
 
 module.exports = constants;

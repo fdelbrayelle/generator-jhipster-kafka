@@ -13,7 +13,6 @@ kafka:
         }
 _%>
     <%= _.camelCase(entity) _%>:
-      name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= _.upperFirst(_.camelCase(entity)) %>Deserializer
@@ -31,10 +30,15 @@ _%>
         }
 _%>
     <%= _.camelCase(entity) _%>:
-      name: queuing.<%= snakeCaseBaseName %>.<%= _.snakeCase(entity) %>
       enabled: <%= enabled %>
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= _.upperFirst(_.camelCase(entity)) %>Serializer
+<%_ } _%>
+<%_ } _%>
+<%_ if (components.includes('consumer') || components.includes('producer')) { _%>
+  topic:
+<%_ for (topic of topics) { _%>
+    <%= topic.key %>: <%= topic.value %>
 <%_ } _%>
 <%_ } _%>
 
