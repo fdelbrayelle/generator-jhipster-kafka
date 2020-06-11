@@ -14,6 +14,8 @@ const FOO_ENTITY = 'Foo';
 const AWESOME_ENTITY = 'AwesomeEntity';
 const COMPONENT_PREFIX = 'ComponentsWithoutEntity';
 const COMPONENTS_CHOSEN = Object.freeze({ all: 1, consumer: 2, producer: 3 });
+const CUSTOM_TOPIC_NAME = 'custom_topic_name';
+const EXISTING_TOPIC_NAME = 'queuing.message_broker_with_entities.foo';
 
 describe('JHipster generator kafka', () => {
     describe('with no message broker', () => {
@@ -173,6 +175,51 @@ describe('JHipster generator kafka', () => {
             it('should update application.yml kafka.auto.offset.reset property', () => {
                 assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
                 assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
+            });
+        });
+
+        describe('with a consumer and a producer for a single entity with a default topic name', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        generationType: constants.BIGBANG_MODE,
+                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        entities: [FOO_ENTITY],
+                        topic: constants.DEFAULT_TOPIC
+                    })
+                    .on('end', done);
+            });
+
+            it('should put a default topic name in application.yml', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.DEFAULT_TOPIC, null);
+            });
+        });
+
+        describe('with a consumer and a producer for a single entity with a custom topic name', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        generationType: constants.BIGBANG_MODE,
+                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        entities: [FOO_ENTITY],
+                        topic: constants.CUSTOM_TOPIC,
+                        topicName: CUSTOM_TOPIC_NAME
+                    })
+                    .on('end', done);
+            });
+
+            it('should put a custom topic name in application.yml', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
             });
         });
     });
@@ -422,6 +469,53 @@ describe('JHipster generator kafka', () => {
 
                 itShouldUpdatesPropertiesWithGivenValue();
             });
+
+            describe('with a default topic name', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            generationType: constants.INCREMENTAL_MODE,
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            topic: constants.DEFAULT_TOPIC,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should put a default topic name in application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.DEFAULT_TOPIC, null);
+                });
+            });
+
+            describe('with a custom topic name', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            generationType: constants.INCREMENTAL_MODE,
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            topic: constants.CUSTOM_TOPIC,
+                            topicName: CUSTOM_TOPIC_NAME,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should put a custom topic name in application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
+                });
+            });
         });
 
         describe('with a consumer and a producer without entity', () => {
@@ -609,6 +703,29 @@ describe('JHipster generator kafka', () => {
                     const { applicationYml, testApplicationYml } = loadApplicationYaml();
                     assertThatKafkaPropertiesAreOrdered(applicationYml);
                     assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+                });
+            });
+
+            describe('with a consumer and a producer for a single entity (using an existing topic name)', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                        })
+                        .withPrompts({
+                            generationType: constants.INCREMENTAL_MODE,
+                            currentEntity: AWESOME_ENTITY,
+                            currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
+                            topic: EXISTING_TOPIC_NAME,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should put an existing topic name in application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertTopicName(applicationYml, testApplicationYml, AWESOME_ENTITY, null, EXISTING_TOPIC_NAME);
                 });
             });
 
@@ -846,10 +963,29 @@ function assertMinimalProperties(applicationYml, testApplicationYml, entityName,
         entityTestYmlBlock = testApplicationYml.kafka.producer[`${_.camelCase(entityName)}`];
     }
 
-    assert.textEqual(entityYmlBlock.name, `queuing.message_broker_with_entities.${_.snakeCase(entityName)}`);
     assert.textEqual(entityYmlBlock.enabled.toString(), 'true');
-    assert.textEqual(entityTestYmlBlock.name, `queuing.message_broker_with_entities.${_.snakeCase(entityName)}`);
     assert.textEqual(entityTestYmlBlock.enabled.toString(), 'false');
+
+    assertTopicName(applicationYml, testApplicationYml, entityName, constants.DEFAULT_TOPIC, null);
+}
+
+function assertTopicName(applicationYml, testApplicationYml, entityName, topicChoice, topicName) {
+    let expectedTopicName = `queuing.message_broker_with_entities.${_.snakeCase(entityName)}`;
+
+    if (topicChoice !== constants.DEFAULT_TOPIC) {
+        expectedTopicName = topicName;
+    }
+
+    Object.keys(applicationYml.kafka.topic).forEach(key => {
+        if (key === _.camelCase(entityName)) {
+            assert.textEqual(applicationYml.kafka.topic[key], expectedTopicName);
+        }
+    });
+    Object.keys(testApplicationYml.kafka.topic).forEach(key => {
+        if (key === _.camelCase(entityName)) {
+            assert.textEqual(testApplicationYml.kafka.topic[key], expectedTopicName);
+        }
+    });
 }
 
 function assertThatKafkaPropertiesAreOrdered(applicationYml) {

@@ -19,12 +19,13 @@ module.exports = class extends BaseGenerator {
             defaults: false
         });
 
-        // init props
+        // props used for writing
         this.props = {
             entities: [],
             components: [],
             componentsByEntityConfig: [],
-            componentsPrefixes: []
+            componentsPrefixes: [],
+            topics: []
         };
 
         this.setupClientOptions(this);
@@ -54,7 +55,11 @@ module.exports = class extends BaseGenerator {
                 this.printJHipsterLogo();
 
                 // Have Yeoman greet the user.
-                this.log(`\nWelcome to the ${chalk.bold.yellow('JHipster kafka')} generator! ${chalk.yellow(`v${packagejs.version}\n`)}`);
+                this.log(
+                    `\nWelcome to the ${chalk.bold.yellow('Kafka')} Module for ${chalk.bold.green('J')}${chalk.bold.red(
+                        'Hipster'
+                    )}! ${chalk.yellow(`v${packagejs.version}\n`)}`
+                );
             },
             checkJhipster() {
                 const currentJhipsterVersion = this.jhipsterAppConfig.jhipsterVersion;

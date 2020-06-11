@@ -163,19 +163,19 @@ kafka:
   bootstrap.servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
   producer:
     foo:
-      name: queuing.message_broker_with_entities.foo
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
       '[value.serializer]': com.mycompany.myapp.service.kafka.serializer.FooSerializer
   polling.timeout: 10000
   consumer:
     foo:
-      name: queuing.message_broker_with_entities.foo
       enabled: true
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
       '[value.deserializer]': com.mycompany.myapp.service.kafka.deserializer.FooDeserializer
       '[group.id]': message-broker-with-entities
       '[auto.offset.reset]': earliest
+  topic:
+    foo: queuing.message_broker_with_entities.foo
 # ===================================================================
 # Application specific properties
 # Add your own application properties here, see the ApplicationProperties class

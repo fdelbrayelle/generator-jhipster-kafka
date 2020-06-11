@@ -43,7 +43,7 @@ function offsetChoices() {
     ];
 }
 
-function componentChoices() {
+function componentsChoices() {
     return [
         {
             name: 'Consumer',
@@ -54,6 +54,34 @@ function componentChoices() {
             value: constants.PRODUCER_COMPONENT
         }
     ];
+}
+
+function topicsChoices(generator, previousConfiguration) {
+    const topicsChoices = [];
+    topicsChoices.push({
+        name: 'Default topic name following this convention: message_type.application_type.entity_name',
+        value: constants.DEFAULT_TOPIC
+    });
+    topicsChoices.push({
+        name: 'Custom topic name',
+        value: constants.CUSTOM_TOPIC
+    });
+
+    if (previousConfiguration && previousConfiguration.topic) {
+        Object.entries(previousConfiguration.topic).forEach(topic => {
+            if (!topicsChoices.some(t => t.name === topic[1])) {
+                topicsChoices.push({ name: topic[1], value: topic[1] });
+            }
+        });
+    }
+
+    generator.props.topics.forEach(topic => {
+        if (!topic.existingTopicName) {
+            topicsChoices.push({ name: topic.value, value: topic.value });
+        }
+    });
+
+    return topicsChoices;
 }
 
 /**
@@ -120,7 +148,7 @@ function askForBigBangOperations(generator, done) {
             type: 'checkbox',
             name: 'components',
             message: 'Which components would you like to generate?',
-            choices: componentChoices(),
+            choices: componentsChoices(),
             default: [],
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
         },
@@ -178,7 +206,77 @@ function askForBigBangOperations(generator, done) {
         }
 
         generator.props = _.merge(generator.props, answers);
-        done();
+
+        askForBigBangEntityOperations(generator, answers, done);
+    });
+}
+
+function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0) {
+    let name = answers.entities[entityIndex];
+    if (answers.entities[entityIndex] === constants.NO_ENTITY) {
+        name = answers.componentPrefix;
+    }
+
+    const bigbangEntityPrompt = [
+        {
+            when: answers.components.includes(constants.CONSUMER_COMPONENT) || answers.components.includes(constants.PRODUCER_COMPONENT),
+            type: 'list',
+            name: 'topic',
+            message: `Which topic for ${name}?`,
+            choices: topicsChoices(generator, null),
+            default: constants.DEFAULT_TOPIC
+        },
+        {
+            when: response => response.topic === constants.CUSTOM_TOPIC,
+            type: 'input',
+            name: 'topicName',
+            message: `What is the topic name for ${name}?`,
+            validate: input => {
+                if (_.isEmpty(input)) return 'You have to choose a topic name';
+
+                const legalChars = /^[A-Za-z0-9._]+$/gm;
+                if (!input.match(new RegExp(legalChars))) {
+                    return 'You can only use alphanumeric characters, dots and underscores';
+                }
+
+                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
+                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
+                }
+
+                return true;
+            }
+        },
+        {
+            when: entityIndex < answers.entities.length - 1,
+            type: 'confirm',
+            name: 'confirmBigBangEntityOperations',
+            message: 'Do you want to continue to the next entity/prefix or exit?',
+            default: true
+        }
+    ];
+
+    generator.prompt(bigbangEntityPrompt).then(subAnswers => {
+        if (!generator.props.topics) {
+            generator.props.topics = [];
+        }
+
+        generator.props.currentEntity = answers.entities[entityIndex];
+
+        if (generator.props.currentEntity === constants.NO_ENTITY) {
+            generator.props.currentPrefix = answers.componentPrefix;
+        }
+
+        pushTopicName(generator, subAnswers.topic, subAnswers.topicName);
+
+        generator.props = _.merge(generator.props, subAnswers);
+
+        if (entityIndex === answers.entities.length - 1) {
+            done();
+        }
+
+        if (subAnswers.confirmBigBangEntityOperations) {
+            askForBigBangEntityOperations(generator, answers, done, ++entityIndex);
+        }
     });
 }
 
@@ -238,7 +336,7 @@ function askForIncrementalOperations(generator, done) {
             if (answers.currentPrefix && !generator.props.componentsPrefixes.includes(answers.currentPrefix)) {
                 generator.props.componentsPrefixes.push(answers.currentPrefix);
             }
-            askForUnitaryEntityOperations(generator, done);
+            askForIncrementalEntityOperations(generator, done);
         } else {
             done();
         }
@@ -247,7 +345,7 @@ function askForIncrementalOperations(generator, done) {
 
 function getAvailableComponentsWithoutEntity(generator, previousConfiguration, prefix) {
     const availableComponents = [];
-    const allComponentChoices = componentChoices();
+    const allComponentChoices = componentsChoices();
     const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
     const prefixJavaClassName = utils.transformToJavaClassNameCase(prefix);
     if (generator.props.componentsByEntityConfig) {
@@ -268,10 +366,10 @@ function getAvailableComponentsWithoutEntity(generator, previousConfiguration, p
     return availableComponents;
 }
 
-function askForUnitaryEntityOperations(generator, done) {
+function askForIncrementalEntityOperations(generator, done) {
     const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
-        const allComponentChoices = componentChoices();
+        const allComponentChoices = componentsChoices();
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
 
         if (entityName === constants.NO_ENTITY) {
@@ -308,10 +406,40 @@ function askForUnitaryEntityOperations(generator, done) {
             when: generator.props.currentEntity,
             type: 'checkbox',
             name: 'currentEntityComponents',
-            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true),
             message: 'Which components would you like to generate?',
             choices: getConcernedComponents(previousConfiguration(generator), generator.props.currentEntity, generator.props.currentPrefix),
-            default: []
+            default: [],
+            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
+        },
+        {
+            when: response =>
+                response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) ||
+                response.currentEntityComponents.includes(constants.PRODUCER_COMPONENT),
+            type: 'list',
+            name: 'topic',
+            message: 'For which topic?',
+            choices: topicsChoices(generator, previousConfiguration(generator)),
+            default: constants.DEFAULT_TOPIC
+        },
+        {
+            when: response => response.topic === constants.CUSTOM_TOPIC,
+            type: 'input',
+            name: 'topicName',
+            message: 'What is the topic name?',
+            validate: input => {
+                if (_.isEmpty(input)) return 'You have to choose a topic name';
+
+                const legalChars = /^[A-Za-z0-9._]+$/gm;
+                if (!input.match(new RegExp(legalChars))) {
+                    return 'You can only use alphanumeric characters, dots and underscores';
+                }
+
+                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
+                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
+                }
+
+                return true;
+            }
         },
         {
             when: response =>
@@ -348,6 +476,13 @@ function askForUnitaryEntityOperations(generator, done) {
             if (!generator.props.componentsByEntityConfig) {
                 generator.props.componentsByEntityConfig = [];
             }
+
+            if (!generator.props.topics) {
+                generator.props.topics = [];
+            }
+
+            pushTopicName(generator, answers.topic, answers.topicName);
+
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
                 if (generator.props.currentEntity === constants.NO_ENTITY) {
                     pushComponentsByEntity(generator, answers, utils.transformToJavaClassNameCase(generator.props.currentPrefix));
@@ -355,12 +490,15 @@ function askForUnitaryEntityOperations(generator, done) {
                     pushComponentsByEntity(generator, answers, generator.props.currentEntity);
                 }
             }
+
             if (answers.pollingTimeout) {
                 generator.props.pollingTimeout = +answers.pollingTimeout; // force conversion to int
             }
+
             if (answers.autoOffsetResetPolicy) {
                 generator.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
             }
+
             if (answers.continueAddingEntitiesComponents) {
                 askForIncrementalOperations(generator, done);
             } else {
@@ -378,5 +516,23 @@ function pushComponentsByEntity(generator, answers, entity) {
         generator.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
     } else {
         generator.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+    }
+}
+
+function pushTopicName(generator, topicChoice, topicName) {
+    const name = generator.props.currentEntity === constants.NO_ENTITY ? generator.props.currentPrefix : generator.props.currentEntity;
+
+    if (topicChoice) {
+        if (topicChoice === constants.CUSTOM_TOPIC) {
+            generator.props.topics.push({ key: _.camelCase(name), value: topicName, existingTopicName: false });
+        } else if (topicChoice === constants.DEFAULT_TOPIC) {
+            generator.props.topics.push({
+                key: _.camelCase(name),
+                value: utils.topicNamingFormat(_.snakeCase(generator.jhipsterAppConfig.baseName), _.snakeCase(name)),
+                existingTopicName: false
+            });
+        } else {
+            generator.props.topics.push({ key: _.camelCase(name), value: topicChoice, existingTopicName: true });
+        }
     }
 }

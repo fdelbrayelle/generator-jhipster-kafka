@@ -18,7 +18,7 @@ public class FooConsumer extends GenericConsumer<Foo> {
 
     private final Logger log = LoggerFactory.getLogger(FooConsumer.class);
 
-    public FooConsumer(@Value("${kafka.consumer.foo.name}") final String topicName, final KafkaProperties kafkaProperties) {
+    public FooConsumer(@Value("${kafka.topic.foo}") final String topicName, final KafkaProperties kafkaProperties) {
         super(topicName, kafkaProperties.getConsumer().get("foo"), kafkaProperties.getPollingTimeout());
     }
 

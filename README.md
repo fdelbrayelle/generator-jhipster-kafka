@@ -14,12 +14,12 @@
 - [x] Basic [Consumer/Producer API use](#consumer-api-and-producer-api)
 - [x] Several [prompt options](#prompt-options-tree) (`polling.timeout`, `auto.offset.reset.policy`)
 - [x] [AKHQ (KafkaHQ)](#akhq) support
+- [x] Topic management
 
 ## 🛠 To do or doing...
 
 You can have more details about work in progress in [issues](https://github.com/fdelbrayelle/generator-jhipster-kafka/issues):
 
-- [ ] Topic management
 - [ ] Producer API (ordered messages, high throughput...)
 - [ ] Deserialization alternatives (JacksonSerde) as a prompt option
 - [ ] Security (SSL protocol as a prompt option, safe mode...)
@@ -112,85 +112,97 @@ Choose your own adventure module!
 
 The **END** represents the end of the prompts below, when files are written after confirmation (you can use the `--force` option with `yo jhipster-kafka` to overwrite all files).
 
-```
-.
-├── Big Bang Mode (build a configuration from scratch) (default)
-│   ├── Consumer
-│   │   ├── No entity (will be typed String) (default)
-│   │   │   └── componentPrefix
-│   │   │       └── pollingTimeoutValue (default = 10000)
-│   │   │           ├── earliest (automatically reset the offset to the earliest offset) (default)
-│   │   │           │   └── END
-│   │   │           ├── latest (automatically reset the offset to the latest offset)
-│   │   │           │   └── END
-│   │   │           └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-│   │   │               └── END
-│   │   ├── FooEntity
-│   │   │   └── pollingTimeoutValue (default = 10000)
-│   │   │       ├── earliest (automatically reset the offset to the earliest offset) (default)
-│   │   │       │   └── END
-│   │   │       ├── latest (automatically reset the offset to the latest offset)
-│   │   │       │   └── END
-│   │   │       └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-│   │   │           └── END
-│   │   └── BarEntity
-│   │       └── pollingTimeoutValue (default = 10000)
-│   │           ├── earliest (automatically reset the offset to the earliest offset) (default)
-│   │           ├── latest (automatically reset the offset to the latest offset)
-│   │           └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-│   └── Producer
-│       ├── No entity (will be typed String)
-│       │   └── componentPrefix
-│       │       └── END
-│       ├── FooEntity
-│       │   └── END
-│       └── BarEntity
-│           └── END
-└── Incremental Mode (upgrade an existing configuration)
-    ├── No entity (will be typed String) (default)
-    │   └── componentPrefix
-    │       ├── Consumer
-    │       │    └── pollingTimeoutValue (default = 10000)
-    │       │        ├── earliest (automatically reset the offset to the earliest offset) (default)
-    │       │        │   ├── Continue adding consumers or producers (default = N)
-    │       │        │   └── END
-    │       │        ├── latest (automatically reset the offset to the latest offset)
-    │       │        │   ├── Continue adding consumers or producers (default = N)
-    │       │        │   └── END
-    │       │        └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-    │       │            ├── Continue adding consumers or producers (default = N)
-    │       │            └── END
-    │       └── Producer
-    │           └── END
-    ├── FooEntity
-    │   ├── Consumer
-    │   │    └── pollingTimeoutValue (default = 10000)
-    │   │        ├── earliest (automatically reset the offset to the earliest offset) (default)
-    │   │        │   ├── Continue adding consumers or producers (default = N)
-    │   │        │   └── END
-    │   │        ├── latest (automatically reset the offset to the latest offset)
-    │   │        │   ├── Continue adding consumers or producers (default = N)
-    │   │        │   └── END
-    │   │        └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-    │   │            ├── Continue adding consumers or producers (default = N)
-    │   │            └── END
-    │   └── Producer
-    │       └── END
-    └── BarEntity
-        ├── Consumer
-        │    └── pollingTimeoutValue (default = 10000)
-        │        ├── earliest (automatically reset the offset to the earliest offset) (default)
-        │        │   ├── Continue adding consumers or producers (default = N)
-        │        │   └── END
-        │        ├── latest (automatically reset the offset to the latest offset)
-        │        │   ├── Continue adding consumers or producers (default = N)
-        │        │   └── END
-        │        └── none (throw exception to the consumer if no previous offset is found for the consumer group)
-        │            ├── Continue adding consumers or producers (default = N)
-        │            └── END
-        └── Producer
-            └── END
-```
+<ul>
+    <li>Big Bang Mode (build a configuration from scratch) <strong>(default)</strong>
+        <ul>
+            <li>Which components would you like to generate?
+                <ul>
+                    <li>Consumer</li>
+                    <li>Producer</li>
+                </ul>
+            </li>
+            <li>For which entity (class name)?
+                <ul>
+                    <li>No entity (will be typed String) <strong>(default)</strong>
+                        <ul>
+                            <li>How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?</li>
+                        </ul>
+                    </li>
+                    <li>Foo</li>
+                    <li>Bar</li>
+                    <li>...</li>
+                </ul>
+            </li>
+            <li><em>If "Consumer" was selected:</em> What is the consumer polling timeout (in ms)? <strong>(default = 10000)</strong></li>
+            <li><em>If "Consumer" was selected:</em> Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?
+                <ul>
+                    <li>earliest (automatically reset the offset to the earliest offset) <strong>(default)</strong></li>
+                    <li>latest (automatically reset the offset to the latest offset)</li>
+                    <li>none (throw exception to the consumer if no previous offset is found for the consumer group)</li>
+                </ul>
+            </li>
+            <li>For which topic?
+                <ul>
+                    <li>Default topic name following this convention: message_type.application_type.entity_name <strong>(default)</strong></li>
+                    <li>Custom topic name
+                        <ul>
+                            <li>What is the topic name?</li>
+                        </ul>
+                    </li>
+                    <li>queuing.application_name.existing_topic_name</li>
+                    <li>...</li>
+                </ul>
+            </li>
+            <li>Do you want to continue to the next entity/prefix or exit? <strong>(default = Y)</strong></li>
+            <li><strong>END</strong></li>
+        </ul>
+    </li>
+    <li>Incremental Mode (upgrade an existing configuration)
+        <ul>
+            <li>For which entity (class name)?
+                <ul>
+                    <li>No entity (will be typed String) <strong>(default)</strong>
+                        <ul>
+                            <li>How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?</li>
+                        </ul>
+                    </li>
+                    <li>Foo</li>
+                    <li>Bar</li>
+                    <li>...</li>
+                </ul>
+            </li>
+            <li>Which components would you like to generate?
+                <ul>
+                    <li>Consumer</li>
+                    <li>Producer</li>
+                </ul>
+            </li>
+            <li>For which topic?
+                <ul>
+                    <li>Default topic name following this convention: message_type.application_type.entity_name <strong>(default)</strong></li>
+                    <li>Custom topic name
+                        <ul>
+                            <li>What is the topic name?</li>
+                        </ul>
+                    </li>
+                    <li>queuing.application_name.existing_topic_name</li>
+                    <li>...</li>
+                </ul>
+            </li>
+            <li><em>If "Consumer" was selected:</em> What is the consumer polling timeout (in ms)? <strong>(default = 10000)</strong></li>
+            <li><em>If "Consumer" was selected:</em> Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?
+                <ul>
+                    <li>earliest (automatically reset the offset to the earliest offset) <strong>(default)</strong></li>
+                    <li>latest (automatically reset the offset to the latest offset)</li>
+                    <li>none (throw exception to the consumer if no previous offset is found for the consumer group)</li>
+                </ul>
+            </li>
+            <li>Do you want to continue adding consumers or producers? <strong>(default = N)</strong></li>
+            <li><em>If "N" was selected:</em> <strong>END</strong></li>
+        </ul>
+    </li>
+</ul>
+</code>
 
 ## Skip prompts
 
