@@ -25,7 +25,7 @@ module.exports = class extends BaseGenerator {
             componentsByEntityConfig: [],
             componentsPrefixes: [],
             topics: [],
-            cleanup: false
+            cleanup: false || this.options['skip-prompts']
         };
 
         this.setupClientOptions(this);
