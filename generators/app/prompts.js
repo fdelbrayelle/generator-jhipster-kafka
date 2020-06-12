@@ -26,6 +26,42 @@ function generationTypeChoices() {
     ];
 }
 
+function componentsChoices() {
+    return [
+        {
+            name: 'Consumer',
+            value: constants.CONSUMER_COMPONENT
+        },
+        {
+            name: 'Producer',
+            value: constants.PRODUCER_COMPONENT
+        }
+    ];
+}
+
+function entitiesChoices(generator) {
+    const entitiesChoices = [];
+    let existingEntityNames = [];
+
+    entitiesChoices.push({ name: 'No entity (will be typed String)', value: constants.NO_ENTITY });
+
+    try {
+        existingEntityNames = fs.readdirSync(constants.JHIPSTER_CONFIG_DIR);
+    } catch (e) {
+        generator.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: ${constants.JHIPSTER_CONFIG_DIR}`, e);
+    }
+    existingEntityNames.forEach(entry => {
+        if (entry.indexOf(constants.JSON_EXTENSION) !== -1) {
+            const entityName = entry.replace(constants.JSON_EXTENSION, constants.EMPTY_STRING);
+            entitiesChoices.push({
+                name: entityName,
+                value: entityName
+            });
+        }
+    });
+    return entitiesChoices;
+}
+
 function offsetChoices() {
     return [
         {
@@ -43,15 +79,15 @@ function offsetChoices() {
     ];
 }
 
-function componentsChoices() {
+function serializationChoices() {
     return [
         {
-            name: 'Consumer',
-            value: constants.CONSUMER_COMPONENT
+            name: 'Basic (for instance: EntitySerializer, EntityDeserializer)',
+            value: constants.BASIC_SERIALIZATION
         },
         {
-            name: 'Producer',
-            value: constants.PRODUCER_COMPONENT
+            name: 'JacksonSerde',
+            value: constants.JACKSON_SERDE_SERIALIZATION
         }
     ];
 }
@@ -82,35 +118,6 @@ function topicsChoices(generator, previousConfiguration) {
     });
 
     return topicsChoices;
-}
-
-/**
- * Retrieve from .jhipster metadata, the list of all project entities.
- *
- * @param generator
- * @returns {[]} - all entities choices possible
- */
-function entitiesChoices(generator) {
-    const entitiesChoices = [];
-    let existingEntityNames = [];
-
-    entitiesChoices.push({ name: 'No entity (will be typed String)', value: constants.NO_ENTITY });
-
-    try {
-        existingEntityNames = fs.readdirSync(constants.JHIPSTER_CONFIG_DIR);
-    } catch (e) {
-        generator.log(`${chalk.red.bold('WARN!')} Error while reading entities folder: ${constants.JHIPSTER_CONFIG_DIR}`, e);
-    }
-    existingEntityNames.forEach(entry => {
-        if (entry.indexOf(constants.JSON_EXTENSION) !== -1) {
-            const entityName = entry.replace(constants.JSON_EXTENSION, constants.EMPTY_STRING);
-            entitiesChoices.push({
-                name: entityName,
-                value: entityName
-            });
-        }
-    });
-    return entitiesChoices;
 }
 
 function askForOperations(generator) {
@@ -221,6 +228,14 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
         {
             when: answers.components.includes(constants.CONSUMER_COMPONENT) || answers.components.includes(constants.PRODUCER_COMPONENT),
             type: 'list',
+            name: 'serializationType',
+            message: 'How do you want to (de)serialize consumed/produced data?',
+            choices: serializationChoices(),
+            default: constants.BASIC_SERIALIZATION
+        },
+        {
+            when: answers.components.includes(constants.CONSUMER_COMPONENT) || answers.components.includes(constants.PRODUCER_COMPONENT),
+            type: 'list',
             name: 'topic',
             message: `Which topic for ${name}?`,
             choices: topicsChoices(generator, null),
@@ -231,20 +246,7 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
             type: 'input',
             name: 'topicName',
             message: `What is the topic name for ${name}?`,
-            validate: input => {
-                if (_.isEmpty(input)) return 'You have to choose a topic name';
-
-                const legalChars = /^[A-Za-z0-9._]+$/gm;
-                if (!input.match(new RegExp(legalChars))) {
-                    return 'You can only use alphanumeric characters, dots and underscores';
-                }
-
-                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
-                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
-                }
-
-                return true;
-            }
+            validate: input => validateTopicName(input)
         },
         {
             when: entityIndex < answers.entities.length - 1,
@@ -267,6 +269,8 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
         }
 
         pushTopicName(generator, subAnswers.topic, subAnswers.topicName);
+
+        pushSerializationTypeByEntity(generator, subAnswers.serializationType);
 
         generator.props = _.merge(generator.props, subAnswers);
 
@@ -426,20 +430,7 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'input',
             name: 'topicName',
             message: 'What is the topic name?',
-            validate: input => {
-                if (_.isEmpty(input)) return 'You have to choose a topic name';
-
-                const legalChars = /^[A-Za-z0-9._]+$/gm;
-                if (!input.match(new RegExp(legalChars))) {
-                    return 'You can only use alphanumeric characters, dots and underscores';
-                }
-
-                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
-                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
-                }
-
-                return true;
-            }
+            validate: input => validateTopicName(input)
         },
         {
             when: response =>
@@ -464,6 +455,16 @@ function askForIncrementalEntityOperations(generator, done) {
             default: constants.EARLIEST_OFFSET
         },
         {
+            when: response =>
+                response.currentEntityComponents.includes(constants.CONSUMER_COMPONENT) ||
+                response.currentEntityComponents.includes(constants.PRODUCER_COMPONENT),
+            type: 'list',
+            name: 'serializationType',
+            message: 'How do you want to (de)serialize consumed/produced data?',
+            choices: serializationChoices(),
+            default: constants.BASIC_SERIALIZATION
+        },
+        {
             type: 'confirm',
             name: 'continueAddingEntitiesComponents',
             message: 'Do you want to continue adding consumers or producers?',
@@ -485,9 +486,13 @@ function askForIncrementalEntityOperations(generator, done) {
 
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
                 if (generator.props.currentEntity === constants.NO_ENTITY) {
-                    pushComponentsByEntity(generator, answers, utils.transformToJavaClassNameCase(generator.props.currentPrefix));
+                    pushComponentsByEntity(
+                        generator,
+                        answers.currentEntityComponents,
+                        utils.transformToJavaClassNameCase(generator.props.currentPrefix)
+                    );
                 } else {
-                    pushComponentsByEntity(generator, answers, generator.props.currentEntity);
+                    pushComponentsByEntity(generator, answers.currentEntityComponents, generator.props.currentEntity);
                 }
             }
 
@@ -498,6 +503,8 @@ function askForIncrementalEntityOperations(generator, done) {
             if (answers.autoOffsetResetPolicy) {
                 generator.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
             }
+
+            pushSerializationTypeByEntity(generator, answers.serializationType);
 
             if (answers.continueAddingEntitiesComponents) {
                 askForIncrementalOperations(generator, done);
@@ -510,12 +517,27 @@ function askForIncrementalEntityOperations(generator, done) {
     });
 }
 
-function pushComponentsByEntity(generator, answers, entity) {
+function pushComponentsByEntity(generator, currentEntityComponents, entity) {
     generator.props.componentsByEntityConfig.push(entity);
     if (generator.props.componentsByEntityConfig[entity]) {
-        generator.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
+        generator.props.componentsByEntityConfig[entity].push(...currentEntityComponents);
     } else {
-        generator.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+        generator.props.componentsByEntityConfig[entity] = [...currentEntityComponents];
+    }
+}
+
+function pushSerializationTypeByEntity(generator, serializationType) {
+    if (!generator.props.serializationTypesByEntityConfig) {
+        generator.props.serializationTypesByEntityConfig = [];
+    }
+
+    if (generator.props.currentEntity === constants.NO_ENTITY) {
+        const currentPrefix = utils.transformToJavaClassNameCase(generator.props.currentPrefix);
+        generator.props.serializationTypesByEntityConfig.push(currentPrefix);
+        generator.props.serializationTypesByEntityConfig[currentPrefix] = serializationType;
+    } else {
+        generator.props.serializationTypesByEntityConfig.push(generator.props.currentEntity);
+        generator.props.serializationTypesByEntityConfig[generator.props.currentEntity] = serializationType;
     }
 }
 
@@ -535,4 +557,19 @@ function pushTopicName(generator, topicChoice, topicName) {
             generator.props.topics.push({ key: _.camelCase(name), value: topicChoice, existingTopicName: true });
         }
     }
+}
+
+function validateTopicName(input) {
+    if (_.isEmpty(input)) return 'You have to choose a topic name';
+
+    const legalChars = /^[A-Za-z0-9._]+$/gm;
+    if (!input.match(new RegExp(legalChars))) {
+        return 'You can only use alphanumeric characters, dots and underscores';
+    }
+
+    if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
+        return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
+    }
+
+    return true;
 }

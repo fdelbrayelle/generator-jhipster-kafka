@@ -15,13 +15,13 @@
 - [x] Several [prompt options](#prompt-options-tree) (`polling.timeout`, `auto.offset.reset.policy`)
 - [x] [AKHQ (KafkaHQ)](#akhq) support
 - [x] Topic management
+- [x] Deserialization alternatives (JacksonSerde) as a prompt option
 
 ## 🛠 To do or doing...
 
 You can have more details about work in progress in [issues](https://github.com/fdelbrayelle/generator-jhipster-kafka/issues):
 
 - [ ] Producer API (ordered messages, high throughput...)
-- [ ] Deserialization alternatives (JacksonSerde) as a prompt option
 - [ ] Security (SSL protocol as a prompt option, safe mode...)
 - [ ] JHipster entity sub-generator hook
 - [ ] JHipster microservices applications support
@@ -141,6 +141,7 @@ The **END** represents the end of the prompts below, when files are written afte
                     <li>none (throw exception to the consumer if no previous offset is found for the consumer group)</li>
                 </ul>
             </li>
+            <li>How do you want to (de)serialize consumed/produced data? <strong>(default = Basic)</strong></li>
             <li>For which topic?
                 <ul>
                     <li>Default topic name following this convention: message_type.application_type.entity_name <strong>(default)</strong></li>
@@ -197,6 +198,7 @@ The **END** represents the end of the prompts below, when files are written afte
                     <li>none (throw exception to the consumer if no previous offset is found for the consumer group)</li>
                 </ul>
             </li>
+            <li>How do you want to (de)serialize consumed/produced data? <strong>(default = Basic)</strong></li>
             <li>Do you want to continue adding consumers or producers? <strong>(default = N)</strong></li>
             <li><em>If "N" was selected:</em> <strong>END</strong></li>
         </ul>

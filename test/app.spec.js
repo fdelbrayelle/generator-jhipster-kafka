@@ -222,6 +222,41 @@ describe('JHipster generator kafka', () => {
                 assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
             });
         });
+
+        describe('with a consumer and a producer for a single entity with JacksonSerde', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        generationType: constants.BIGBANG_MODE,
+                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        entities: [FOO_ENTITY],
+                        serializationType: constants.JACKSON_SERDE_SERIALIZATION
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate default and producer files only', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonSerde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonAbstract.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonSerializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonDeserializer.java`
+                ];
+
+                assert.file(expectedFiles);
+            });
+
+            it('should update application.yml', () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /'\[value.deserializer\]': com.mycompany.myapp.service.kafka.serde.JacksonDeserializer<Foo>/
+                );
+            });
+        });
     });
 
     describe('with the incremental mode', () => {
@@ -514,6 +549,42 @@ describe('JHipster generator kafka', () => {
                 it('should put a custom topic name in application.yml', () => {
                     const { applicationYml, testApplicationYml } = loadApplicationYaml();
                     assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
+                });
+            });
+
+            describe('with a JacksonSerde', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            generationType: constants.INCREMENTAL_MODE,
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            serializationType: constants.JACKSON_SERDE_SERIALIZATION,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should generate default and producer files only', () => {
+                    const expectedFiles = [
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonSerde.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonAbstract.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonSerializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/JacksonDeserializer.java`
+                    ];
+
+                    assert.file(expectedFiles);
+                });
+
+                it('should update application.yml', () => {
+                    assert.fileContent(
+                        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                        /'\[value.deserializer\]': com.mycompany.myapp.service.kafka.serde.JacksonDeserializer<Foo>/
+                    );
                 });
             });
         });

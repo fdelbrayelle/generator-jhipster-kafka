@@ -44,6 +44,7 @@ function initVariables(generator) {
     generator.componentsPrefixes = generator.props.componentsPrefixes || [];
     generator.components = generator.props.components;
     generator.componentsByEntityConfig = generator.props.componentsByEntityConfig || [];
+    generator.serializationTypesByEntityConfig = generator.props.serializationTypesByEntityConfig || [];
     generator.topics = generator.props.topics;
     generator.pollingTimeout = generator.props.pollingTimeout;
     generator.autoOffsetResetPolicy = generator.props.autoOffsetResetPolicy;
@@ -185,12 +186,17 @@ function writeFiles(generator) {
                 null,
                 null
             );
-            generator.template(
-                'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
-                `${generator.javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
-                null,
-                null
-            );
+
+            if (generator.serializationTypesByEntityConfig[entity] === constants.BASIC_SERIALIZATION) {
+                generator.template(
+                    'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
+                    `${generator.javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
+                    null,
+                    null
+                );
+            } else if (generator.serializationTypesByEntityConfig[entity] === constants.JACKSON_SERDE_SERIALIZATION) {
+                copySerdeTemplates(generator);
+            }
         }
 
         if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
@@ -200,12 +206,16 @@ function writeFiles(generator) {
                 null,
                 null
             );
-            generator.template(
-                'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
-                `${generator.javaDir}service/kafka/serializer/${entity}Serializer.java`,
-                null,
-                null
-            );
+            if (generator.serializationTypesByEntityConfig[entity] === constants.BASIC_SERIALIZATION) {
+                generator.template(
+                    'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
+                    `${generator.javaDir}service/kafka/serializer/${entity}Serializer.java`,
+                    null,
+                    null
+                );
+            } else if (generator.serializationTypesByEntityConfig[entity] === constants.JACKSON_SERDE_SERIALIZATION) {
+                copySerdeTemplates(generator);
+            }
             generator.template(
                 'src/main/java/package/web/rest/kafka/EntityKafkaResource.java.ejs',
                 `${generator.javaDir}web/rest/kafka/${entity}KafkaResource.java`,
@@ -366,20 +376,36 @@ function writeFiles(generator) {
 }
 
 function buildJsonConsumerConfiguration(generator, entity, enabled) {
+    let deserializer = '';
+
+    if (generator.serializationTypesByEntityConfig[entity] === constants.BASIC_SERIALIZATION) {
+        deserializer = `${generator.packageName}.service.kafka.deserializer.${entity}Deserializer`;
+    } else if (generator.serializationTypesByEntityConfig[entity] === constants.JACKSON_SERDE_SERIALIZATION) {
+        deserializer = `${generator.packageName}.service.kafka.serde.JacksonDeserializer<${entity}>`;
+    }
+
     return {
         enabled,
         '[key.deserializer]': 'org.apache.kafka.common.serialization.StringDeserializer',
-        '[value.deserializer]': `${generator.packageName}.service.kafka.deserializer.${entity}Deserializer`,
+        '[value.deserializer]': deserializer,
         '[group.id]': `${generator.dasherizedBaseName}`,
         '[auto.offset.reset]': `${generator.autoOffsetResetPolicy}`
     };
 }
 
 function buildJsonProducerConfiguration(generator, entity, enabled) {
+    let serializer = '';
+
+    if (generator.serializationTypesByEntityConfig[entity] === constants.BASIC_SERIALIZATION) {
+        serializer = `${generator.packageName}.service.kafka.serializer.${entity}Serializer`;
+    } else if (generator.serializationTypesByEntityConfig[entity] === constants.JACKSON_SERDE_SERIALIZATION) {
+        serializer = `${generator.packageName}.service.kafka.serde.JacksonSerializer<${entity}>`;
+    }
+
     return {
         enabled,
         '[key.serializer]': 'org.apache.kafka.common.serialization.StringSerializer',
-        '[value.serializer]': `${generator.packageName}.service.kafka.serializer.${entity}Serializer`
+        '[value.serializer]': serializer
     };
 }
 function sanitizeProperties(jsyamlGeneratedProperties) {
@@ -438,4 +464,31 @@ function overrideMainGeneratorAppYml(generator) {
     const kafkaAdvertisedListenersPattern = /^\s.*KAFKA_ADVERTISED_LISTENERS.*$/gm;
     const kafkaAdvertisedListeners = '      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092';
     generator.replaceContent(appYmlPath, kafkaAdvertisedListenersPattern, kafkaAdvertisedListeners);
+}
+
+function copySerdeTemplates(generator) {
+    generator.template(
+        'src/main/java/package/service/kafka/serde/JacksonAbstract.java.ejs',
+        `${generator.javaDir}service/kafka/serde/JacksonAbstract.java`,
+        null,
+        null
+    );
+    generator.template(
+        'src/main/java/package/service/kafka/serde/JacksonDeserializer.java.ejs',
+        `${generator.javaDir}service/kafka/serde/JacksonDeserializer.java`,
+        null,
+        null
+    );
+    generator.template(
+        'src/main/java/package/service/kafka/serde/JacksonSerde.java.ejs',
+        `${generator.javaDir}service/kafka/serde/JacksonSerde.java`,
+        null,
+        null
+    );
+    generator.template(
+        'src/main/java/package/service/kafka/serde/JacksonSerializer.java.ejs',
+        `${generator.javaDir}service/kafka/serde/JacksonSerializer.java`,
+        null,
+        null
+    );
 }

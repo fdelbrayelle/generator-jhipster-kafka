@@ -37,6 +37,9 @@ const CUSTOM_TOPIC = 'custom_topic';
 // Related to: https://github.com/apache/kafka/commit/ad3dfc6ab25c3f80d2425e24e72ae732b850dc60
 const TOPIC_NAME_MAX_SIZE = 249;
 
+const BASIC_SERIALIZATION = 'basic_serialization';
+const JACKSON_SERDE_SERIALIZATION = 'jackson_serde_serialization';
+
 const constants = {
     JHIPSTER_CONFIG_DIR,
     MODULES_HOOK_FILE,
@@ -54,7 +57,9 @@ const constants = {
     EMPTY_STRING,
     DEFAULT_TOPIC,
     CUSTOM_TOPIC,
-    TOPIC_NAME_MAX_SIZE
+    TOPIC_NAME_MAX_SIZE,
+    BASIC_SERIALIZATION,
+    JACKSON_SERDE_SERIALIZATION
 };
 
 module.exports = constants;
