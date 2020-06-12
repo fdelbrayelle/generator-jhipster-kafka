@@ -1,7 +1,6 @@
 const _ = require('lodash');
 const chalk = require('chalk');
 const jhipsterConstants = require('generator-jhipster/generators/generator-constants');
-const jhipsterUtils = require('generator-jhipster/generators/utils');
 const jsYaml = require('js-yaml');
 const shelljs = require('shelljs');
 
@@ -36,7 +35,6 @@ function initVariables(generator) {
     generator.generationType = generator.props.generationType;
     generator.entities = generator.props.entities || [];
     generator.componentsPrefixes = generator.props.componentsPrefixes || [];
-    generator.components = generator.props.components;
     generator.componentsByEntityConfig = generator.props.componentsByEntityConfig || [];
     generator.topics = generator.props.topics;
     generator.pollingTimeout = generator.props.pollingTimeout;
@@ -67,7 +65,6 @@ function initVariables(generator) {
         generator.log('Skipping prompts...');
     } else {
         generator.log('\n--- variables from questions ---');
-        generator.log(`\ncomponents=${generator.components}`);
         generator.log(`\nentities=${generator.entities}`);
         generator.log(`\ncomponentsPrefixes=${generator.componentsPrefixes}`);
         generator.log(`\npollingTimeout=${generator.pollingTimeout}`);
@@ -93,20 +90,8 @@ function writeFiles(generator) {
         return shelljs.cat(constants.MODULES_HOOK_FILE).match(constants.MODULE_NAME) === null;
     };
 
-    const generateKafkaProperties = (generator, enabled) => {
-        generator.enabled = enabled;
-
-        let generatedKafkaProperties = constants.EMPTY_STRING;
-        jhipsterUtils.renderContent(
-            generator.templatePath('src/main/resources/application-kafka.yml.ejs'),
-            generator,
-            generator,
-            {},
-            res => {
-                generatedKafkaProperties = res;
-            }
-        );
-        return generatedKafkaProperties;
+    const isCleanup = generator => {
+        return generator.props.cleanup ? generator.props.cleanup : false;
     };
 
     /**
@@ -123,61 +108,44 @@ function writeFiles(generator) {
             generator.addGradleDependency('implementation', 'io.vavr', 'vavr', '${vavr_version}'); // eslint-disable-line no-template-curly-in-string
         }
     }
-
-    /**
-     * Search in dedicated incremental structure if a type of component must be generated for an entity.
-     * @param entityName
-     * @param componentType
-     * @returns {*}
-     */
-    const haveComponentForEntity = (entityName, componentType) => {
-        return (
-            generator.props.componentsByEntityConfig &&
-            generator.props.componentsByEntityConfig[entityName] &&
-            generator.props.componentsByEntityConfig[entityName].includes(componentType)
-        );
-    };
-
     /**
      * Search if a component type is present at least once in the asked generations.
      * @param componentType
      * @returns {boolean|boolean|*}
      */
     const containsComponent = componentType => {
-        if (generator.props.generationType === constants.BIGBANG_MODE) {
-            return generator.props.components.includes(componentType) && generator.entities.length > 0;
-        }
+        let haveComponentWithoutEntity = false;
+        generator.props.componentsPrefixes.forEach(prefix => {
+            haveComponentWithoutEntity =
+                generator.props.componentsByEntityConfig &&
+                generator.props.componentsByEntityConfig[prefix] &&
+                generator.props.componentsByEntityConfig[prefix].includes(componentType);
+        });
 
-        if (generator.props.generationType === constants.INCREMENTAL_MODE) {
-            let haveComponentWithoutEntity = false;
-            generator.props.componentsPrefixes.forEach(prefix => {
-                haveComponentWithoutEntity = haveComponentForEntity(prefix, componentType);
-            });
-
-            return (
-                haveComponentWithoutEntity ||
-                (generator.props.entities.length > 0 &&
-                    generator.props.entities.find(entityName => haveComponentForEntity(entityName, componentType)))
-            );
-        }
-
-        return false;
+        return (
+            haveComponentWithoutEntity ||
+            (generator.props.entities.length > 0 &&
+                generator.props.entities.find(
+                    entityName =>
+                        generator.props.componentsByEntityConfig &&
+                        generator.props.componentsByEntityConfig[entityName] &&
+                        generator.props.componentsByEntityConfig[entityName].includes(componentType)
+                ))
+        );
     };
 
     /**
      * Search if a component type must be generated for an entity.
-     * @param entityName
      * @param componentType - Producer or Consumer
+     * @param entityName
      * @returns {boolean|*}
      */
-    const mustGenerateComponent = (entityName, componentType) => {
-        if (generator.props.generationType === constants.BIGBANG_MODE) {
-            return generator.props.components.includes(componentType);
-        }
-        if (generator.props.generationType === constants.INCREMENTAL_MODE) {
-            return haveComponentForEntity(entityName, componentType);
-        }
-        return false;
+    const haveComponentForEntity = (componentType, entityName) => {
+        return (
+            generator.props.componentsByEntityConfig &&
+            generator.props.componentsByEntityConfig[entityName] &&
+            generator.props.componentsByEntityConfig[entityName].includes(componentType)
+        );
     };
 
     const writeComponents = (entity, useEntityAsType) => {
@@ -188,10 +156,9 @@ function writeFiles(generator) {
         generator.entityClass = entity;
         generator.camelCaseEntityClass = _.camelCase(entity);
         generator.type = useEntityAsType ? entity : 'String';
-
         generateSerdeFiles(generator, entity, useEntityAsType);
 
-        if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
+        if (haveComponentForEntity(constants.CONSUMER_COMPONENT, entity)) {
             generator.template(
                 'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                 `${generator.javaDir}service/kafka/consumer/${entity}Consumer.java`,
@@ -200,7 +167,7 @@ function writeFiles(generator) {
             );
         }
 
-        if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
+        if (haveComponentForEntity(constants.PRODUCER_COMPONENT, entity)) {
             generator.template(
                 'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                 `${generator.javaDir}service/kafka/producer/${entity}Producer.java`,
@@ -221,7 +188,7 @@ function writeFiles(generator) {
             return;
         }
 
-        if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
+        if (haveComponentForEntity(constants.CONSUMER_COMPONENT, entity)) {
             if (!kafkaPreviousConfiguration.kafka.consumer) {
                 kafkaPreviousConfiguration.kafka.consumer = {};
             }
@@ -236,7 +203,7 @@ function writeFiles(generator) {
             );
         }
 
-        if (mustGenerateComponent(entity, constants.PRODUCER_COMPONENT)) {
+        if (haveComponentForEntity(constants.PRODUCER_COMPONENT, entity)) {
             if (!kafkaPreviousConfiguration.kafka.producer) {
                 kafkaPreviousConfiguration.kafka.producer = {};
             }
@@ -252,7 +219,7 @@ function writeFiles(generator) {
         }
     };
 
-    if (generator.generationType === constants.BIGBANG_MODE) {
+    if (generator.props.cleanup) {
         shelljs.rm('-rf', `${generator.javaDir}service/kafka/`, `${generator.javaDir}web/rest/kafka/`);
     }
 
@@ -290,37 +257,37 @@ function writeFiles(generator) {
         writeComponents(utils.transformToJavaClassNameCase(prefix), false);
     });
 
-    if (generator.generationType === constants.INCREMENTAL_MODE) {
-        const kafkaPreviousConfiguration = utils.getPreviousKafkaConfiguration(
-            generator,
-            `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-            isFirstGeneration()
-        );
+    const kafkaPreviousConfiguration = utils.getPreviousKafkaConfiguration(
+        generator,
+        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+        isFirstGeneration() || isCleanup(generator)
+    );
 
-        const kafkaPreviousTestConfiguration = utils.getPreviousKafkaConfiguration(
-            generator,
-            `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-            isFirstGeneration()
-        );
+    const kafkaPreviousTestConfiguration = utils.getPreviousKafkaConfiguration(
+        generator,
+        `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+        isFirstGeneration() || isCleanup(generator)
+    );
 
-        // eslint-disable-next-line no-template-curly-in-string
-        kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
-        // eslint-disable-next-line no-template-curly-in-string
-        kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+    // eslint-disable-next-line no-template-curly-in-string
+    kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+    // eslint-disable-next-line no-template-curly-in-string
+    kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
 
-        if (generator.pollingTimeout) {
-            kafkaPreviousConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;
-            kafkaPreviousTestConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;
-        }
+    if (generator.pollingTimeout) {
+        kafkaPreviousConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;
+        kafkaPreviousTestConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;
+    }
 
-        generator.entities.forEach(entity => {
-            writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, entity);
-        });
+    generator.entities.forEach(entity => {
+        writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, entity);
+    });
 
-        generator.componentsPrefixes.forEach(prefix => {
-            writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, utils.transformToJavaClassNameCase(prefix));
-        });
+    generator.componentsPrefixes.forEach(prefix => {
+        writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, utils.transformToJavaClassNameCase(prefix));
+    });
 
+    if (containsComponent(constants.CONSUMER_COMPONENT) || containsComponent(constants.PRODUCER_COMPONENT)) {
         if (!kafkaPreviousConfiguration.kafka.topic) {
             kafkaPreviousConfiguration.kafka.topic = {};
         }
@@ -328,42 +295,30 @@ function writeFiles(generator) {
         if (!kafkaPreviousTestConfiguration.kafka.topic) {
             kafkaPreviousTestConfiguration.kafka.topic = {};
         }
-
-        generator.topics.forEach(topic => {
-            kafkaPreviousConfiguration.kafka.topic[topic.key] = topic.value;
-            kafkaPreviousTestConfiguration.kafka.topic[topic.key] = topic.value;
-        });
-
-        const kafkaProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousConfiguration), {
-            lineWidth: -1
-        });
-        const kafkaTestProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousTestConfiguration), {
-            lineWidth: -1
-        });
-
-        const kafkaBlockPattern = /^(\n)?^kafka:\n(?:^[ ]+.*\n?)*$/gm;
-        generator.replaceContent(
-            `${generator.resourceDir}config/application.yml`,
-            kafkaBlockPattern,
-            `\n${sanitizeProperties(kafkaProperties)}`
-        );
-        generator.replaceContent(
-            `${generator.testResourceDir}config/application.yml`,
-            kafkaBlockPattern,
-            `\n${sanitizeProperties(kafkaTestProperties)}`
-        );
-    } else {
-        // big bang properties writing
-        const kafkaProperties = generateKafkaProperties(generator, true);
-        generator.log(`application.yml (src/main/resources) kafka block will be updated like this:${kafkaProperties}`);
-
-        const kafkaTestProperties = generateKafkaProperties(generator, false);
-        generator.log(`application.yml (src/test/resources) kafka block will be updated like this:${kafkaTestProperties}`);
-
-        const kafkaBlockPattern = /\n+kafka:\n(\s.+\n+)+/g;
-        generator.replaceContent(`${generator.resourceDir}config/application.yml`, kafkaBlockPattern, kafkaProperties);
-        generator.replaceContent(`${generator.testResourceDir}config/application.yml`, kafkaBlockPattern, kafkaTestProperties);
     }
+    generator.topics.forEach(topic => {
+        kafkaPreviousConfiguration.kafka.topic[topic.key] = topic.value;
+        kafkaPreviousTestConfiguration.kafka.topic[topic.key] = topic.value;
+    });
+
+    const kafkaProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousConfiguration), {
+        lineWidth: -1
+    });
+    const kafkaTestProperties = jsYaml.dump(utils.orderKafkaProperties(kafkaPreviousTestConfiguration), {
+        lineWidth: -1
+    });
+
+    const kafkaBlockPattern = /^(\n)?^kafka:\n(?:^[ ]+.*\n?)*$/gm;
+    generator.replaceContent(
+        `${generator.resourceDir}config/application.yml`,
+        kafkaBlockPattern,
+        `\n${sanitizeProperties(kafkaProperties)}`
+    );
+    generator.replaceContent(
+        `${generator.testResourceDir}config/application.yml`,
+        kafkaBlockPattern,
+        `\n${sanitizeProperties(kafkaTestProperties)}`
+    );
 
     writeKafkaDockerYaml(generator);
 }
@@ -385,6 +340,7 @@ function buildJsonProducerConfiguration(generator, entity, enabled) {
         '[value.serializer]': `${generator.packageName}.service.kafka.serde.${entity}Serializer`
     };
 }
+
 function sanitizeProperties(jsyamlGeneratedProperties) {
     // Related to: https://github.com/nodeca/js-yaml/issues/470
     const patternContainingSingleQuote = /^(\s.+)(:[ ]+)('((.+:)+.*)')$/gm;

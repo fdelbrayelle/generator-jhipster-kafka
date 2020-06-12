@@ -22,10 +22,10 @@ module.exports = class extends BaseGenerator {
         // props used for writing
         this.props = {
             entities: [],
-            components: [],
             componentsByEntityConfig: [],
             componentsPrefixes: [],
-            topics: []
+            topics: [],
+            cleanup: false
         };
 
         this.setupClientOptions(this);

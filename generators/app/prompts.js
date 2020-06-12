@@ -10,8 +10,8 @@ module.exports = {
     askForOperations
 };
 
-const previousConfiguration = generator =>
-    utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
+const previousConfiguration = (generator, cleanup = false) =>
+    utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, cleanup).kafka;
 
 function generationTypeChoices() {
     return [
@@ -117,30 +117,26 @@ function askForOperations(generator) {
     const prompts = [
         {
             when: !generator.options['skip-prompts'],
-            type: 'list',
-            name: 'generationType',
-            message: 'Which type of generation do you want?',
+            type: 'confirm',
+            name: 'cleanup',
+            message: 'do you want to reset your kafka configuration?',
             choices: generationTypeChoices(),
-            default: [constants.BIGBANG_MODE]
+            default: false
         }
     ];
 
     const done = generator.async();
     try {
         generator.prompt(prompts).then(props => {
-            generator.props.generationType = props.generationType;
-            if (!props.generationType || props.generationType === constants.BIGBANG_MODE) {
-                askForBigBangOperations(generator, done);
-            } else if (props.generationType === constants.INCREMENTAL_MODE) {
-                askForIncrementalOperations(generator, done);
-            }
+            generator.props.cleanup = props.cleanup;
+            askForIncrementalOperations(generator, done);
         });
     } catch (e) {
         generator.error('An error occurred while asking for operations', e);
         done();
     }
 }
-
+/*
 function askForBigBangOperations(generator, done) {
     const bigbangPrompt = [
         {
@@ -267,6 +263,7 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
     });
 }
 
+*/
 function askForIncrementalOperations(generator, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices(generator);
@@ -285,10 +282,11 @@ function askForIncrementalOperations(generator, done) {
 
     const incrementalPrompt = [
         {
+            when: !generator.options['skip-prompts'],
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration(generator))],
+            choices: [...getConcernedEntities(previousConfiguration(generator, generator.props.cleanup))],
             default: constants.NO_ENTITY
         },
         {
@@ -303,7 +301,11 @@ function askForIncrementalOperations(generator, done) {
                     return 'This name is already taken by an entity generated with JHipster';
                 }
 
-                const availableComponents = getAvailableComponentsWithoutEntity(generator, previousConfiguration(generator), input);
+                const availableComponents = getAvailableComponentsWithoutEntity(
+                    generator,
+                    previousConfiguration(generator, generator.props.cleanup),
+                    input
+                );
                 if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
 
                 return true;
@@ -394,7 +396,11 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'checkbox',
             name: 'currentEntityComponents',
             message: 'Which components would you like to generate?',
-            choices: getConcernedComponents(previousConfiguration(generator), generator.props.currentEntity, generator.props.currentPrefix),
+            choices: getConcernedComponents(
+                previousConfiguration(generator, generator.props.cleanup),
+                generator.props.currentEntity,
+                generator.props.currentPrefix
+            ),
             default: [],
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
         },
@@ -405,7 +411,7 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'list',
             name: 'topic',
             message: 'For which topic?',
-            choices: topicsChoices(generator, previousConfiguration(generator)),
+            choices: topicsChoices(generator, previousConfiguration(generator, generator.props.cleanup)),
             default: constants.DEFAULT_TOPIC
         },
         {
