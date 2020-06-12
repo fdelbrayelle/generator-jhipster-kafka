@@ -31,12 +31,13 @@ public class JacksonSerializer<T> extends JacksonAbstract implements Serializer<
     @Override
     public byte[] serialize(final String topic, final T message) {
       if (null == message) {
-        return new byte[0];
+          return new byte[0];
       }
+
       try {
-        return getMapper().writeValueAsBytes(message);
+          return getMapper().writeValueAsBytes(message);
       } catch (final JsonProcessingException e) {
-        throw new SerializationException(e);
+          throw new SerializationException(e);
       }
     }
 }

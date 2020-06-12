@@ -17,13 +17,9 @@ _%>
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
 <%_ if (serializationTypesByEntityConfig[entity] === 'basic_serialization') { _%>
       '[value.deserializer]': <%= packageName %>.service.kafka.deserializer.<%= _.upperFirst(_.camelCase(entity)) %>Deserializer
-<%_ } else if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') {
-          if (entity === 'no_entity') { _%>
-      '[value.deserializer]': <%= packageName %>.service.kafka.serde.JacksonDeserializer<String>
-<%_       } else { _%>
-      '[value.deserializer]': <%= packageName %>.service.kafka.serde.JacksonDeserializer<<%= _.upperFirst(_.camelCase(entity)) %>>
-<%_       }
-    } _%>
+<%_ } else if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') { _%>
+      # See: KafkaProperties for value.deserializer
+<%_ } _%>
       '[group.id]': <%= dasherizedBaseName %>
 <%_ if (autoOffsetResetPolicy) { _%>
       '[auto.offset.reset]': <%= autoOffsetResetPolicy %>
@@ -42,13 +38,9 @@ _%>
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
 <%_ if (serializationTypesByEntityConfig[entity] === 'basic_serialization') { _%>
       '[value.serializer]': <%= packageName %>.service.kafka.serializer.<%= _.upperFirst(_.camelCase(entity)) %>Serializer
-<%_ } else if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') {
-          if (entity === 'no_entity') { _%>
-      '[value.serializer]': <%= packageName %>.service.kafka.serde.JacksonSerializer<String>
-<%_       } else { _%>
-      '[value.deserializer]': <%= packageName %>.service.kafka.serde.JacksonSerializer<<%= _.upperFirst(_.camelCase(entity)) %>>
-<%_       }
-    } _%>
+<%_ } else if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') { _%>
+      # See: KafkaProperties for value.deserializer
+<%_ } _%>
 <%_ } _%>
 <%_ } _%>
 <%_ if (components.includes('consumer') || components.includes('producer')) { _%>

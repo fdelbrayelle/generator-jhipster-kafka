@@ -23,12 +23,14 @@ import java.util.Map;
 import org.apache.kafka.common.errors.SerializationException;
 import org.apache.kafka.common.serialization.Deserializer;
 
-public class JacksonDeserializer<T> extends JacksonAbstract implements Deserializer<T> {
+import <%= packageName %>.service.kafka.deserializer.DeserializationError;
+
+public class JacksonDeserializer<T> extends JacksonAbstract implements Deserializer<Either<DeserializationError, T>> {
     private Class<T> cls;
 
     public JacksonDeserializer(Class<T> cls) {
-      super();
-      this.cls = cls;
+        super();
+        this.cls = cls;
     }
 
     @Override
@@ -36,15 +38,15 @@ public class JacksonDeserializer<T> extends JacksonAbstract implements Deseriali
     }
 
     @Override
-    public T deserialize(final String topic, final byte[] bytes) {
-      if (null == bytes) {
-        return null;
-      }
+    public Either<DeserializationError, T> deserialize(final String topic, final byte[] bytes) {
+        if (null == bytes) {
+          return null;
+        }
 
-      try {
-        return getMapper().readValue(bytes, this.cls);
-      } catch (final IOException e) {
-        throw new SerializationException(e);
-      }
+        try {
+          return return Either.right(getMapper().readValue(bytes, this.cls));
+        } catch (final IOException e) {
+          throw new SerializationException(e);
+        }
     }
 }

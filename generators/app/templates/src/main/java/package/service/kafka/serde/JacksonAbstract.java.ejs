@@ -28,14 +28,14 @@ public class JacksonAbstract implements Closeable {
     private static ObjectMapper mapper;
 
     static {
-      mapper = new ObjectMapper();
-      mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
-      mapper.registerModule(new JavaTimeModule());
-      mapper.registerModule(new ParameterNamesModule());
+        mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(new ParameterNamesModule());
     }
 
     public static ObjectMapper getMapper() {
-      return mapper;
+        return mapper;
     }
 
     @Override

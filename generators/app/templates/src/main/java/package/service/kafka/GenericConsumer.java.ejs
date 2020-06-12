@@ -33,7 +33,11 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+<%_ if (serializationTypesByEntityConfig[entity] === 'basic_serialization') { _%>
 import <%= packageName %>.service.kafka.deserializer.DeserializationError;
+<%_ } else if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') { _%>
+import <%= packageName %>.service.kafka.serde.JacksonSerde;
+<%_ } _%>
 
 public abstract class GenericConsumer<T> implements Runnable {
 
@@ -44,11 +48,18 @@ public abstract class GenericConsumer<T> implements Runnable {
     private final KafkaConsumer<String, Either<DeserializationError, T>> consumer;
     private final String topicName;
     private final int pollingTimeout;
+<%_ if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') { _%>
+    private Class<T> clazz;
+<%_ } _%>
 
     public GenericConsumer(final String topicName, final Map<String, Object> properties, final int pollingTimeout) {
         this.topicName = topicName;
         this.consumer = new KafkaConsumer<>(properties);
         this.pollingTimeout = pollingTimeout;
+<%_ if (serializationTypesByEntityConfig[entity] === 'jackson_serde_serialization') { _%>
+
+        properties.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, JacksonSerde.of(clazz.getClass()).serializer());
+<%_ } _%>
     }
 
     @PostConstruct

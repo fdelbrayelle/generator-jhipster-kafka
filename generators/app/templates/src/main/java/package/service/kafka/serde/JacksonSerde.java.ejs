@@ -18,43 +18,46 @@
 -%>
 package <%= packageName %>.service.kafka.serde;
 
+import io.vavr.control.Either;
 import java.util.Map;
 import org.apache.kafka.common.serialization.Deserializer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serializer;
 
+import <%= packageName %>.service.kafka.deserializer.DeserializationError;
+
 public class JacksonSerde<T> implements Serde<T> {
     private final Serializer<T> serializer;
-    private final Deserializer<T> deserializer;
+    private final Deserializer<Either<DeserializationError, T>> deserializer;
 
     public JacksonSerde(Class<T> cls) {
-      this.deserializer = new JacksonDeserializer<>(cls);
-      this.serializer = new JacksonSerializer<>();
+        this.deserializer = new JacksonDeserializer<>(cls);
+        this.serializer = new JacksonSerializer<>();
     }
 
     public static <T> JacksonSerde<T> of(Class<T> cls) {
-      return new JacksonSerde<>(cls);
+        return new JacksonSerde<>(cls);
     }
 
     @Override
     public void configure(final Map<String, ?> settings, final boolean isKey) {
-      this.serializer.configure(settings, isKey);
-      this.deserializer.configure(settings, isKey);
+        this.serializer.configure(settings, isKey);
+        this.deserializer.configure(settings, isKey);
     }
 
     @Override
     public void close() {
-      this.deserializer.close();
-      this.serializer.close();
+        this.deserializer.close();
+        this.serializer.close();
     }
 
     @Override
     public Serializer<T> serializer() {
-      return this.serializer;
+        return this.serializer;
     }
 
     @Override
     public Deserializer<T> deserializer() {
-      return this.deserializer;
+        return this.deserializer;
     }
 }
