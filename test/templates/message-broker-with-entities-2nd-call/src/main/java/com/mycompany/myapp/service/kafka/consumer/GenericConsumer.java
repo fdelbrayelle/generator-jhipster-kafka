@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.mycompany.myapp.service.kafka.deserializer.DeserializationError;
+import com.mycompany.myapp.service.kafka.serde.DeserializationError;
 
 public abstract class GenericConsumer<T> implements Runnable {
 

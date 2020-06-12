@@ -50,7 +50,7 @@ describe('JHipster generator kafka', () => {
         it('should generate generic consumer and akhq.yml', () => {
             const expectedFiles = [
                 `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/DeserializationError.java`,
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
                 `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
             ];
 
@@ -241,18 +241,19 @@ describe('JHipster generator kafka', () => {
                     .on('end', done);
             });
 
-            it('should generate default and producer files only', () => {
+            it('should generate default, producer, serializer, deserializer, serde and resource', () => {
                 const expectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                 ];
 
                 const notExpectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${FOO_ENTITY}Deserializer.java`
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`
                 ];
 
                 assert.file(expectedFiles);
@@ -299,20 +300,21 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate default and consumer files only', () => {
+                it('should generate default, consumer, deserializer, serializer and serde', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${FOO_ENTITY}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate producer and serializer', () => {
+                it('should not generate producer', () => {
                     const notExpectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${FOO_ENTITY}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                     ];
                     assert.noFile(notExpectedFiles);
@@ -369,20 +371,21 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate default and consumer files only', () => {
+                it('should generate default, consumer, deserializer, serializer and serde', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${FOO_ENTITY}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate producer and serializer', () => {
+                it('should not generate producer', () => {
                     const notExpectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${FOO_ENTITY}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                     ];
                     assert.noFile(notExpectedFiles);
@@ -583,18 +586,19 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate consumer and deserializer', () => {
+                it('should generate consumer, deserializer, serializer and serde', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${AWESOME_ENTITY}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate producer and serializer', () => {
+                it('should not generate producer', () => {
                     const notExpectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${AWESOME_ENTITY}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                     ];
                     assert.noFile(notExpectedFiles);
@@ -631,19 +635,20 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate producer and serializer', () => {
+                it('should generate producer, serializer, deserializer, serde and resource', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${AWESOME_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate consumer and deserializer', () => {
+                it('should not generate consumer', () => {
                     const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${AWESOME_ENTITY}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`
                     ];
                     assert.noFile(notExpectedFiles);
                 });
@@ -682,9 +687,9 @@ describe('JHipster generator kafka', () => {
                 it('should generate consumer, deserializer, producer and serializer', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${AWESOME_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${AWESOME_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
                     ];
 
@@ -746,18 +751,18 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate consumer and deserializer', () => {
+                it('should generate consumer, deserializer and serializer', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${COMPONENT_PREFIX}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate producer and serializer', () => {
+                it('should not generate producer', () => {
                     const notExpectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${COMPONENT_PREFIX}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
                     ];
                     assert.noFile(notExpectedFiles);
@@ -791,19 +796,19 @@ describe('JHipster generator kafka', () => {
                         .on('end', done);
                 });
 
-                it('should generate producer and serializer', () => {
+                it('should generate producer, serializer, deserializer and resource', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${COMPONENT_PREFIX}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
                     ];
                     assert.file(expectedFiles);
                 });
 
-                it('should not generate consumer and deserializer', () => {
+                it('should not generate consumer', () => {
                     const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${COMPONENT_PREFIX}Deserializer.java`
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`
                     ];
                     assert.noFile(notExpectedFiles);
                 });
@@ -839,9 +844,9 @@ describe('JHipster generator kafka', () => {
                 it('should generate producer and consumer files', () => {
                     const expectedFiles = [
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${COMPONENT_PREFIX}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${COMPONENT_PREFIX}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
                         `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
                     ];
 
@@ -870,9 +875,9 @@ function itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(entityNam
             `${jhipsterConstants.SERVER_TEST_SRC_DIR}com/mycompany/myapp/KafkaArchTest.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${entityName}Consumer.java`,
-            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${entityName}Deserializer.java`,
+            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityName}Deserializer.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${entityName}Producer.java`,
-            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${entityName}Serializer.java`,
+            `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityName}Serializer.java`,
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${entityName}KafkaResource.java`,
             `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
         ];
@@ -921,14 +926,14 @@ function itShouldUpdatesPropertiesWithDefaultValue() {
 }
 
 function itShouldTypeClassesWithClass(prefix, clazz, chosenComponents) {
-    it('should type classes with String', () => {
+    it(`should type classes with ${clazz}`, () => {
         if (chosenComponents === COMPONENTS_CHOSEN.all || chosenComponents === COMPONENTS_CHOSEN.consumer) {
             assert.fileContent(
                 `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${prefix}Consumer.java`,
                 new RegExp(`GenericConsumer<${clazz}>`, 'g')
             );
             assert.fileContent(
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${prefix}Deserializer.java`,
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${prefix}Deserializer.java`,
                 new RegExp(`Deserializer<Either<DeserializationError, ${clazz}>>`, 'g')
             );
         }
@@ -939,7 +944,7 @@ function itShouldTypeClassesWithClass(prefix, clazz, chosenComponents) {
                 new RegExp(`private final KafkaProducer<String, ${clazz}> kafkaProducer;`, 'g')
             );
             assert.fileContent(
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${prefix}Serializer.java`,
+                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${prefix}Serializer.java`,
                 new RegExp(`Serializer<${clazz}>`, 'g')
             );
         }

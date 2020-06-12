@@ -231,20 +231,7 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
             type: 'input',
             name: 'topicName',
             message: `What is the topic name for ${name}?`,
-            validate: input => {
-                if (_.isEmpty(input)) return 'You have to choose a topic name';
-
-                const legalChars = /^[A-Za-z0-9._]+$/gm;
-                if (!input.match(new RegExp(legalChars))) {
-                    return 'You can only use alphanumeric characters, dots and underscores';
-                }
-
-                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
-                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
-                }
-
-                return true;
-            }
+            validate: input => validateTopic(input)
         },
         {
             when: entityIndex < answers.entities.length - 1,
@@ -426,20 +413,7 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'input',
             name: 'topicName',
             message: 'What is the topic name?',
-            validate: input => {
-                if (_.isEmpty(input)) return 'You have to choose a topic name';
-
-                const legalChars = /^[A-Za-z0-9._]+$/gm;
-                if (!input.match(new RegExp(legalChars))) {
-                    return 'You can only use alphanumeric characters, dots and underscores';
-                }
-
-                if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
-                    return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
-                }
-
-                return true;
-            }
+            validate: input => validateTopic(input)
         },
         {
             when: response =>
@@ -485,9 +459,13 @@ function askForIncrementalEntityOperations(generator, done) {
 
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
                 if (generator.props.currentEntity === constants.NO_ENTITY) {
-                    pushComponentsByEntity(generator, answers, utils.transformToJavaClassNameCase(generator.props.currentPrefix));
+                    pushComponentsByEntity(
+                        generator,
+                        answers.currentEntityComponents,
+                        utils.transformToJavaClassNameCase(generator.props.currentPrefix)
+                    );
                 } else {
-                    pushComponentsByEntity(generator, answers, generator.props.currentEntity);
+                    pushComponentsByEntity(generator, answers.currentEntityComponents, generator.props.currentEntity);
                 }
             }
 
@@ -510,12 +488,12 @@ function askForIncrementalEntityOperations(generator, done) {
     });
 }
 
-function pushComponentsByEntity(generator, answers, entity) {
+function pushComponentsByEntity(generator, currentEntityComponents, entity) {
     generator.props.componentsByEntityConfig.push(entity);
     if (generator.props.componentsByEntityConfig[entity]) {
-        generator.props.componentsByEntityConfig[entity].push(...answers.currentEntityComponents);
+        generator.props.componentsByEntityConfig[entity].push(...currentEntityComponents);
     } else {
-        generator.props.componentsByEntityConfig[entity] = [...answers.currentEntityComponents];
+        generator.props.componentsByEntityConfig[entity] = [...currentEntityComponents];
     }
 }
 
@@ -535,4 +513,19 @@ function pushTopicName(generator, topicChoice, topicName) {
             generator.props.topics.push({ key: _.camelCase(name), value: topicChoice, existingTopicName: true });
         }
     }
+}
+
+function validateTopic(input) {
+    if (_.isEmpty(input)) return 'You have to choose a topic name';
+
+    const legalChars = /^[A-Za-z0-9._]+$/gm;
+    if (!input.match(new RegExp(legalChars))) {
+        return 'You can only use alphanumeric characters, dots and underscores';
+    }
+
+    if (input.length > constants.TOPIC_NAME_MAX_SIZE) {
+        return `Your topic name cannot exceed ${constants.TOPIC_NAME_MAX_SIZE} characters`;
+    }
+
+    return true;
 }

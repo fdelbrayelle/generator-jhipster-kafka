@@ -30,7 +30,7 @@ import <%= packageName %>.config.KafkaProperties;
 <%_ if (type !== 'String') { _%>
 import <%= packageName %>.domain.<%= entityClass %>;
 <%_ } _%>
-import <%= packageName %>.service.kafka.deserializer.DeserializationError;
+import <%= packageName %>.service.kafka.serde.DeserializationError;
 
 @Service
 public class <%= entityClass %>Consumer extends GenericConsumer<<%= type %>> {
