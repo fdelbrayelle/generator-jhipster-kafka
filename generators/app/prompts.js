@@ -13,19 +13,6 @@ module.exports = {
 const previousConfiguration = (generator, cleanup = false) =>
     utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, cleanup).kafka;
 
-function generationTypeChoices() {
-    return [
-        {
-            name: 'Big Bang Mode (build a configuration from scratch)',
-            value: constants.BIGBANG_MODE
-        },
-        {
-            name: 'Incremental Mode (upgrade an existing configuration)',
-            value: constants.INCREMENTAL_MODE
-        }
-    ];
-}
-
 function offsetChoices() {
     return [
         {
@@ -119,17 +106,19 @@ function askForOperations(generator) {
             when: !generator.options['skip-prompts'],
             type: 'confirm',
             name: 'cleanup',
-            message: 'do you want to reset your kafka configuration?',
-            choices: generationTypeChoices(),
-            default: false
+            message: 'Do you want to clean up your current Kafka configuration?',
+            default: false,
+            validate: input => (_.lowerCase(input) !== 'o' && _.lowerCase(input) !== 'n' ? 'Please enter Y or N' : true)
         }
     ];
 
     const done = generator.async();
     try {
         generator.prompt(prompts).then(props => {
-            generator.props.cleanup = props.cleanup;
-            askForIncrementalOperations(generator, done);
+            if (props.cleanup) {
+                generator.props.cleanup = props.cleanup;
+            }
+            askForEntityOperations(generator, done);
         });
     } catch (e) {
         generator.error('An error occurred while asking for operations', e);
@@ -264,7 +253,7 @@ function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0
 }
 
 */
-function askForIncrementalOperations(generator, done) {
+function askForEntityOperations(generator, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices(generator);
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
@@ -280,7 +269,7 @@ function askForIncrementalOperations(generator, done) {
         );
     };
 
-    const incrementalPrompt = [
+    const entityPrompts = [
         {
             when: !generator.options['skip-prompts'],
             type: 'list',
@@ -313,7 +302,7 @@ function askForIncrementalOperations(generator, done) {
         }
     ];
 
-    generator.prompt(incrementalPrompt).then(answers => {
+    generator.prompt(entityPrompts).then(answers => {
         generator.props.currentEntity = undefined;
 
         if (answers.currentEntity) {
@@ -325,7 +314,7 @@ function askForIncrementalOperations(generator, done) {
             if (answers.currentPrefix && !generator.props.componentsPrefixes.includes(answers.currentPrefix)) {
                 generator.props.componentsPrefixes.push(answers.currentPrefix);
             }
-            askForIncrementalEntityOperations(generator, done);
+            askForComponentsEntityOperation(generator, done);
         } else {
             done();
         }
@@ -355,7 +344,7 @@ function getAvailableComponentsWithoutEntity(generator, previousConfiguration, p
     return availableComponents;
 }
 
-function askForIncrementalEntityOperations(generator, done) {
+function askForComponentsEntityOperation(generator, done) {
     const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentsChoices();
@@ -484,7 +473,7 @@ function askForIncrementalEntityOperations(generator, done) {
             }
 
             if (answers.continueAddingEntitiesComponents) {
-                askForIncrementalOperations(generator, done);
+                askForEntityOperations(generator, done);
             } else {
                 done();
             }

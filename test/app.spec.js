@@ -13,6 +13,8 @@ const constants = require('../generators/constants');
 const FOO_ENTITY = 'Foo';
 const AWESOME_ENTITY = 'AwesomeEntity';
 const COMPONENT_PREFIX = 'ComponentsWithoutEntity';
+const COMPONENT_PREFIX_LOWERCASE = 'componentsWithoutEntity';
+
 const COMPONENTS_CHOSEN = Object.freeze({ all: 1, consumer: 2, producer: 3 });
 const CUSTOM_TOPIC_NAME = 'custom_topic_name';
 const EXISTING_TOPIC_NAME = 'queuing.message_broker_with_entities.foo';
@@ -406,6 +408,63 @@ describe('JHipster generator kafka', () => {
     });
 
     describe('with an existing previous generation', () => {
+        describe('with --force --skip-prompts options', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    // RunContext from run-context.js (yeoman-test) have 'force' option by default
+                    .withOptions({ skipPrompts: true })
+                    .on('end', done);
+            });
+
+            it('should remove consumer and producer for previous entity and generate generic consumer and akhq.yml', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
+                    `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
+                ];
+
+                assert.file(expectedFiles);
+
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it('should update application.yml', () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /topic:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /producer:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /consumer:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /topic:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /producer:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /consumer:.*/);
+            });
+        });
+
         describe(`with a cleanup and a single other entity ${AWESOME_ENTITY}`, () => {
             before(done => {
                 helpers
@@ -425,18 +484,20 @@ describe('JHipster generator kafka', () => {
             it(`should remove all files and generate only consumer and Producer files for the entity ${AWESOME_ENTITY}`, () => {
                 const expectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${AWESOME_ENTITY}Deserializer.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
                 ];
                 assert.file(expectedFiles);
 
                 const notExpectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/deserializer/${FOO_ENTITY}Deserializer.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serializer/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                 ];
                 assert.noFile(notExpectedFiles);
@@ -456,6 +517,122 @@ describe('JHipster generator kafka', () => {
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
                 assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
                 assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+        });
+
+        describe(`with a cleanup and a single no_entity ${COMPONENT_PREFIX}`, () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        cleanup: true,
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it(`should remove all files and generate only consumer and Producer files for the entity ${COMPONENT_PREFIX}`, () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
+
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX}`, () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+        });
+
+        describe(`with a cleanup and a single no_entity with prefix lowerCase '${COMPONENT_PREFIX_LOWERCASE}'`, () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        cleanup: true,
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX_LOWERCASE,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it(`should remove all files and generate only consumer and Producer files for the entity ${COMPONENT_PREFIX_LOWERCASE}`, () => {
+                const entityJavaClassCase = _.upperFirst(_.camelCase(COMPONENT_PREFIX_LOWERCASE));
+
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${entityJavaClassCase}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${entityJavaClassCase}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityJavaClassCase}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityJavaClassCase}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${entityJavaClassCase}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
+
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX_LOWERCASE}`, () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX_LOWERCASE, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX_LOWERCASE, constants.CONSUMER_COMPONENT);
                 assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
                 assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
             });

@@ -287,7 +287,7 @@ function writeFiles(generator) {
         writeProperties(kafkaPreviousConfiguration, kafkaPreviousTestConfiguration, utils.transformToJavaClassNameCase(prefix));
     });
 
-    if (containsComponent(constants.CONSUMER_COMPONENT) || containsComponent(constants.PRODUCER_COMPONENT)) {
+    if (generator.topics && generator.topics.length > 0) {
         if (!kafkaPreviousConfiguration.kafka.topic) {
             kafkaPreviousConfiguration.kafka.topic = {};
         }
@@ -296,6 +296,7 @@ function writeFiles(generator) {
             kafkaPreviousTestConfiguration.kafka.topic = {};
         }
     }
+
     generator.topics.forEach(topic => {
         kafkaPreviousConfiguration.kafka.topic[topic.key] = topic.value;
         kafkaPreviousTestConfiguration.kafka.topic[topic.key] = topic.value;
