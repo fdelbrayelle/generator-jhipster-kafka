@@ -1,4 +1,4 @@
-package com.mycompany.myapp.service.kafka.serializer;
+package com.mycompany.myapp.service.kafka.serde;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;

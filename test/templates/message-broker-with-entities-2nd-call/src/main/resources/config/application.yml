@@ -165,13 +165,13 @@ kafka:
     foo:
       enabled: true
       '[key.serializer]': org.apache.kafka.common.serialization.StringSerializer
-      '[value.serializer]': com.mycompany.myapp.service.kafka.serializer.FooSerializer
+      '[value.serializer]': com.mycompany.myapp.service.kafka.serde.FooSerializer
   polling.timeout: 10000
   consumer:
     foo:
       enabled: true
       '[key.deserializer]': org.apache.kafka.common.serialization.StringDeserializer
-      '[value.deserializer]': com.mycompany.myapp.service.kafka.deserializer.FooDeserializer
+      '[value.deserializer]': com.mycompany.myapp.service.kafka.serde.FooDeserializer
       '[group.id]': message-broker-with-entities
       '[auto.offset.reset]': earliest
   topic:

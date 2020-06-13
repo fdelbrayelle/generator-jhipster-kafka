@@ -178,16 +178,12 @@ function writeFiles(generator) {
         generator.camelCaseEntityClass = _.camelCase(entity);
         generator.type = useEntityAsType ? entity : 'String';
 
+        generateSerdeFiles(generator, entity, useEntityAsType);
+
         if (mustGenerateComponent(entity, constants.CONSUMER_COMPONENT)) {
             generator.template(
                 'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
                 `${generator.javaDir}service/kafka/consumer/${entity}Consumer.java`,
-                null,
-                null
-            );
-            generator.template(
-                'src/main/java/package/service/kafka/deserializer/EntityDeserializer.java.ejs',
-                `${generator.javaDir}service/kafka/deserializer/${entity}Deserializer.java`,
                 null,
                 null
             );
@@ -197,12 +193,6 @@ function writeFiles(generator) {
             generator.template(
                 'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
                 `${generator.javaDir}service/kafka/producer/${entity}Producer.java`,
-                null,
-                null
-            );
-            generator.template(
-                'src/main/java/package/service/kafka/serializer/EntitySerializer.java.ejs',
-                `${generator.javaDir}service/kafka/serializer/${entity}Serializer.java`,
                 null,
                 null
             );
@@ -263,8 +253,8 @@ function writeFiles(generator) {
             null
         );
         generator.template(
-            'src/main/java/package/service/kafka/deserializer/DeserializationError.java.ejs',
-            `${generator.javaDir}service/kafka/deserializer/DeserializationError.java`,
+            'src/main/java/package/service/kafka/serde/DeserializationError.java.ejs',
+            `${generator.javaDir}service/kafka/serde/DeserializationError.java`,
             null,
             null
         );
@@ -371,7 +361,7 @@ function buildJsonConsumerConfiguration(generator, entity, enabled) {
     return {
         enabled,
         '[key.deserializer]': 'org.apache.kafka.common.serialization.StringDeserializer',
-        '[value.deserializer]': `${generator.packageName}.service.kafka.deserializer.${entity}Deserializer`,
+        '[value.deserializer]': `${generator.packageName}.service.kafka.serde.${entity}Deserializer`,
         '[group.id]': `${generator.dasherizedBaseName}`,
         '[auto.offset.reset]': `${generator.autoOffsetResetPolicy}`
     };
@@ -381,7 +371,7 @@ function buildJsonProducerConfiguration(generator, entity, enabled) {
     return {
         enabled,
         '[key.serializer]': 'org.apache.kafka.common.serialization.StringSerializer',
-        '[value.serializer]': `${generator.packageName}.service.kafka.serializer.${entity}Serializer`
+        '[value.serializer]': `${generator.packageName}.service.kafka.serde.${entity}Serializer`
     };
 }
 function sanitizeProperties(jsyamlGeneratedProperties) {
@@ -440,4 +430,35 @@ function overrideMainGeneratorAppYml(generator) {
     const kafkaAdvertisedListenersPattern = /^\s.*KAFKA_ADVERTISED_LISTENERS.*$/gm;
     const kafkaAdvertisedListeners = '      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092';
     generator.replaceContent(appYmlPath, kafkaAdvertisedListenersPattern, kafkaAdvertisedListeners);
+}
+
+function generateSerdeFiles(generator, entity, useEntityAsType) {
+    generator.template(
+        'src/main/java/package/service/kafka/serde/DeserializationError.java.ejs',
+        `${generator.javaDir}service/kafka/serde/DeserializationError.java`,
+        null,
+        null
+    );
+    generator.template(
+        'src/main/java/package/service/kafka/serde/EntityDeserializer.java.ejs',
+        `${generator.javaDir}service/kafka/serde/${entity}Deserializer.java`,
+        null,
+        null
+    );
+    generator.template(
+        'src/main/java/package/service/kafka/serde/EntitySerializer.java.ejs',
+        `${generator.javaDir}service/kafka/serde/${entity}Serializer.java`,
+        null,
+        null
+    );
+
+    // When using no_entity there is already a Serdes.String() (which implements Serde<String>) so no need to generate a custom Serde
+    if (useEntityAsType) {
+        generator.template(
+            'src/main/java/package/service/kafka/serde/EntitySerde.java.ejs',
+            `${generator.javaDir}service/kafka/serde/${entity}Serde.java`,
+            null,
+            null
+        );
+    }
 }

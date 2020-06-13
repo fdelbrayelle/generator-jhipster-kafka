@@ -77,7 +77,7 @@ class KafkaArchTest {
             .that()
             .haveSimpleNameEndingWith("Serializer")
             .should()
-            .resideInAPackage("<%= packageName %>.service.kafka.serializer")
+            .resideInAPackage("<%= packageName %>.service.kafka.serde")
             .because("Serializers have to be gathered")
             .check(importedClasses);
     }
@@ -93,7 +93,7 @@ class KafkaArchTest {
             .that()
             .haveSimpleNameEndingWith("Deserializer")
             .should()
-            .resideInAPackage("<%= packageName %>.service.kafka.deserializer")
+            .resideInAPackage("<%= packageName %>.service.kafka.serde")
             .because("Deserializers have to be gathered")
             .check(importedClasses);
     }

@@ -1,4 +1,4 @@
-package com.mycompany.myapp.service.kafka.deserializer;
+package com.mycompany.myapp.service.kafka.serde;
 
 public class DeserializationError {
 
