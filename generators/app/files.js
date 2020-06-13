@@ -257,8 +257,8 @@ function writeFiles(generator) {
 
     if (generator.options['skip-prompts'] || containsComponent(constants.CONSUMER_COMPONENT)) {
         generator.template(
-            'src/main/java/package/service/kafka/GenericConsumer.java.ejs',
-            `${generator.javaDir}service/kafka/GenericConsumer.java`,
+            'src/main/java/package/service/kafka/consumer/GenericConsumer.java.ejs',
+            `${generator.javaDir}service/kafka/consumer/GenericConsumer.java`,
             null,
             null
         );
@@ -278,6 +278,8 @@ function writeFiles(generator) {
             null
         );
     }
+
+    generator.template('src/test/java/package/KafkaArchTest.java.ejs', `${generator.testDir}/KafkaArchTest.java`, null, null);
 
     generator.entities.forEach(entity => {
         writeComponents(entity, true);
