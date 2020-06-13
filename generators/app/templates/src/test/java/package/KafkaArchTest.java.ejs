@@ -1,0 +1,178 @@
+<%#
+ Copyright 2013-2020 the original author or authors from the JHipster project.
+
+ This file is part of the JHipster project, see https://www.jhipster.tech/
+ for more information.
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-%>
+package <%= packageName %>;
+
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.lang.ArchCondition;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
+import org.junit.jupiter.api.Test;
+import org.springframework.stereotype.Service;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+
+import <%= packageName %>.service.kafka.consumer.GenericConsumer;
+
+class KafkaArchTest {
+
+    @Test
+    void consumersShouldBeInTheirPackage() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Consumer")
+            .should()
+            .resideInAPackage("<%= packageName %>.service.kafka.consumer")
+            .because("Consumers have to be gathered")
+            .check(importedClasses);
+    }
+
+    @Test
+    void producersShouldBeInTheirPackage() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Producer")
+            .should()
+            .resideInAPackage("<%= packageName %>.service.kafka.producer")
+            .because("Producers have to be gathered")
+            .check(importedClasses);
+    }
+
+    @Test
+    void serializersShouldBeInTheirPackage() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Serializer")
+            .should()
+            .resideInAPackage("<%= packageName %>.service.kafka.serializer")
+            .because("Serializers have to be gathered")
+            .check(importedClasses);
+    }
+
+    @Test
+    void deserializersShouldBeInTheirPackage() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Deserializer")
+            .should()
+            .resideInAPackage("<%= packageName %>.service.kafka.deserializer")
+            .because("Deserializers have to be gathered")
+            .check(importedClasses);
+    }
+
+    @Test
+    void serdesShouldBeInTheirPackage() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Serde")
+            .should()
+            .resideInAPackage("<%= packageName %>.service.kafka.serde")
+            .because("Serdes have to be gathered")
+            .check(importedClasses);
+    }
+
+    @Test
+    void consumersShouldExtendGenericConsumer() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>.service.kafka.consumer");
+
+        final ArchCondition<? super JavaClass> extendGenericConsumer = new ArchCondition<JavaClass>("extend GenericConsumer") {
+            @Override
+            public void check(JavaClass javaClass, ConditionEvents conditionEvents) {
+                if (!javaClass.getSuperClass().isPresent() || !javaClass.getSuperClass().get().getName().equals(GenericConsumer.class.getName())) {
+                    final String message = String.format(
+                        "Class %s does not extend GenericConsumer", javaClass.getName());
+                    conditionEvents.add(SimpleConditionEvent.violated(javaClass, message));
+                }
+            }
+        };
+
+        classes()
+            .that()
+            .doNotHaveSimpleName("GenericConsumer")
+            .and()
+            .haveSimpleNameEndingWith("Consumer")
+            .should(extendGenericConsumer)
+            .because("Consumers have to extend GenericConsumer")
+            .check(importedClasses);
+    }
+
+    @Test
+    void consumersShouldBeServices() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>.service.kafka.consumer");
+
+        classes()
+            .that()
+            .doNotHaveSimpleName("GenericConsumer")
+            .and()
+            .haveSimpleNameEndingWith("Consumer")
+            .should()
+            .beAnnotatedWith(Service.class)
+            .because("Consumers have to be services")
+            .check(importedClasses);
+    }
+
+    @Test
+    void producersShouldBeServices() {
+
+        JavaClasses importedClasses = new ClassFileImporter()
+            .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+            .importPackages("<%= packageName %>.service.kafka.producer");
+
+        classes()
+            .that()
+            .haveSimpleNameEndingWith("Producer")
+            .should()
+            .beAnnotatedWith(Service.class)
+            .because("Producers have to be services")
+            .check(importedClasses);
+    }
+}

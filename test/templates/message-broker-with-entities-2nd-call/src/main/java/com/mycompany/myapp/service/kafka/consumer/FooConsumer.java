@@ -10,7 +10,6 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.stereotype.Service;
 import com.mycompany.myapp.config.KafkaProperties;
 import com.mycompany.myapp.domain.Foo;
-import com.mycompany.myapp.service.kafka.GenericConsumer;
 import com.mycompany.myapp.service.kafka.deserializer.DeserializationError;
 
 @Service
