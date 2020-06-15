@@ -118,8 +118,8 @@ function writeFiles(generator) {
         generator.props.componentsPrefixes.forEach(prefix => {
             haveComponentWithoutEntity =
                 generator.props.componentsByEntityConfig &&
-                generator.props.componentsByEntityConfig[prefix] &&
-                generator.props.componentsByEntityConfig[prefix].includes(componentType);
+                generator.props.componentsByEntityConfig[utils.transformToJavaClassNameCase(prefix)] &&
+                generator.props.componentsByEntityConfig[utils.transformToJavaClassNameCase(prefix)].includes(componentType);
         });
 
         return (
