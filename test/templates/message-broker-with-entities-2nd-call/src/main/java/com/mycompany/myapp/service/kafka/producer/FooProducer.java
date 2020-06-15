@@ -33,6 +33,7 @@ public class FooProducer {
     public void send(final Foo message) {
         final ProducerRecord<String, Foo> record = new ProducerRecord<>(topicName, message);
         try {
+            log.info("Sending asynchronously a Foo record to topic: '" + topicName + "'");
             kafkaProducer.send(record);
         } catch (final Exception e) {
             log.error(e.getMessage(), e);

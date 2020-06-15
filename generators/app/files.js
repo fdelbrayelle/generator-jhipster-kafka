@@ -219,7 +219,7 @@ function writeFiles(generator) {
         }
     };
 
-    if (generator.props.cleanup) {
+    if (isCleanup(generator)) {
         shelljs.rm('-rf', `${generator.javaDir}service/kafka/`, `${generator.javaDir}web/rest/kafka/`);
     }
 

@@ -27,16 +27,16 @@ public class KafkaProperties {
     @PostConstruct
     public void init() {
 
-        for (String consumerKey: consumer.keySet()) {
+        for (String consumerKey : consumer.keySet()) {
             final Map<String, Object> properties = consumer.get(consumerKey);
-            if (! properties.containsKey(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
+            if (!properties.containsKey(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
                 properties.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
             }
         }
 
-        for (String consumerKey: producer.keySet()) {
+        for (String consumerKey : producer.keySet()) {
             final Map<String, Object> properties = producer.get(consumerKey);
-            if (! properties.containsKey(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
+            if (!properties.containsKey(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG)) {
                 properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
             }
         }

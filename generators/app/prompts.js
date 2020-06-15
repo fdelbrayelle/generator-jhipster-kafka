@@ -108,7 +108,7 @@ function askForOperations(generator) {
             name: 'cleanup',
             message: 'Do you want to clean up your current Kafka configuration?',
             default: false,
-            validate: input => (_.lowerCase(input) !== 'o' && _.lowerCase(input) !== 'n' ? 'Please enter Y or N' : true)
+            validate: input => (_.lowerCase(input) !== 'y' && _.lowerCase(input) !== 'n' ? 'Please enter Y or N' : true)
         }
     ];
 
@@ -125,134 +125,7 @@ function askForOperations(generator) {
         done();
     }
 }
-/*
-function askForBigBangOperations(generator, done) {
-    const bigbangPrompt = [
-        {
-            when: !generator.options['skip-prompts'],
-            type: 'checkbox',
-            name: 'components',
-            message: 'Which components would you like to generate?',
-            choices: componentsChoices(),
-            default: [],
-            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
-        },
-        {
-            when: response =>
-                response.components.includes(constants.CONSUMER_COMPONENT) || response.components.includes(constants.PRODUCER_COMPONENT),
-            type: 'checkbox',
-            name: 'entities',
-            message: 'For which entity (class name)?',
-            choices: entitiesChoices(generator),
-            default: constants.NO_ENTITY,
-            validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
-        },
-        {
-            when: response => response.entities.includes(constants.NO_ENTITY),
-            type: 'input',
-            name: 'componentPrefix',
-            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
-            validate: input => {
-                if (_.isEmpty(input)) return 'Please enter a value';
-                if (entitiesChoices(generator).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
-                    return 'This name is already taken by an entity generated with JHipster';
-                }
-                return true;
-            }
-        },
-        {
-            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
-            type: 'number',
-            name: 'pollingTimeout',
-            message: 'What is the consumer polling timeout (in ms)?',
-            default: constants.DEFAULT_POLLING_TIMEOUT,
-            validate: input => (isNaN(input) ? 'Please enter a number' : true)
-        },
-        {
-            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
-            type: 'list',
-            name: 'autoOffsetResetPolicy',
-            message:
-                'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
-            choices: offsetChoices(),
-            default: constants.EARLIEST_OFFSET
-        }
-    ];
 
-    if (generator.options['skip-prompts']) {
-        generator.props = _.merge(generator.props, bigbangPrompt.map(prompt => prompt.default));
-        done();
-        return;
-    }
-
-    generator.prompt(bigbangPrompt).then(answers => {
-        if (answers.componentPrefix) {
-            generator.props.componentsPrefixes.push(answers.componentPrefix);
-        }
-
-        generator.props = _.merge(generator.props, answers);
-
-        askForBigBangEntityOperations(generator, answers, done);
-    });
-}
-
-function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0) {
-    let name = answers.entities[entityIndex];
-    if (answers.entities[entityIndex] === constants.NO_ENTITY) {
-        name = answers.componentPrefix;
-    }
-
-    const bigbangEntityPrompt = [
-        {
-            when: answers.components.includes(constants.CONSUMER_COMPONENT) || answers.components.includes(constants.PRODUCER_COMPONENT),
-            type: 'list',
-            name: 'topic',
-            message: `Which topic for ${name}?`,
-            choices: topicsChoices(generator, null),
-            default: constants.DEFAULT_TOPIC
-        },
-        {
-            when: response => response.topic === constants.CUSTOM_TOPIC,
-            type: 'input',
-            name: 'topicName',
-            message: `What is the topic name for ${name}?`,
-            validate: input => validateTopic(input)
-        },
-        {
-            when: entityIndex < answers.entities.length - 1,
-            type: 'confirm',
-            name: 'confirmBigBangEntityOperations',
-            message: 'Do you want to continue to the next entity/prefix or exit?',
-            default: true
-        }
-    ];
-
-    generator.prompt(bigbangEntityPrompt).then(subAnswers => {
-        if (!generator.props.topics) {
-            generator.props.topics = [];
-        }
-
-        generator.props.currentEntity = answers.entities[entityIndex];
-
-        if (generator.props.currentEntity === constants.NO_ENTITY) {
-            generator.props.currentPrefix = answers.componentPrefix;
-        }
-
-        pushTopicName(generator, subAnswers.topic, subAnswers.topicName);
-
-        generator.props = _.merge(generator.props, subAnswers);
-
-        if (entityIndex === answers.entities.length - 1) {
-            done();
-        }
-
-        if (subAnswers.confirmBigBangEntityOperations) {
-            askForBigBangEntityOperations(generator, answers, done, ++entityIndex);
-        }
-    });
-}
-
-*/
 function askForEntityOperations(generator, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices(generator);
@@ -314,7 +187,7 @@ function askForEntityOperations(generator, done) {
             if (answers.currentPrefix && !generator.props.componentsPrefixes.includes(answers.currentPrefix)) {
                 generator.props.componentsPrefixes.push(answers.currentPrefix);
             }
-            askForComponentsEntityOperation(generator, done);
+            askForEntityComponentsOperations(generator, done);
         } else {
             done();
         }
@@ -344,7 +217,7 @@ function getAvailableComponentsWithoutEntity(generator, previousConfiguration, p
     return availableComponents;
 }
 
-function askForComponentsEntityOperation(generator, done) {
+function askForEntityComponentsOperations(generator, done) {
     const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentsChoices();
