@@ -13,12 +13,6 @@ module.exports = {
 };
 
 function initVariables(generator) {
-    const vavrVersion = '0.10.3';
-    generator.addMavenProperty('vavr.version', vavrVersion);
-    generator.addGradleProperty('vavr_version', vavrVersion);
-    generator.addMavenDependency('io.vavr', 'vavr', '${vavr.version}'); // eslint-disable-line no-template-curly-in-string
-    generator.addGradleDependency('implementation', 'io.vavr', 'vavr', '${vavr_version}'); // eslint-disable-line no-template-curly-in-string
-
     // read config from .yo-rc.json
     generator.baseName = generator.jhipsterAppConfig.baseName;
     generator.dasherizedBaseName = _.kebabCase(generator.baseName);
@@ -85,6 +79,8 @@ function initVariables(generator) {
 function writeFiles(generator) {
     initVariables(generator);
 
+    addDependencies(generator);
+
     registerToEntityPostHook(generator);
 
     cleanMainGeneratorKafkaFiles(generator, generator.javaDir, generator.testDir);
@@ -112,6 +108,21 @@ function writeFiles(generator) {
         );
         return generatedKafkaProperties;
     };
+
+    /**
+     * add dependencies according to the build tool present in the application.
+     * @param generator
+     */
+    function addDependencies(generator) {
+        const vavrVersion = '0.10.3';
+        if (generator.buildTool === 'maven') {
+            generator.addMavenProperty('vavr.version', vavrVersion);
+            generator.addMavenDependency('io.vavr', 'vavr', '${vavr.version}'); // eslint-disable-line no-template-curly-in-string
+        } else if (generator.buildTool === 'gradle') {
+            generator.addGradleProperty('vavr_version', vavrVersion);
+            generator.addGradleDependency('implementation', 'io.vavr', 'vavr', '${vavr_version}'); // eslint-disable-line no-template-curly-in-string
+        }
+    }
 
     /**
      * Search in dedicated incremental structure if a type of component must be generated for an entity.
