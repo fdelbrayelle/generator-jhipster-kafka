@@ -10,9 +10,9 @@ The **topic naming convention** has been set to: `message_type.application_name.
 
 ### Define your configuration Step-by-step
 
-This modules allows the user to write new Kafka configuration (new Java files and `application.yml` updates). And in order to achieve it, prompt options are asked step-by-step until you decide to finish your configuration.
+This module allows the user to write new Kafka configuration (new Java files and `application.yml` updates). In order to achieve it, prompt options are asked step-by-step until you decide to finish your configuration.
 
-You can choose to merge the new configuration with the previous configuration or just replace it, by selecting `"y"` or `"n"` to the question `"Do you want to clean up your current Kafka configuration?"`
+You can choose to merge the new configuration with the previous configuration or just replace it, by typing `y` or `n` to the question "Do you want to clean up your current Kafka configuration?".
 
 ### Create a consumer linked to an entity
 
@@ -20,7 +20,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
-3. "Do you want to clean up your current Kafka configuration?" - `'y' or 'n'`
+3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
 5. "Which components would you like to generate?" - Consumer
 6. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")
@@ -50,7 +50,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
-3. "Do you want to clean up your current Kafka configuration?" - `'y' or 'n'`
+3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - No entity (will be typed String)
 5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
 6. "Which components would you like to generate?" - Consumer
@@ -67,7 +67,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
-3. "Do you want to clean up your current Kafka configuration?" - `'y' or 'n'`
+3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - No entity (will be typed String)
 5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
 6. "Which components would you like to generate?" - Producer
