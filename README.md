@@ -113,7 +113,7 @@ Do your own configuration step-by-step!
 The **END** represents the end of the prompts below, when files are written after confirmation (you can use the `--force` option with `yo jhipster-kafka` to overwrite all files).
 
 <ul>
-    <li>Do you want to clean up your current Kafka configuration?
+    <li>Do you want to clean up your current Kafka configuration? <strong>(default = N)</strong>
         <ul>
             <li><em>If "y" was typed:</em> all configurations and classes will be deleted and fully regenerated</li>
             <li><em>If "n" was typed:</em> the new configuration will be merged with the previous one</li>

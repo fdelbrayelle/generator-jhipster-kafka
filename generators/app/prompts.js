@@ -107,8 +107,7 @@ function askForOperations(generator) {
             type: 'confirm',
             name: 'cleanup',
             message: 'Do you want to clean up your current Kafka configuration?',
-            default: false,
-            validate: input => (_.lowerCase(input) !== 'y' && _.lowerCase(input) !== 'n' ? 'Please enter Y or N' : true)
+            default: false
         }
     ];
 

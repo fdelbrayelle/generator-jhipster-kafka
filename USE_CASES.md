@@ -36,7 +36,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
-3. "Do you want to clean up your current Kafka configuration?" - `'y' or 'n'`
+3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
 5. "Which components would you like to generate?" - Producer
 6. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")

@@ -37,7 +37,7 @@ describe('JHipster generator kafka', () => {
         });
     });
 
-    describe('with --force --skip-prompts options', () => {
+    describe('with --skip-prompts options', () => {
         before(done => {
             helpers
                 .run(path.join(__dirname, '../generators/app'))
@@ -408,7 +408,7 @@ describe('JHipster generator kafka', () => {
     });
 
     describe('with an existing previous generation', () => {
-        describe('with --force --skip-prompts options', () => {
+        describe('with --skip-prompts options', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))

@@ -90,10 +90,6 @@ function writeFiles(generator) {
         return shelljs.cat(constants.MODULES_HOOK_FILE).match(constants.MODULE_NAME) === null;
     };
 
-    const isCleanup = generator => {
-        return generator.props.cleanup ? generator.props.cleanup : false;
-    };
-
     /**
      * add dependencies according to the build tool present in the application.
      * @param generator
@@ -219,7 +215,7 @@ function writeFiles(generator) {
         }
     };
 
-    if (isCleanup(generator)) {
+    if (generator.props.cleanup) {
         shelljs.rm('-rf', `${generator.javaDir}service/kafka/`, `${generator.javaDir}web/rest/kafka/`);
     }
 
@@ -260,13 +256,13 @@ function writeFiles(generator) {
     const kafkaPreviousConfiguration = utils.getPreviousKafkaConfiguration(
         generator,
         `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-        isFirstGeneration() || isCleanup(generator)
+        isFirstGeneration() || generator.props.cleanup
     );
 
     const kafkaPreviousTestConfiguration = utils.getPreviousKafkaConfiguration(
         generator,
         `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-        isFirstGeneration() || isCleanup(generator)
+        isFirstGeneration() || generator.props.cleanup
     );
 
     // eslint-disable-next-line no-template-curly-in-string
