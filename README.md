@@ -115,8 +115,8 @@ The **END** represents the end of the prompts below, when files are written afte
 <ul>
     <li>Do you want to clean up your current Kafka configuration?
         <ul>
-            <li><em>If "y" was selected:</em> all configurations and classes will be deleted and fully regenerated</li>
-            <li><em>If "n" was selected <b>(default)</b>:</em> the new configuration will be merged with the previous one</li>
+            <li><em>If "y" was typed:</em> all configurations and classes will be deleted and fully regenerated</li>
+            <li><em>If "n" was typed:</em> the new configuration will be merged with the previous one</li>
         </ul>
     </li>
     <li>For which entity (class name)?
