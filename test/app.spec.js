@@ -13,6 +13,8 @@ const constants = require('../generators/constants');
 const FOO_ENTITY = 'Foo';
 const AWESOME_ENTITY = 'AwesomeEntity';
 const COMPONENT_PREFIX = 'ComponentsWithoutEntity';
+const COMPONENT_PREFIX_LOWERCASE = 'componentsWithoutEntity';
+
 const COMPONENTS_CHOSEN = Object.freeze({ all: 1, consumer: 2, producer: 3 });
 const CUSTOM_TOPIC_NAME = 'custom_topic_name';
 const EXISTING_TOPIC_NAME = 'queuing.message_broker_with_entities.foo';
@@ -27,204 +29,51 @@ describe('JHipster generator kafka', () => {
                 })
                 .on('error', error => {
                     expect(error.message === 'You need to use Kafka as message broker!').to.be.true;
+                    done();
                 })
                 .on('end', () => {
                     expect(true).to.be.false;
+                    done();
                 });
-            done();
         });
     });
 
-    describe('with --force --skip-prompts options', () => {
-        before(done => {
-            helpers
-                .run(path.join(__dirname, '../generators/app'))
-                .inTmpDir(dir => {
-                    fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                })
-                // RunContext from run-context.js (yeoman-test) have 'force' option by default
-                .withOptions({ skipPrompts: true })
-                .on('end', done);
-        });
-
-        it('should generate generic consumer and akhq.yml', () => {
-            const expectedFiles = [
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
-                `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
-            ];
-
-            assert.file(expectedFiles);
-        });
-
-        it('should update application.yml', () => {
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-        });
-    });
-
-    describe('with the big bang mode', () => {
-        describe('with a consumer and a producer for a single entity', () => {
+    describe('with a message broker and first generation', () => {
+        describe('with --skip-prompts options', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
                         fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [FOO_ENTITY]
-                    })
+                    // RunContext from run-context.js (yeoman-test) have 'force' option by default
+                    .withOptions({ skipPrompts: true })
                     .on('end', done);
             });
 
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-        });
+            it('should generate generic consumer and akhq.yml', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
+                    `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
+                ];
 
-        describe('with a consumer and a producer without entity', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [constants.NO_ENTITY],
-                        componentPrefix: COMPONENT_PREFIX
-                    })
-                    .on('end', done);
+                assert.file(expectedFiles);
             });
 
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
-            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
-        });
+            it('should update application.yml', () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-        describe('with a consumer and a producer without entity and for a single entity', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [constants.NO_ENTITY, FOO_ENTITY],
-                        componentPrefix: COMPONENT_PREFIX
-                    })
-                    .on('end', done);
-            });
-
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
-        });
-
-        describe('with a given polling timeout', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [FOO_ENTITY],
-                        pollingTimeout: 20000
-                    })
-                    .on('end', done);
-            });
-
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-
-            it('should update application.yml kafka.polling.timeout property', () => {
-                assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
-                assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
             });
         });
 
-        describe('with a given auto offset reset policy', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [FOO_ENTITY],
-                        autoOffsetResetPolicy: constants.LATEST_OFFSET
-                    })
-                    .on('end', done);
-            });
-
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-
-            it('should update application.yml kafka.auto.offset.reset property', () => {
-                assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
-                assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
-            });
-        });
-
-        describe('with a consumer and a producer for a single entity with a default topic name', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [FOO_ENTITY],
-                        topic: constants.DEFAULT_TOPIC
-                    })
-                    .on('end', done);
-            });
-
-            it('should put a default topic name in application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.DEFAULT_TOPIC, null);
-            });
-        });
-
-        describe('with a consumer and a producer for a single entity with a custom topic name', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        generationType: constants.BIGBANG_MODE,
-                        components: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        entities: [FOO_ENTITY],
-                        topic: constants.CUSTOM_TOPIC,
-                        topicName: CUSTOM_TOPIC_NAME
-                    })
-                    .on('end', done);
-            });
-
-            it('should put a custom topic name in application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
-            });
-        });
-    });
-
-    describe('with the incremental mode', () => {
         describe('with only a producer for a single entity', () => {
             before(done => {
                 helpers
@@ -233,7 +82,6 @@ describe('JHipster generator kafka', () => {
                         fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
-                        generationType: constants.INCREMENTAL_MODE,
                         currentEntity: FOO_ENTITY,
                         currentEntityComponents: [constants.PRODUCER_COMPONENT],
                         continueAddingEntitiesComponents: false
@@ -292,7 +140,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT],
                             continueAddingEntitiesComponents: false
@@ -361,7 +208,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT],
                             pollingTimeout: 20000,
@@ -437,7 +283,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
                             continueAddingEntitiesComponents: false
@@ -458,7 +303,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
                             pollingTimeout: 500,
@@ -481,7 +325,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
                             topic: constants.DEFAULT_TOPIC,
@@ -504,7 +347,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: FOO_ENTITY,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
                             topic: constants.CUSTOM_TOPIC,
@@ -530,7 +372,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: constants.NO_ENTITY,
                             currentPrefix: COMPONENT_PREFIX,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
@@ -552,7 +393,6 @@ describe('JHipster generator kafka', () => {
                             fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                         })
                         .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
                             currentEntity: constants.NO_ENTITY,
                             currentPrefix: COMPONENT_PREFIX,
                             currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
@@ -568,302 +408,528 @@ describe('JHipster generator kafka', () => {
                 itShouldUpdatesPropertiesWithGivenValue();
             });
         });
+    });
 
-        describe('with an existing previous generation', () => {
-            describe('with only a consumer for a single entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: AWESOME_ENTITY,
-                            currentEntityComponents: [constants.CONSUMER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
-
-                it('should generate consumer, deserializer, serializer and serde', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`
-                    ];
-                    assert.file(expectedFiles);
-                });
-
-                it('should not generate producer', () => {
-                    const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
-                    ];
-                    assert.noFile(notExpectedFiles);
-                });
-
-                it(`should add consumer configuration for ${AWESOME_ENTITY}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                });
-
-                it('should order properties to put root properties at top', () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                    assertThatKafkaPropertiesAreOrdered(applicationYml);
-                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
-                });
+    describe('with an existing previous generation', () => {
+        describe('with --skip-prompts options', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    // RunContext from run-context.js (yeoman-test) have 'force' option by default
+                    .withOptions({ skipPrompts: true })
+                    .on('end', done);
             });
 
-            describe('with only a producer for a single entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: AWESOME_ENTITY,
-                            currentEntityComponents: [constants.PRODUCER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it('should remove consumer and producer for previous entity and generate generic consumer and akhq.yml', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
+                    `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
+                ];
 
-                it('should generate producer, serializer, deserializer, serde and resource', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
-                    ];
-                    assert.file(expectedFiles);
-                });
+                assert.file(expectedFiles);
 
-                it('should not generate consumer', () => {
-                    const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`
-                    ];
-                    assert.noFile(notExpectedFiles);
-                });
-
-                it(`should add producer configuration for ${AWESOME_ENTITY}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                });
-
-                it('should order properties to put root properties at top', () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                    assertThatKafkaPropertiesAreOrdered(applicationYml);
-                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
-                });
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
             });
 
-            describe('with a consumer and a producer for a single entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: AWESOME_ENTITY,
-                            currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it('should update application.yml', () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                it('should generate consumer, deserializer, producer and serializer', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
-                    ];
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                    assert.file(expectedFiles);
-                });
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /topic:.*/);
 
-                it(`should add consumer configuration for ${AWESOME_ENTITY}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /producer:.*/);
 
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
-                });
-                it('should order properties to put root properties at top', () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                    assertThatKafkaPropertiesAreOrdered(applicationYml);
-                    assertThatKafkaPropertiesAreOrdered(testApplicationYml);
-                });
+                assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /consumer:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /topic:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /producer:.*/);
+
+                assert.noFileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /consumer:.*/);
+            });
+        });
+
+        describe(`with a cleanup and a single other entity ${AWESOME_ENTITY}`, () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        cleanup: true,
+                        currentEntity: AWESOME_ENTITY,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
             });
 
-            describe('with a consumer and a producer for a single entity (using an existing topic name)', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: AWESOME_ENTITY,
-                            currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
-                            topic: EXISTING_TOPIC_NAME,
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it(`should remove all files and generate only consumer and Producer files for the entity ${AWESOME_ENTITY}`, () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
 
-                it('should put an existing topic name in application.yml', () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                    assertTopicName(applicationYml, testApplicationYml, AWESOME_ENTITY, null, EXISTING_TOPIC_NAME);
-                });
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
             });
 
-            describe('with only a consumer without entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: constants.NO_ENTITY,
-                            currentPrefix: COMPONENT_PREFIX,
-                            currentEntityComponents: [constants.CONSUMER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it(`should regenerate all basics properties and producer/consumer properties for only ${AWESOME_ENTITY}`, () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                it('should generate consumer, deserializer and serializer', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`
-                    ];
-                    assert.file(expectedFiles);
-                });
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                it('should not generate producer', () => {
-                    const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
-                    ];
-                    assert.noFile(notExpectedFiles);
-                });
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+        });
 
-                it(`should add consumer configuration for ${COMPONENT_PREFIX}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                });
-
-                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.consumer);
+        describe(`with a cleanup and a single no_entity ${COMPONENT_PREFIX}`, () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        cleanup: true,
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
             });
 
-            describe('with only a producer without entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: constants.NO_ENTITY,
-                            currentPrefix: COMPONENT_PREFIX,
-                            currentEntityComponents: [constants.PRODUCER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it(`should remove all files and generate only consumer and Producer files for the entity ${COMPONENT_PREFIX}`, () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
 
-                it('should generate producer, serializer, deserializer and resource', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
-                    ];
-                    assert.file(expectedFiles);
-                });
-
-                it('should not generate consumer', () => {
-                    const notExpectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`
-                    ];
-                    assert.noFile(notExpectedFiles);
-                });
-
-                it(`should add producer configuration for ${COMPONENT_PREFIX}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                });
-
-                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.producer);
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
             });
 
-            describe('with a producer and consumer without entity', () => {
-                before(done => {
-                    helpers
-                        .run(path.join(__dirname, '../generators/app'))
-                        .inTmpDir(dir => {
-                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
-                        })
-                        .withPrompts({
-                            generationType: constants.INCREMENTAL_MODE,
-                            currentEntity: constants.NO_ENTITY,
-                            currentPrefix: COMPONENT_PREFIX,
-                            currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
-                            continueAddingEntitiesComponents: false
-                        })
-                        .on('end', done);
-                });
+            it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX}`, () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                it('should generate producer and consumer files', () => {
-                    const expectedFiles = [
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
-                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
-                    ];
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
 
-                    assert.file(expectedFiles);
-                });
-
-                it(`should add consumer configuration for ${COMPONENT_PREFIX}`, () => {
-                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-                    assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
-                });
-
-                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
             });
+        });
+
+        describe(`with a cleanup and a single no_entity with prefix lowerCase '${COMPONENT_PREFIX_LOWERCASE}'`, () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        cleanup: true,
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX_LOWERCASE,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it(`should remove all files and generate only consumer and Producer files for the entity ${COMPONENT_PREFIX_LOWERCASE}`, () => {
+                const entityJavaClassCase = _.upperFirst(_.camelCase(COMPONENT_PREFIX_LOWERCASE));
+
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${entityJavaClassCase}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${entityJavaClassCase}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityJavaClassCase}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${entityJavaClassCase}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${entityJavaClassCase}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
+
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX_LOWERCASE}`, () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                );
+
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX_LOWERCASE, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX_LOWERCASE, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertNoProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+        });
+
+        describe('with only a consumer for a single entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: AWESOME_ENTITY,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate consumer, deserializer, serializer and serde', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`
+                ];
+                assert.file(expectedFiles);
+            });
+
+            it('should not generate producer and serializer', () => {
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should add consumer configuration for ${AWESOME_ENTITY}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+
+            it('should order properties to put root properties at top', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertThatKafkaPropertiesAreOrdered(applicationYml);
+                assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+            });
+        });
+
+        describe('with only a producer for a single entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: AWESOME_ENTITY,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate producer, serializer, deserializer, serde and resource', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serde.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
+            });
+
+            it('should not generate consumer', () => {
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should add producer configuration for ${AWESOME_ENTITY}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+
+            it('should order properties to put root properties at top', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertThatKafkaPropertiesAreOrdered(applicationYml);
+                assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+            });
+        });
+
+        describe('with a consumer and a producer for a single entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: AWESOME_ENTITY,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate consumer, deserializer, producer and serializer', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${AWESOME_ENTITY}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${AWESOME_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${AWESOME_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${AWESOME_ENTITY}KafkaResource.java`
+                ];
+
+                assert.file(expectedFiles);
+            });
+
+            it(`should add consumer configuration for ${AWESOME_ENTITY}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+            it('should order properties to put root properties at top', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertThatKafkaPropertiesAreOrdered(applicationYml);
+                assertThatKafkaPropertiesAreOrdered(testApplicationYml);
+            });
+        });
+
+        describe('with a consumer and a producer for a single entity (using an existing topic name)', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: AWESOME_ENTITY,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
+                        topic: EXISTING_TOPIC_NAME,
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should put an existing topic name in application.yml', () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                assertTopicName(applicationYml, testApplicationYml, AWESOME_ENTITY, null, EXISTING_TOPIC_NAME);
+            });
+        });
+
+        describe('with only a consumer without entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate consumer, deserializer and serializer', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`
+                ];
+                assert.file(expectedFiles);
+            });
+
+            it('should not generate producer', () => {
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should add consumer configuration for ${COMPONENT_PREFIX}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+
+            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.consumer);
+        });
+
+        describe('with only a producer without entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate producer, serializer, deserializer and resource', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
+                ];
+                assert.file(expectedFiles);
+            });
+
+            it('should not generate consumer', () => {
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`
+                ];
+                assert.noFile(notExpectedFiles);
+            });
+
+            it(`should add producer configuration for ${COMPONENT_PREFIX}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+            });
+
+            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.producer);
+        });
+
+        describe('with a producer and consumer without entity', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-2nd-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: constants.NO_ENTITY,
+                        currentPrefix: COMPONENT_PREFIX,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT, constants.CONSUMER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should generate producer and consumer files', () => {
+                const expectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${COMPONENT_PREFIX}Consumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${COMPONENT_PREFIX}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${COMPONENT_PREFIX}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${COMPONENT_PREFIX}KafkaResource.java`
+                ];
+
+                assert.file(expectedFiles);
+            });
+
+            it(`should add consumer configuration for ${COMPONENT_PREFIX}`, () => {
+                const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.CONSUMER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
+                assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
+            });
+
+            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
         });
     });
 });
@@ -992,6 +1058,23 @@ function assertTopicName(applicationYml, testApplicationYml, entityName, topicCh
             assert.textEqual(testApplicationYml.kafka.topic[key], expectedTopicName);
         }
     });
+}
+
+function assertNoProperties(applicationYml, testApplicationYml, entityName, componentType) {
+    if (componentType === constants.CONSUMER_COMPONENT) {
+        expect(applicationYml.kafka.consumer).to.not.have.property(_.camelCase(entityName));
+        expect(testApplicationYml.kafka.consumer).to.not.have.property(_.camelCase(entityName));
+    } else if (componentType === constants.PRODUCER_COMPONENT) {
+        expect(applicationYml.kafka.producer).to.not.have.property(_.camelCase(entityName));
+        expect(testApplicationYml.kafka.producer).to.not.have.property(_.camelCase(entityName));
+    }
+
+    assertNoTopicName(applicationYml, testApplicationYml, entityName);
+}
+
+function assertNoTopicName(applicationYml, testApplicationYml, entityName) {
+    expect(Object.keys(applicationYml.kafka.topic)).to.not.have.property(_.camelCase(entityName));
+    expect(Object.keys(testApplicationYml.kafka.topic)).to.not.have.property(_.camelCase(entityName));
 }
 
 function assertThatKafkaPropertiesAreOrdered(applicationYml) {

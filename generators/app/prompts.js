@@ -10,21 +10,8 @@ module.exports = {
     askForOperations
 };
 
-const previousConfiguration = generator =>
-    utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`).kafka;
-
-function generationTypeChoices() {
-    return [
-        {
-            name: 'Big Bang Mode (build a configuration from scratch)',
-            value: constants.BIGBANG_MODE
-        },
-        {
-            name: 'Incremental Mode (upgrade an existing configuration)',
-            value: constants.INCREMENTAL_MODE
-        }
-    ];
-}
+const previousConfiguration = (generator, cleanup = false) =>
+    utils.getPreviousKafkaConfiguration(generator, `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, cleanup).kafka;
 
 function offsetChoices() {
     return [
@@ -117,23 +104,20 @@ function askForOperations(generator) {
     const prompts = [
         {
             when: !generator.options['skip-prompts'],
-            type: 'list',
-            name: 'generationType',
-            message: 'Which type of generation do you want?',
-            choices: generationTypeChoices(),
-            default: [constants.BIGBANG_MODE]
+            type: 'confirm',
+            name: 'cleanup',
+            message: 'Do you want to clean up your current Kafka configuration?',
+            default: false
         }
     ];
 
     const done = generator.async();
     try {
         generator.prompt(prompts).then(props => {
-            generator.props.generationType = props.generationType;
-            if (!props.generationType || props.generationType === constants.BIGBANG_MODE) {
-                askForBigBangOperations(generator, done);
-            } else if (props.generationType === constants.INCREMENTAL_MODE) {
-                askForIncrementalOperations(generator, done);
+            if (props.cleanup) {
+                generator.props.cleanup = props.cleanup;
             }
+            askForEntityOperations(generator, done);
         });
     } catch (e) {
         generator.error('An error occurred while asking for operations', e);
@@ -141,133 +125,7 @@ function askForOperations(generator) {
     }
 }
 
-function askForBigBangOperations(generator, done) {
-    const bigbangPrompt = [
-        {
-            when: !generator.options['skip-prompts'],
-            type: 'checkbox',
-            name: 'components',
-            message: 'Which components would you like to generate?',
-            choices: componentsChoices(),
-            default: [],
-            validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
-        },
-        {
-            when: response =>
-                response.components.includes(constants.CONSUMER_COMPONENT) || response.components.includes(constants.PRODUCER_COMPONENT),
-            type: 'checkbox',
-            name: 'entities',
-            message: 'For which entity (class name)?',
-            choices: entitiesChoices(generator),
-            default: constants.NO_ENTITY,
-            validate: input => (_.isEmpty(input) ? 'You have to choose at least one option' : true)
-        },
-        {
-            when: response => response.entities.includes(constants.NO_ENTITY),
-            type: 'input',
-            name: 'componentPrefix',
-            message: 'How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?',
-            validate: input => {
-                if (_.isEmpty(input)) return 'Please enter a value';
-                if (entitiesChoices(generator).find(entity => entity.name === utils.transformToJavaClassNameCase(input))) {
-                    return 'This name is already taken by an entity generated with JHipster';
-                }
-                return true;
-            }
-        },
-        {
-            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
-            type: 'number',
-            name: 'pollingTimeout',
-            message: 'What is the consumer polling timeout (in ms)?',
-            default: constants.DEFAULT_POLLING_TIMEOUT,
-            validate: input => (isNaN(input) ? 'Please enter a number' : true)
-        },
-        {
-            when: response => response.components.includes(constants.CONSUMER_COMPONENT),
-            type: 'list',
-            name: 'autoOffsetResetPolicy',
-            message:
-                'Define the auto offset reset policy (what to do when there is no initial offset in Kafka or if the current offset does not exist any more on the server)?',
-            choices: offsetChoices(),
-            default: constants.EARLIEST_OFFSET
-        }
-    ];
-
-    if (generator.options['skip-prompts']) {
-        generator.props = _.merge(generator.props, bigbangPrompt.map(prompt => prompt.default));
-        done();
-        return;
-    }
-
-    generator.prompt(bigbangPrompt).then(answers => {
-        if (answers.componentPrefix) {
-            generator.props.componentsPrefixes.push(answers.componentPrefix);
-        }
-
-        generator.props = _.merge(generator.props, answers);
-
-        askForBigBangEntityOperations(generator, answers, done);
-    });
-}
-
-function askForBigBangEntityOperations(generator, answers, done, entityIndex = 0) {
-    let name = answers.entities[entityIndex];
-    if (answers.entities[entityIndex] === constants.NO_ENTITY) {
-        name = answers.componentPrefix;
-    }
-
-    const bigbangEntityPrompt = [
-        {
-            when: answers.components.includes(constants.CONSUMER_COMPONENT) || answers.components.includes(constants.PRODUCER_COMPONENT),
-            type: 'list',
-            name: 'topic',
-            message: `Which topic for ${name}?`,
-            choices: topicsChoices(generator, null),
-            default: constants.DEFAULT_TOPIC
-        },
-        {
-            when: response => response.topic === constants.CUSTOM_TOPIC,
-            type: 'input',
-            name: 'topicName',
-            message: `What is the topic name for ${name}?`,
-            validate: input => validateTopic(input)
-        },
-        {
-            when: entityIndex < answers.entities.length - 1,
-            type: 'confirm',
-            name: 'confirmBigBangEntityOperations',
-            message: 'Do you want to continue to the next entity/prefix or exit?',
-            default: true
-        }
-    ];
-
-    generator.prompt(bigbangEntityPrompt).then(subAnswers => {
-        if (!generator.props.topics) {
-            generator.props.topics = [];
-        }
-
-        generator.props.currentEntity = answers.entities[entityIndex];
-
-        if (generator.props.currentEntity === constants.NO_ENTITY) {
-            generator.props.currentPrefix = answers.componentPrefix;
-        }
-
-        pushTopicName(generator, subAnswers.topic, subAnswers.topicName);
-
-        generator.props = _.merge(generator.props, subAnswers);
-
-        if (entityIndex === answers.entities.length - 1) {
-            done();
-        }
-
-        if (subAnswers.confirmBigBangEntityOperations) {
-            askForBigBangEntityOperations(generator, answers, done, ++entityIndex);
-        }
-    });
-}
-
-function askForIncrementalOperations(generator, done) {
+function askForEntityOperations(generator, done) {
     const getConcernedEntities = previousConfiguration => {
         const allEntities = entitiesChoices(generator);
         const entitiesComponents = utils.extractEntitiesComponents(previousConfiguration);
@@ -283,12 +141,13 @@ function askForIncrementalOperations(generator, done) {
         );
     };
 
-    const incrementalPrompt = [
+    const entityPrompts = [
         {
+            when: !generator.options['skip-prompts'],
             type: 'list',
             name: 'currentEntity',
             message: 'For which entity (class name)?',
-            choices: [...getConcernedEntities(previousConfiguration(generator))],
+            choices: [...getConcernedEntities(previousConfiguration(generator, generator.props.cleanup))],
             default: constants.NO_ENTITY
         },
         {
@@ -303,7 +162,11 @@ function askForIncrementalOperations(generator, done) {
                     return 'This name is already taken by an entity generated with JHipster';
                 }
 
-                const availableComponents = getAvailableComponentsWithoutEntity(generator, previousConfiguration(generator), input);
+                const availableComponents = getAvailableComponentsWithoutEntity(
+                    generator,
+                    previousConfiguration(generator, generator.props.cleanup),
+                    input
+                );
                 if (availableComponents.length === 0) return 'Both consumer and producer already exist for this prefix';
 
                 return true;
@@ -311,7 +174,7 @@ function askForIncrementalOperations(generator, done) {
         }
     ];
 
-    generator.prompt(incrementalPrompt).then(answers => {
+    generator.prompt(entityPrompts).then(answers => {
         generator.props.currentEntity = undefined;
 
         if (answers.currentEntity) {
@@ -323,7 +186,7 @@ function askForIncrementalOperations(generator, done) {
             if (answers.currentPrefix && !generator.props.componentsPrefixes.includes(answers.currentPrefix)) {
                 generator.props.componentsPrefixes.push(answers.currentPrefix);
             }
-            askForIncrementalEntityOperations(generator, done);
+            askForEntityComponentsOperations(generator, done);
         } else {
             done();
         }
@@ -353,7 +216,7 @@ function getAvailableComponentsWithoutEntity(generator, previousConfiguration, p
     return availableComponents;
 }
 
-function askForIncrementalEntityOperations(generator, done) {
+function askForEntityComponentsOperations(generator, done) {
     const getConcernedComponents = (previousConfiguration, entityName, currentPrefix) => {
         const availableComponents = [];
         const allComponentChoices = componentsChoices();
@@ -394,7 +257,11 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'checkbox',
             name: 'currentEntityComponents',
             message: 'Which components would you like to generate?',
-            choices: getConcernedComponents(previousConfiguration(generator), generator.props.currentEntity, generator.props.currentPrefix),
+            choices: getConcernedComponents(
+                previousConfiguration(generator, generator.props.cleanup),
+                generator.props.currentEntity,
+                generator.props.currentPrefix
+            ),
             default: [],
             validate: input => (_.isEmpty(input) ? 'You have to choose at least one component' : true)
         },
@@ -405,7 +272,7 @@ function askForIncrementalEntityOperations(generator, done) {
             type: 'list',
             name: 'topic',
             message: 'For which topic?',
-            choices: topicsChoices(generator, previousConfiguration(generator)),
+            choices: topicsChoices(generator, previousConfiguration(generator, generator.props.cleanup)),
             default: constants.DEFAULT_TOPIC
         },
         {
@@ -478,7 +345,7 @@ function askForIncrementalEntityOperations(generator, done) {
             }
 
             if (answers.continueAddingEntitiesComponents) {
-                askForIncrementalOperations(generator, done);
+                askForEntityOperations(generator, done);
             } else {
                 done();
             }

@@ -11,7 +11,7 @@ module.exports = {
     topicNamingFormat
 };
 
-// This is a default topic naming convention which can be updated (see also application-kafka.yml.ejs)
+// This is a default topic naming convention which can be updated
 function topicNamingFormat(baseName, name) {
     return `queuing.${baseName}.${name}`;
 }
