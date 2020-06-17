@@ -29,176 +29,52 @@ describe('JHipster generator kafka', () => {
                 })
                 .on('error', error => {
                     expect(error.message === 'You need to use Kafka as message broker!').to.be.true;
+                    done();
                 })
                 .on('end', () => {
                     expect(true).to.be.false;
+                    done();
                 });
-            done();
         });
     });
 
-    describe('with --skip-prompts options', () => {
-        before(done => {
-            helpers
-                .run(path.join(__dirname, '../generators/app'))
-                .inTmpDir(dir => {
-                    fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                })
-                // RunContext from run-context.js (yeoman-test) have 'force' option by default
-                .withOptions({ skipPrompts: true })
-                .on('end', done);
-        });
-
-        it('should generate generic consumer and akhq.yml', () => {
-            const expectedFiles = [
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
-                `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
-            ];
-
-            assert.file(expectedFiles);
-        });
-
-        it('should update application.yml', () => {
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-        });
-    });
-
-    describe('with only a producer for a single entity', () => {
-        before(done => {
-            helpers
-                .run(path.join(__dirname, '../generators/app'))
-                .inTmpDir(dir => {
-                    fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                })
-                .withPrompts({
-                    currentEntity: FOO_ENTITY,
-                    currentEntityComponents: [constants.PRODUCER_COMPONENT],
-                    continueAddingEntitiesComponents: false
-                })
-                .on('end', done);
-        });
-
-        it('should generate default, producer, serializer, deserializer, serde and resource', () => {
-            const expectedFiles = [
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
-            ];
-
-            const notExpectedFiles = [
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`
-            ];
-
-            assert.file(expectedFiles);
-            assert.noFile(notExpectedFiles);
-        });
-
-        it('should update application.yml', () => {
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-
-            assert.fileContent(
-                `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-            );
-
-            const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
-            assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
-
-            const entityYmlConsumerBlock = applicationYml.kafka.consumer;
-            assert.strictEqual(entityYmlConsumerBlock, undefined);
-
-            const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer;
-            assert.strictEqual(entityTestYmlConsumerBlock, undefined);
-        });
-    });
-
-    describe('with only a consumer for a single entity', () => {
-        describe('without offset and polling timeout', () => {
+    describe('with a message broker and first generation', () => {
+        describe('with --skip-prompts options', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
                     .inTmpDir(dir => {
                         fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
-                    .withPrompts({
-                        currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT],
-                        continueAddingEntitiesComponents: false
-                    })
+                    // RunContext from run-context.js (yeoman-test) have 'force' option by default
+                    .withOptions({ skipPrompts: true })
                     .on('end', done);
             });
 
-            it('should generate default, consumer, deserializer, serializer and serde', () => {
+            it('should generate generic consumer and akhq.yml', () => {
                 const expectedFiles = [
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/DeserializationError.java`,
+                    `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`
                 ];
+
                 assert.file(expectedFiles);
             });
 
-            it('should not generate producer', () => {
-                const notExpectedFiles = [
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
-                ];
-                assert.noFile(notExpectedFiles);
-            });
-
             it('should update application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
                 assert.fileContent(
                     `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
                     /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
                 );
+
                 assert.fileContent(
                     `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
                     /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
                 );
-                assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
-                assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
-
-                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-
-                const entityYmlProducerBlock = applicationYml.kafka.producer;
-                assert.strictEqual(entityYmlProducerBlock, undefined);
-
-                const entityTestYmlProducerBlock = testApplicationYml.kafka.producer;
-                assert.strictEqual(entityTestYmlProducerBlock, undefined);
-            });
-
-            it('should set the autoRestOffsetPolicy default value for consumer', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
-                const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
-
-                assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
-                assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
             });
         });
 
-        describe('with a given offset and polling timeout', () => {
+        describe('with only a producer for a single entity', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
@@ -207,203 +83,330 @@ describe('JHipster generator kafka', () => {
                     })
                     .withPrompts({
                         currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT],
-                        pollingTimeout: 20000,
-                        autoOffsetResetPolicy: constants.LATEST_OFFSET,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT],
                         continueAddingEntitiesComponents: false
                     })
                     .on('end', done);
             });
 
-            it('should generate default, consumer, deserializer, serializer and serde', () => {
+            it('should generate default, producer, serializer, deserializer, serde and resource', () => {
                 const expectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
-                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
-                ];
-                assert.file(expectedFiles);
-            });
-
-            it('should not generate producer', () => {
-                const notExpectedFiles = [
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`,
                     `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
                 ];
+
+                const notExpectedFiles = [
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`
+                ];
+
+                assert.file(expectedFiles);
                 assert.noFile(notExpectedFiles);
             });
 
             it('should update application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-
                 assert.fileContent(
                     `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
                     /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
                 );
+
                 assert.fileContent(
                     `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
                     /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
                 );
 
-                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
-
-                const entityYmlProducerBlock = applicationYml.kafka.producer;
-                assert.strictEqual(entityYmlProducerBlock, undefined);
-
-                const entityTestYmlProducerBlock = testApplicationYml.kafka.producer;
-                assert.strictEqual(entityTestYmlProducerBlock, undefined);
-            });
-
-            it('should update polling timeout property', () => {
-                assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
-                assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
-            });
-
-            it('should set the auto reset offset policy for consumer', () => {
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
-                const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
 
-                assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
-                assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
-            });
-        });
-    });
+                assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.PRODUCER_COMPONENT);
 
-    describe('with a consumer and a producer for a single entity', () => {
-        describe('without offset and polling timeout', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
-            });
+                const entityYmlConsumerBlock = applicationYml.kafka.consumer;
+                assert.strictEqual(entityYmlConsumerBlock, undefined);
 
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-
-            itShouldUpdatesPropertiesWithDefaultValue();
-        });
-
-        describe('with a given offset and polling timeout', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        pollingTimeout: 500,
-                        autoOffsetResetPolicy: constants.LATEST_OFFSET,
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
-            });
-
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
-
-            itShouldUpdatesPropertiesWithGivenValue();
-        });
-
-        describe('with a default topic name', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        topic: constants.DEFAULT_TOPIC,
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
-            });
-
-            it('should put a default topic name in application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.DEFAULT_TOPIC, null);
+                const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer;
+                assert.strictEqual(entityTestYmlConsumerBlock, undefined);
             });
         });
 
-        describe('with a custom topic name', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: FOO_ENTITY,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        topic: constants.CUSTOM_TOPIC,
-                        topicName: CUSTOM_TOPIC_NAME,
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
+        describe('with only a consumer for a single entity', () => {
+            describe('without offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT],
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should generate default, consumer, deserializer, serializer and serde', () => {
+                    const expectedFiles = [
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
+                    ];
+                    assert.file(expectedFiles);
+                });
+
+                it('should not generate producer', () => {
+                    const notExpectedFiles = [
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                    ];
+                    assert.noFile(notExpectedFiles);
+                });
+
+                it('should update application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                    assert.fileContent(
+                        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                    );
+                    assert.fileContent(
+                        `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                    );
+                    assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
+                    assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
+
+                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+
+                    const entityYmlProducerBlock = applicationYml.kafka.producer;
+                    assert.strictEqual(entityYmlProducerBlock, undefined);
+
+                    const entityTestYmlProducerBlock = testApplicationYml.kafka.producer;
+                    assert.strictEqual(entityTestYmlProducerBlock, undefined);
+                });
+
+                it('should set the autoRestOffsetPolicy default value for consumer', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
+                    const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
+
+                    assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
+                    assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
+                });
             });
 
-            it('should put a custom topic name in application.yml', () => {
-                const { applicationYml, testApplicationYml } = loadApplicationYaml();
-                assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
+            describe('with a given offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT],
+                            pollingTimeout: 20000,
+                            autoOffsetResetPolicy: constants.LATEST_OFFSET,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should generate default, consumer, deserializer, serializer and serde', () => {
+                    const expectedFiles = [
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/GenericConsumer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/consumer/${FOO_ENTITY}Consumer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Deserializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serializer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/serde/${FOO_ENTITY}Serde.java`
+                    ];
+                    assert.file(expectedFiles);
+                });
+
+                it('should not generate producer', () => {
+                    const notExpectedFiles = [
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                        `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/web/rest/kafka/${FOO_ENTITY}KafkaResource.java`
+                    ];
+                    assert.noFile(notExpectedFiles);
+                });
+
+                it('should update application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+
+                    assert.fileContent(
+                        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
+                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                    );
+                    assert.fileContent(
+                        `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
+                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
+                    );
+
+                    assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
+
+                    const entityYmlProducerBlock = applicationYml.kafka.producer;
+                    assert.strictEqual(entityYmlProducerBlock, undefined);
+
+                    const entityTestYmlProducerBlock = testApplicationYml.kafka.producer;
+                    assert.strictEqual(entityTestYmlProducerBlock, undefined);
+                });
+
+                it('should update polling timeout property', () => {
+                    assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
+                    assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 20000/);
+                });
+
+                it('should set the auto reset offset policy for consumer', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
+                    const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
+
+                    assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
+                    assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
+                });
             });
         });
-    });
 
-    describe('with a consumer and a producer without entity', () => {
-        describe('without offset and polling timeout', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: constants.NO_ENTITY,
-                        currentPrefix: COMPONENT_PREFIX,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
+        describe('with a consumer and a producer for a single entity', () => {
+            describe('without offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
+
+                itShouldUpdatesPropertiesWithDefaultValue();
             });
 
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
-            itShouldUpdatesPropertiesWithDefaultValue();
-            itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
+            describe('with a given offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            pollingTimeout: 500,
+                            autoOffsetResetPolicy: constants.LATEST_OFFSET,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY);
+
+                itShouldUpdatesPropertiesWithGivenValue();
+            });
+
+            describe('with a default topic name', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            topic: constants.DEFAULT_TOPIC,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should put a default topic name in application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.DEFAULT_TOPIC, null);
+                });
+            });
+
+            describe('with a custom topic name', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: FOO_ENTITY,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            topic: constants.CUSTOM_TOPIC,
+                            topicName: CUSTOM_TOPIC_NAME,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                it('should put a custom topic name in application.yml', () => {
+                    const { applicationYml, testApplicationYml } = loadApplicationYaml();
+                    assertTopicName(applicationYml, testApplicationYml, FOO_ENTITY, constants.CUSTOM_TOPIC, CUSTOM_TOPIC_NAME);
+                });
+            });
         });
 
-        describe('with a given offset and polling timeout', () => {
-            before(done => {
-                helpers
-                    .run(path.join(__dirname, '../generators/app'))
-                    .inTmpDir(dir => {
-                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
-                    })
-                    .withPrompts({
-                        currentEntity: constants.NO_ENTITY,
-                        currentPrefix: COMPONENT_PREFIX,
-                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
-                        pollingTimeout: 500,
-                        autoOffsetResetPolicy: constants.LATEST_OFFSET,
-                        continueAddingEntitiesComponents: false
-                    })
-                    .on('end', done);
+        describe('with a consumer and a producer without entity', () => {
+            describe('without offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: constants.NO_ENTITY,
+                            currentPrefix: COMPONENT_PREFIX,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
+
+                itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
+                itShouldUpdatesPropertiesWithDefaultValue();
+                itShouldTypeClassesWithClass(COMPONENT_PREFIX, 'String', COMPONENTS_CHOSEN.all);
             });
 
-            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
+            describe('with a given offset and polling timeout', () => {
+                before(done => {
+                    helpers
+                        .run(path.join(__dirname, '../generators/app'))
+                        .inTmpDir(dir => {
+                            fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                        })
+                        .withPrompts({
+                            currentEntity: constants.NO_ENTITY,
+                            currentPrefix: COMPONENT_PREFIX,
+                            currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                            pollingTimeout: 500,
+                            autoOffsetResetPolicy: constants.LATEST_OFFSET,
+                            continueAddingEntitiesComponents: false
+                        })
+                        .on('end', done);
+                });
 
-            itShouldUpdatesPropertiesWithGivenValue();
+                itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(COMPONENT_PREFIX);
+
+                itShouldUpdatesPropertiesWithGivenValue();
+            });
         });
     });
 
