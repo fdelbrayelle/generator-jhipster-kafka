@@ -34,6 +34,12 @@ import <%= packageName %>.domain.<%= entityClass %>;
 @Service
 public class <%= entityClass %>Producer {
 
+<%_ if (entityOrdered) { _%>
+    enum <%= entityClass %>ProducerKey {
+        <%= _.toUpper(entityClass) %>_CREATE, <%= _.toUpper(entityClass) %>_READ, <%= _.toUpper(entityClass) %>_UPDATE, <%= _.toUpper(entityClass) %>_DELETE
+    }
+
+<%_ } _%>
     private final Logger log = LoggerFactory.getLogger(<%= entityClass %>Producer.class);
 
     private final KafkaProducer<String, <%= type %>> kafkaProducer;
@@ -51,7 +57,11 @@ public class <%= entityClass %>Producer {
     }
 
     public void send(final <%= type %> message) {
+<%_ if (entityOrdered) { _%>
+        final ProducerRecord<String, <%= type %>> record = new ProducerRecord<>(topicName, <%= entityClass %>ProducerKey.<%= _.toUpper(entityClass) %>_READ.toString(), message);
+<%_ } else { _%>
         final ProducerRecord<String, <%= type %>> record = new ProducerRecord<>(topicName, message);
+<%_ } _%>
         try {
             log.info("Sending asynchronously a <%= type %> record to topic: '" + topicName + "'");
             kafkaProducer.send(record);

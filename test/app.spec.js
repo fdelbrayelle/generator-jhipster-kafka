@@ -74,7 +74,7 @@ describe('JHipster generator kafka', () => {
             });
         });
 
-        describe('with only a producer for a single entity', () => {
+        describe('with only a producer for a single entity (ordered)', () => {
             before(done => {
                 helpers
                     .run(path.join(__dirname, '../generators/app'))
@@ -84,6 +84,7 @@ describe('JHipster generator kafka', () => {
                     .withPrompts({
                         currentEntity: FOO_ENTITY,
                         currentEntityComponents: [constants.PRODUCER_COMPONENT],
+                        sendOrderedMessages: true,
                         continueAddingEntitiesComponents: false
                     })
                     .on('end', done);
@@ -128,6 +129,37 @@ describe('JHipster generator kafka', () => {
 
                 const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer;
                 assert.strictEqual(entityTestYmlConsumerBlock, undefined);
+            });
+
+            it('should send ordered messages', () => {
+                assert.fileContent(
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    new RegExp(`enum ${FOO_ENTITY}ProducerKey`, 'g')
+                );
+            });
+        });
+
+        describe('with only a producer for a single entity (not ordered)', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        currentEntity: FOO_ENTITY,
+                        currentEntityComponents: [constants.PRODUCER_COMPONENT],
+                        sendOrderedMessages: false,
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            it('should not send ordered messages', () => {
+                assert.noFileContent(
+                    `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/service/kafka/producer/${FOO_ENTITY}Producer.java`,
+                    new RegExp(`enum ${FOO_ENTITY}ProducerKey`, 'g')
+                );
             });
         });
 

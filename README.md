@@ -137,12 +137,12 @@ The **END** represents the end of the prompts below, when files are written afte
             <li>Producer</li>
         </ul>
     </li>
-    <li>For which topic?
+    <li>Which topic for (entity/prefix)?
         <ul>
             <li>Default topic name following this convention: message_type.application_type.entity_name <strong>(default)</strong></li>
             <li>Custom topic name
                 <ul>
-                    <li>What is the topic name?</li>
+                    <li>What is the topic name for (entity/prefix)?</li>
                 </ul>
             </li>
             <li>queuing.application_name.existing_topic_name</li>
@@ -157,6 +157,7 @@ The **END** represents the end of the prompts below, when files are written afte
             <li>none (throw exception to the consumer if no previous offset is found for the consumer group)</li>
         </ul>
     </li>
+    <li><em>If "Producer" was selected:</em> Do you want to send ordered messages for (entity/prefix) production? <strong>(default = Y)</strong></li>
     <li>Do you want to continue adding consumers or producers? <strong>(default = N)</strong></li>
     <li><em>If "N" was selected:</em> <strong>END</strong></li>
 </ul>
