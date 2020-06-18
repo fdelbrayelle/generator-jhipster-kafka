@@ -411,6 +411,27 @@ describe('JHipster generator kafka', () => {
                 itShouldUpdatesPropertiesWithGivenValue();
             });
         });
+
+        describe('with a specific bootstrap.servers', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        bootstrapServer: 'local.dns.kafka:9092,kafka.host:9092',
+                        currentEntity: FOO_ENTITY,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY, 'local.dns.kafka:9092,kafka.host:9092');
+
+            itShouldUpdatesPropertiesWithDefaultValue();
+        });
     });
 
     describe('with an existing previous generation', () => {
