@@ -269,9 +269,9 @@ function writeFiles(generator) {
     );
 
     // eslint-disable-next-line no-template-curly-in-string
-    kafkaPreviousConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+    kafkaPreviousConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${generator.props.bootstrapServers}}`;
     // eslint-disable-next-line no-template-curly-in-string
-    kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = '${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}';
+    kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${generator.props.bootstrapServers}}`;
 
     if (generator.pollingTimeout) {
         kafkaPreviousConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;

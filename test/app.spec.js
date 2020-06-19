@@ -420,7 +420,7 @@ describe('JHipster generator kafka', () => {
                         fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
                     })
                     .withPrompts({
-                        bootstrapServer: 'local.dns.kafka:9092,kafka.host:9092',
+                        bootstrapServers: 'local.dns.kafka:9092,kafka.host:9092',
                         currentEntity: FOO_ENTITY,
                         currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
                         continueAddingEntitiesComponents: false

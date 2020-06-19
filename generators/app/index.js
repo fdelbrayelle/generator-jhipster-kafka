@@ -3,6 +3,7 @@ const chalk = require('chalk');
 const semver = require('semver');
 const packagejs = require('../../package.json');
 
+const constants = require('../constants');
 const files = require('./files');
 const prompts = require('./prompts');
 
@@ -25,6 +26,7 @@ module.exports = class extends BaseGenerator {
             componentsByEntityConfig: [],
             componentsPrefixes: [],
             topics: [],
+            bootstrapServers: constants.DEFAULT_BOOTSTRAP_SERVERS,
             cleanup: false || this.options['skip-prompts'],
             entitiesOrder: []
         };
