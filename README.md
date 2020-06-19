@@ -125,7 +125,7 @@ The **END** represents the end of the prompts below, when files are written afte
         <ul>
             <li>No entity (will be typed String) <strong>(default)</strong>
                 <ul>
-                    <li>how would you prefix your objects (no entity, for instance: [someeventtype]consumer|producer...)?</li>
+                    <li>How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?</li>
                 </ul>
             </li>
             <li>Foo</li>
