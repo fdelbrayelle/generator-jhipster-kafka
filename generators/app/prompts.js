@@ -130,7 +130,7 @@ function askForOperations(generator) {
             when: !generator.options['skip-prompts'],
             type: 'input',
             name: 'bootstrapServers',
-            message: 'What is your bootsrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?',
+            message: 'What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?',
             validate: input => {
                 return isNotValidBootstrapServerString(input) ? 'the bootstrap server string must be correct' : true;
             },

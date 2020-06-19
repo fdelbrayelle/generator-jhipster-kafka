@@ -21,14 +21,15 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
-4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
-5. "Which components would you like to generate?" - Consumer
-6. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
-7. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
-8. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
-9. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-10. Overwrite all files in conflict
-11. `FooConsumer` (consumes `Foo`) is available with a `FooDeserializer`
+4. "What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?" - Your answer or 'localhost:9092' by default
+5. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
+6. "Which components would you like to generate?" - Consumer
+7. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
+8. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
+9. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
+10. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+11. Overwrite all files in conflict
+12. `FooConsumer` (consumes `Foo`) is available with a `FooDeserializer`
 
 ### Create a producer linked to an entity
 
@@ -37,13 +38,14 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
-4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
-5. "Which components would you like to generate?" - Producer
-6. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
-7. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
-8. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-9. Overwrite all files in conflict
-10. `FooProducer` (produces `Foo`) is available with a `FooSerializer` and a `FooKafkaResource` to [help testing](README.md#test-consumers-and-producers)
+4. "What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?" - Your answer or 'localhost:9092' by default
+5. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
+6. "Which components would you like to generate?" - Producer
+7. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
+8. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
+9. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+10. Overwrite all files in conflict
+11. `FooProducer` (produces `Foo`) is available with a `FooSerializer` and a `FooKafkaResource` to [help testing](README.md#test-consumers-and-producers)
 
 ### Create a consumer NOT linked to an entity
 
@@ -52,15 +54,16 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
-4. "For which entity (class name)?" - No entity (will be typed String)
-5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
-6. "Which components would you like to generate?" - Consumer
-7. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
-8. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
-9. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
-10. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-11. Overwrite all files in conflict
-12. `SomeEventTypeConsumer` (consumes `String`) is available with a `SomeEventTypeDeserializer`
+4. "What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?" - Your answer or 'localhost:9092' by default
+5. "For which entity (class name)?" - No entity (will be typed String)
+6. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
+7. "Which components would you like to generate?" - Consumer
+8. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
+9. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
+10. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
+11. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+12. Overwrite all files in conflict
+13. `SomeEventTypeConsumer` (consumes `String`) is available with a `SomeEventTypeDeserializer`
 
 ### Create a producer NOT linked to an entity
 
@@ -69,11 +72,12 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 1. Create a new entity if not already generated with: `jhipster entity Foo`
 2. In the same folder, run `yo jhipster-kafka`
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
-4. "For which entity (class name)?" - No entity (will be typed String)
-5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
-6. "Which components would you like to generate?" - Producer
-7. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
-8. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
-9. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-10. Overwrite all files in conflict
-11. `SomeEventTypeProducer` (produces `String`) is available with a `SomeEventTypeSerializer` and a `SomeEventTypeKafkaResource` to [help testing](README.md#test-consumers-and-producers)
+4. "What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?" - Your answer or 'localhost:9092' by default
+5. "For which entity (class name)?" - No entity (will be typed String)
+6. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
+7. "Which components would you like to generate?" - Producer
+8. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
+9. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
+10. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+11. Overwrite all files in conflict
+12. `SomeEventTypeProducer` (produces `String`) is available with a `SomeEventTypeSerializer` and a `SomeEventTypeKafkaResource` to [help testing](README.md#test-consumers-and-producers)

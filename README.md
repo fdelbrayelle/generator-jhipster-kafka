@@ -119,11 +119,13 @@ The **END** represents the end of the prompts below, when files are written afte
             <li><em>If "n" was typed:</em> the new configuration will be merged with the previous one</li>
         </ul>
     </li>
+    <li>What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)? <strong>(default = localhost:9092)</strong>
+    </li>
     <li>For which entity (class name)?
         <ul>
             <li>No entity (will be typed String) <strong>(default)</strong>
                 <ul>
-                    <li>How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?</li>
+                    <li>how would you prefix your objects (no entity, for instance: [someeventtype]consumer|producer...)?</li>
                 </ul>
             </li>
             <li>Foo</li>
