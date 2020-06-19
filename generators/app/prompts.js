@@ -132,7 +132,7 @@ function askForOperations(generator) {
             name: 'bootstrapServers',
             message: 'What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?',
             validate: input => {
-                return isNotValidBootstrapServerString(input) ? 'the bootstrap server string must be correct' : true;
+                return isNotValidBootstrapServerString(input) ? 'The bootstrap server should follow this pattern: <host>:<port>' : true;
             },
             default: response => getDefaultPromptBootstrapServers(previousConfiguration(generator, response.cleanup))
         }
