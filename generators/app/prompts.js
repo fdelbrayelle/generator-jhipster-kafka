@@ -251,6 +251,11 @@ function askForEntityComponentsOperations(generator, done) {
         return availableComponents;
     };
 
+    let name = generator.props.currentEntity;
+    if (generator.props.currentEntity === constants.NO_ENTITY) {
+        name = generator.props.currentPrefix;
+    }
+
     const unitaryEntityPrompt = [
         {
             when: generator.props.currentEntity,
@@ -271,7 +276,7 @@ function askForEntityComponentsOperations(generator, done) {
                 response.currentEntityComponents.includes(constants.PRODUCER_COMPONENT),
             type: 'list',
             name: 'topic',
-            message: 'For which topic?',
+            message: `Which topic for ${name}?`,
             choices: topicsChoices(generator, previousConfiguration(generator, generator.props.cleanup)),
             default: constants.DEFAULT_TOPIC
         },
@@ -279,7 +284,7 @@ function askForEntityComponentsOperations(generator, done) {
             when: response => response.topic === constants.CUSTOM_TOPIC,
             type: 'input',
             name: 'topicName',
-            message: 'What is the topic name?',
+            message: `What is the topic name for ${name}?`,
             validate: input => validateTopic(input)
         },
         {
@@ -305,6 +310,13 @@ function askForEntityComponentsOperations(generator, done) {
             default: constants.EARLIEST_OFFSET
         },
         {
+            when: response => response.currentEntityComponents.includes(constants.PRODUCER_COMPONENT),
+            type: 'confirm',
+            name: 'sendOrderedMessages',
+            message: `Do you want to send ordered messages for ${name} production?`,
+            default: true
+        },
+        {
             type: 'confirm',
             name: 'continueAddingEntitiesComponents',
             message: 'Do you want to continue adding consumers or producers?',
@@ -322,8 +334,6 @@ function askForEntityComponentsOperations(generator, done) {
                 generator.props.topics = [];
             }
 
-            pushTopicName(generator, answers.topic, answers.topicName);
-
             if (answers.currentEntityComponents && answers.currentEntityComponents.length > 0) {
                 if (generator.props.currentEntity === constants.NO_ENTITY) {
                     pushComponentsByEntity(
@@ -336,12 +346,26 @@ function askForEntityComponentsOperations(generator, done) {
                 }
             }
 
+            pushTopicName(generator, answers.topic, answers.topicName);
+
             if (answers.pollingTimeout) {
                 generator.props.pollingTimeout = +answers.pollingTimeout; // force conversion to int
             }
 
             if (answers.autoOffsetResetPolicy) {
                 generator.props.autoOffsetResetPolicy = answers.autoOffsetResetPolicy;
+            }
+
+            if (answers.sendOrderedMessages) {
+                if (generator.props.currentEntity === constants.NO_ENTITY) {
+                    pushEntitiesOrder(
+                        generator,
+                        utils.transformToJavaClassNameCase(generator.props.currentPrefix),
+                        answers.sendOrderedMessages
+                    );
+                } else {
+                    pushEntitiesOrder(generator, generator.props.currentEntity, answers.sendOrderedMessages);
+                }
             }
 
             if (answers.continueAddingEntitiesComponents) {
@@ -353,6 +377,11 @@ function askForEntityComponentsOperations(generator, done) {
             done();
         }
     });
+}
+
+function pushEntitiesOrder(generator, name, sendOrderedMessages) {
+    generator.props.entitiesOrder.push(name);
+    generator.props.entitiesOrder[name] = sendOrderedMessages;
 }
 
 function pushComponentsByEntity(generator, currentEntityComponents, entity) {

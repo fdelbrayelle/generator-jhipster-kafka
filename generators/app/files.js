@@ -39,6 +39,7 @@ function initVariables(generator) {
     generator.topics = generator.props.topics;
     generator.pollingTimeout = generator.props.pollingTimeout;
     generator.autoOffsetResetPolicy = generator.props.autoOffsetResetPolicy;
+    generator.entitiesOrder = generator.props.entitiesOrder;
 
     // show all variables
     generator.log('\n--- some config read from config ---');
@@ -152,6 +153,8 @@ function writeFiles(generator) {
         generator.entityClass = entity;
         generator.camelCaseEntityClass = _.camelCase(entity);
         generator.type = useEntityAsType ? entity : 'String';
+        generator.entityOrdered = generator.props.entitiesOrder[entity];
+
         generateSerdeFiles(generator, entity, useEntityAsType);
 
         if (haveComponentForEntity(constants.CONSUMER_COMPONENT, entity)) {

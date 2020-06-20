@@ -23,7 +23,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
 5. "Which components would you like to generate?" - Consumer
-6. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")
+6. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
 7. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
 8. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
 9. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
@@ -39,10 +39,11 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 3. "Do you want to clean up your current Kafka configuration?" - Your answer or 'n' by default
 4. "For which entity (class name)?" - Foo (the available entities are retrieved in the `.jhipster` folder as `.json`)
 5. "Which components would you like to generate?" - Producer
-6. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")
-7. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-8. Overwrite all files in conflict
-9. `FooProducer` (produces `Foo`) is available with a `FooSerializer` and a `FooKafkaResource` to [help testing](README.md#test-consumers-and-producers)
+6. "Which topic for Foo?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for Foo?")
+7. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
+8. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+9. Overwrite all files in conflict
+10. `FooProducer` (produces `Foo`) is available with a `FooSerializer` and a `FooKafkaResource` to [help testing](README.md#test-consumers-and-producers)
 
 ### Create a consumer NOT linked to an entity
 
@@ -54,7 +55,7 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 4. "For which entity (class name)?" - No entity (will be typed String)
 5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
 6. "Which components would you like to generate?" - Consumer
-7. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")
+7. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
 8. "What is the consumer polling timeout (in ms)?" - Your answer or '10000' by default (global for all consumers)
 9. "Define the auto offset reset policy?" - Your answer or 'earliest' by default (global for all consumers)
 10. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
@@ -71,7 +72,8 @@ After following the first 3 steps of the [basic usage](README.md#basic-usage) ab
 4. "For which entity (class name)?" - No entity (will be typed String)
 5. "How would you prefix your objects (no entity, for instance: [SomeEventType]Consumer|Producer...)?" - someEventType
 6. "Which components would you like to generate?" - Producer
-7. "For which topic?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name?")
-8. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
-9. Overwrite all files in conflict
-10. `SomeEventTypeProducer` (produces `String`) is available with a `SomeEventTypeSerializer` and a `SomeEventTypeKafkaResource` to [help testing](README.md#test-consumers-and-producers)
+7. "Which topic for someEventType?" - Any choice (choosing "Custom topic name" will add another question "What is the topic name for someEventType?")
+8. "Do you want to send ordered messages for (entity/prefix) production?" - Your answer or 'y' by default
+9. "Do you want to continue adding consumers or producers?" - Your answer or 'N' par default
+10. Overwrite all files in conflict
+11. `SomeEventTypeProducer` (produces `String`) is available with a `SomeEventTypeSerializer` and a `SomeEventTypeKafkaResource` to [help testing](README.md#test-consumers-and-producers)
