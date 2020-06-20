@@ -83,14 +83,6 @@ function writeFiles(generator) {
 
     cleanMainGeneratorKafkaFiles(generator, generator.javaDir, generator.testDir);
 
-    const isFirstGeneration = () => {
-        if (!shelljs.test('-f', constants.MODULES_HOOK_FILE)) {
-            return true;
-        }
-
-        return shelljs.cat(constants.MODULES_HOOK_FILE).match(constants.MODULE_NAME) === null;
-    };
-
     /**
      * add dependencies according to the build tool present in the application.
      * @param generator
@@ -259,19 +251,25 @@ function writeFiles(generator) {
     const kafkaPreviousConfiguration = utils.getPreviousKafkaConfiguration(
         generator,
         `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-        isFirstGeneration() || generator.props.cleanup
+        generator.isFirstGeneration() || generator.props.cleanup
     );
 
     const kafkaPreviousTestConfiguration = utils.getPreviousKafkaConfiguration(
         generator,
         `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-        isFirstGeneration() || generator.props.cleanup
+        generator.isFirstGeneration() || generator.props.cleanup
     );
 
-    // eslint-disable-next-line no-template-curly-in-string
-    kafkaPreviousConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${generator.props.bootstrapServers}}`;
-    // eslint-disable-next-line no-template-curly-in-string
-    kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${generator.props.bootstrapServers}}`;
+    if (!kafkaPreviousConfiguration.kafka['bootstrap.servers']) {
+        // eslint-disable-next-line no-template-curly-in-string
+        kafkaPreviousConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${
+            generator.props.bootstrapServers ? generator.props.bootstrapServers : constants.DEFAULT_BOOTSTRAP_SERVERS
+        }}`;
+        // eslint-disable-next-line no-template-curly-in-string
+        kafkaPreviousTestConfiguration.kafka['bootstrap.servers'] = `\${KAFKA_BOOTSTRAP_SERVERS:${
+            generator.props.bootstrapServers ? generator.props.bootstrapServers : constants.DEFAULT_BOOTSTRAP_SERVERS
+        }}`;
+    }
 
     if (generator.pollingTimeout) {
         kafkaPreviousConfiguration.kafka['polling.timeout'] = generator.pollingTimeout;

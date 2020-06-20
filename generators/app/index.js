@@ -1,6 +1,7 @@
 const BaseGenerator = require('generator-jhipster/generators/generator-base');
 const chalk = require('chalk');
 const semver = require('semver');
+const shelljs = require('shelljs');
 const packagejs = require('../../package.json');
 
 const constants = require('../constants');
@@ -26,12 +27,19 @@ module.exports = class extends BaseGenerator {
             componentsByEntityConfig: [],
             componentsPrefixes: [],
             topics: [],
-            bootstrapServers: constants.DEFAULT_BOOTSTRAP_SERVERS,
             cleanup: false || this.options['skip-prompts'],
             entitiesOrder: []
         };
 
         this.setupClientOptions(this);
+    }
+
+    isFirstGeneration() {
+        if (!shelljs.test('-f', constants.MODULES_HOOK_FILE)) {
+            return true;
+        }
+
+        return shelljs.cat(constants.MODULES_HOOK_FILE).match(constants.MODULE_NAME) === null;
     }
 
     get initializing() {

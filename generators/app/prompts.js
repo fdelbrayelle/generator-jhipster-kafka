@@ -71,18 +71,6 @@ function topicsChoices(generator, previousConfiguration) {
     return topicsChoices;
 }
 
-function getDefaultPromptBootstrapServers(previousConfiguration) {
-    const regexExtractConfig = /\${KAFKA_BOOTSTRAP_SERVERS:(.*)}/;
-    if (
-        previousConfiguration &&
-        previousConfiguration['bootstrap.servers'] &&
-        regexExtractConfig.test(previousConfiguration['bootstrap.servers'])
-    ) {
-        return previousConfiguration['bootstrap.servers'].match(regexExtractConfig)[1];
-    }
-    return constants.DEFAULT_BOOTSTRAP_SERVERS;
-}
-
 /**
  * Retrieve from .jhipster metadata, the list of all project entities.
  *
@@ -114,6 +102,7 @@ function entitiesChoices(generator) {
 
 function askForOperations(generator) {
     const boostrapServersUnitPattern = /^((([a-zA-Z0-9-]+)(\.?))+(:[0-9]+)?)$/;
+
     function isNotValidBootstrapServerString(input) {
         return _.isEmpty(input) || input.split(',').some(bootstrapServer => boostrapServersUnitPattern.test(bootstrapServer) === false);
     }
@@ -127,14 +116,14 @@ function askForOperations(generator) {
             default: false
         },
         {
-            when: !generator.options['skip-prompts'],
+            when: response => !generator.options['skip-prompts'] && (response.cleanup || generator.isFirstGeneration()),
             type: 'input',
             name: 'bootstrapServers',
             message: 'What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?',
             validate: input => {
                 return isNotValidBootstrapServerString(input) ? 'The bootstrap server should follow this pattern: <host>:<port>' : true;
             },
-            default: response => getDefaultPromptBootstrapServers(previousConfiguration(generator, response.cleanup))
+            default: constants.DEFAULT_BOOTSTRAP_SERVERS
         }
     ];
 
