@@ -101,6 +101,12 @@ function entitiesChoices(generator) {
 }
 
 function askForOperations(generator) {
+    const boostrapServersUnitPattern = /^((([a-zA-Z0-9-]+)(\.?))+(:[0-9]+)?)$/;
+
+    function isNotValidBootstrapServerString(input) {
+        return _.isEmpty(input) || input.split(',').some(bootstrapServer => boostrapServersUnitPattern.test(bootstrapServer) === false);
+    }
+
     const prompts = [
         {
             when: !generator.options['skip-prompts'],
@@ -108,14 +114,27 @@ function askForOperations(generator) {
             name: 'cleanup',
             message: 'Do you want to clean up your current Kafka configuration?',
             default: false
+        },
+        {
+            when: response => !generator.options['skip-prompts'] && (response.cleanup || generator.isFirstGeneration()),
+            type: 'input',
+            name: 'bootstrapServers',
+            message: 'What is your bootstrap servers string connection (you can add several bootstrap servers by using a "," delimiter)?',
+            validate: input => {
+                return isNotValidBootstrapServerString(input) ? 'The bootstrap server should follow this pattern: <host>:<port>' : true;
+            },
+            default: constants.DEFAULT_BOOTSTRAP_SERVERS
         }
     ];
 
     const done = generator.async();
     try {
-        generator.prompt(prompts).then(props => {
-            if (props.cleanup) {
-                generator.props.cleanup = props.cleanup;
+        generator.prompt(prompts).then(answers => {
+            if (answers.cleanup) {
+                generator.props.cleanup = answers.cleanup;
+            }
+            if (answers.bootstrapServers) {
+                generator.props.bootstrapServers = answers.bootstrapServers;
             }
             askForEntityOperations(generator, done);
         });

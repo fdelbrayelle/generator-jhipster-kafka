@@ -62,15 +62,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it('should update application.yml', () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
             });
         });
 
@@ -110,15 +102,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it('should update application.yml', () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
 
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
 
@@ -202,14 +186,8 @@ describe('JHipster generator kafka', () => {
                 it('should update application.yml', () => {
                     const { applicationYml, testApplicationYml } = loadApplicationYaml();
 
-                    assert.fileContent(
-                        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                    );
-                    assert.fileContent(
-                        `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                    );
+                    assertBootstrapServerProperties();
+
                     assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
                     assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /polling.timeout: 10000/);
 
@@ -272,14 +250,7 @@ describe('JHipster generator kafka', () => {
                 it('should update application.yml', () => {
                     const { applicationYml, testApplicationYml } = loadApplicationYaml();
 
-                    assert.fileContent(
-                        `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                    );
-                    assert.fileContent(
-                        `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                        /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                    );
+                    assertBootstrapServerProperties();
 
                     assertMinimalProperties(applicationYml, testApplicationYml, FOO_ENTITY, constants.CONSUMER_COMPONENT);
 
@@ -440,6 +411,27 @@ describe('JHipster generator kafka', () => {
                 itShouldUpdatesPropertiesWithGivenValue();
             });
         });
+
+        describe('with a specific bootstrap.servers', () => {
+            before(done => {
+                helpers
+                    .run(path.join(__dirname, '../generators/app'))
+                    .inTmpDir(dir => {
+                        fse.copySync(path.join(__dirname, '../test/templates/message-broker-with-entities-1st-call'), dir);
+                    })
+                    .withPrompts({
+                        bootstrapServers: 'local.dns.kafka:9092,kafka.host:9092',
+                        currentEntity: FOO_ENTITY,
+                        currentEntityComponents: [constants.CONSUMER_COMPONENT, constants.PRODUCER_COMPONENT],
+                        continueAddingEntitiesComponents: false
+                    })
+                    .on('end', done);
+            });
+
+            itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(FOO_ENTITY, 'local.dns.kafka:9092,kafka.host:9092');
+
+            itShouldUpdatesPropertiesWithDefaultValue();
+        });
     });
 
     describe('with an existing previous generation', () => {
@@ -476,15 +468,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it('should update application.yml', () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
 
                 assert.noFileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /topic:.*/);
 
@@ -540,15 +524,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it(`should regenerate all basics properties and producer/consumer properties for only ${AWESOME_ENTITY}`, () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
 
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
                 assertMinimalProperties(applicationYml, testApplicationYml, AWESOME_ENTITY, constants.PRODUCER_COMPONENT);
@@ -598,15 +574,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX}`, () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
 
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
                 assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX, constants.PRODUCER_COMPONENT);
@@ -658,15 +626,7 @@ describe('JHipster generator kafka', () => {
             });
 
             it(`should regenerate all basics properties and producer/consumer properties for only ${COMPONENT_PREFIX_LOWERCASE}`, () => {
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
-
-                assert.fileContent(
-                    `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-                    /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-                );
+                assertBootstrapServerProperties();
 
                 const { applicationYml, testApplicationYml } = loadApplicationYaml();
                 assertMinimalProperties(applicationYml, testApplicationYml, COMPONENT_PREFIX_LOWERCASE, constants.PRODUCER_COMPONENT);
@@ -966,7 +926,7 @@ describe('JHipster generator kafka', () => {
     });
 });
 
-function itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(entityName) {
+function itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(entityName, bootstrapServers = constants.DEFAULT_BOOTSTRAP_SERVERS) {
     it(`should generate default files for ${entityName}`, () => {
         const expectedFiles = [
             `${jhipsterConstants.SERVER_MAIN_SRC_DIR}com/mycompany/myapp/config/KafkaProperties.java`,
@@ -983,15 +943,7 @@ function itGeneratesBasicConfigurationWithConsumerProducerWithAnEntity(entityNam
     });
 
     it(`should update application.yml kafka.bootstrap.servers, kafka.consumer and kafka.producer for ${entityName}`, () => {
-        assert.fileContent(
-            `${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`,
-            /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-        );
-
-        assert.fileContent(
-            `${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`,
-            /bootstrap.servers: \${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}/
-        );
+        assertBootstrapServerProperties(bootstrapServers);
 
         const { applicationYml, testApplicationYml } = loadApplicationYaml();
         assertMinimalProperties(applicationYml, testApplicationYml, entityName, constants.CONSUMER_COMPONENT);
@@ -1107,6 +1059,14 @@ function assertNoProperties(applicationYml, testApplicationYml, entityName, comp
 function assertNoTopicName(applicationYml, testApplicationYml, entityName) {
     expect(Object.keys(applicationYml.kafka.topic)).to.not.have.property(_.camelCase(entityName));
     expect(Object.keys(testApplicationYml.kafka.topic)).to.not.have.property(_.camelCase(entityName));
+}
+
+function assertBootstrapServerProperties(bootstrapServers = constants.DEFAULT_BOOTSTRAP_SERVERS) {
+    const boostrapProps = `bootstrap.servers: \\\${KAFKA_BOOTSTRAP_SERVERS:${bootstrapServers}}`;
+
+    assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, new RegExp(boostrapProps));
+
+    assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, new RegExp(boostrapProps));
 }
 
 function assertThatKafkaPropertiesAreOrdered(applicationYml) {

@@ -33,7 +33,7 @@ const JSON_EXTENSION = '.json';
 const EMPTY_STRING = '';
 const DEFAULT_TOPIC = 'default_topic';
 const CUSTOM_TOPIC = 'custom_topic';
-
+const DEFAULT_BOOTSTRAP_SERVERS = 'localhost:9092';
 // Related to: https://github.com/apache/kafka/commit/ad3dfc6ab25c3f80d2425e24e72ae732b850dc60
 const TOPIC_NAME_MAX_SIZE = 249;
 
@@ -54,7 +54,8 @@ const constants = {
     EMPTY_STRING,
     DEFAULT_TOPIC,
     CUSTOM_TOPIC,
-    TOPIC_NAME_MAX_SIZE
+    TOPIC_NAME_MAX_SIZE,
+    DEFAULT_BOOTSTRAP_SERVERS
 };
 
 module.exports = constants;
