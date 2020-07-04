@@ -30,8 +30,6 @@ import org.springframework.stereotype.Service;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
-import <%= packageName %>.service.kafka.consumer.GenericConsumer;
-
 class KafkaArchTest {
 
     @Test
@@ -124,7 +122,7 @@ class KafkaArchTest {
         final ArchCondition<? super JavaClass> extendGenericConsumer = new ArchCondition<JavaClass>("extend GenericConsumer") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents conditionEvents) {
-                if (!javaClass.getSuperClass().isPresent() || !javaClass.getSuperClass().get().getName().equals(GenericConsumer.class.getName())) {
+                if (!javaClass.getSuperClass().isPresent() || !javaClass.getSuperClass().get().getName().equals("GenericConsumer")) {
                     final String message = String.format(
                         "Class %s does not extend GenericConsumer", javaClass.getName());
                     conditionEvents.add(SimpleConditionEvent.violated(javaClass, message));
