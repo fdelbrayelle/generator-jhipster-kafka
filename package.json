@@ -6,7 +6,8 @@
     "yeoman-generator",
     "jhipster-module",
     "jhipster-5",
-    "jhipster-6"
+    "jhipster-6",
+    "jhipster-7"
   ],
   "homepage": "https://github.com/fdelbrayelle/generator-jhipster-kafka",
   "author": {
@@ -24,7 +25,7 @@
   },
   "dependencies": {
     "chalk": "2.4.1",
-    "generator-jhipster": ">=6.0.0",
+    "generator-jhipster": "github:jhipster/generator-jhipster#main",
     "js-yaml": "^3.14.0",
     "lodash": "4.17.19",
     "semver": "5.3.0",

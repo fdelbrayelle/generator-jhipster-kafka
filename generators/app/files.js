@@ -21,8 +21,6 @@ function initVariables(generator) {
     generator.clientFramework = generator.jhipsterAppConfig.clientFramework;
     generator.clientPackageManager = generator.jhipsterAppConfig.clientPackageManager;
     generator.buildTool = generator.jhipsterAppConfig.buildTool;
-    // use function in generator-base.js from generator-jhipster
-    generator.angularAppName = generator.getAngularAppName();
 
     // use constants from generator-constants.js
     generator.javaDir = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + generator.packageFolder}/`;
@@ -48,9 +46,6 @@ function initVariables(generator) {
     generator.log(`clientFramework=${generator.clientFramework}`);
     generator.log(`clientPackageManager=${generator.clientPackageManager}`);
     generator.log(`buildTool=${generator.buildTool}`);
-
-    generator.log('\n--- some function ---');
-    generator.log(`angularAppName=${generator.angularAppName}`);
 
     generator.log('\n--- some const ---');
     generator.log(`javaDir=${generator.javaDir}`);
@@ -152,24 +147,18 @@ function writeFiles(generator) {
         if (haveComponentForEntity(constants.CONSUMER_COMPONENT, entity)) {
             generator.template(
                 'src/main/java/package/service/kafka/consumer/EntityConsumer.java.ejs',
-                `${generator.javaDir}service/kafka/consumer/${entity}Consumer.java`,
-                null,
-                null
+                `${generator.javaDir}service/kafka/consumer/${entity}Consumer.java`
             );
         }
 
         if (haveComponentForEntity(constants.PRODUCER_COMPONENT, entity)) {
             generator.template(
                 'src/main/java/package/service/kafka/producer/EntityProducer.java.ejs',
-                `${generator.javaDir}service/kafka/producer/${entity}Producer.java`,
-                null,
-                null
+                `${generator.javaDir}service/kafka/producer/${entity}Producer.java`
             );
             generator.template(
                 'src/main/java/package/web/rest/kafka/EntityKafkaResource.java.ejs',
-                `${generator.javaDir}web/rest/kafka/${entity}KafkaResource.java`,
-                null,
-                null
+                `${generator.javaDir}web/rest/kafka/${entity}KafkaResource.java`
             );
         }
     };
@@ -217,28 +206,19 @@ function writeFiles(generator) {
     if (generator.options['skip-prompts'] || containsComponent(constants.CONSUMER_COMPONENT)) {
         generator.template(
             'src/main/java/package/service/kafka/consumer/GenericConsumer.java.ejs',
-            `${generator.javaDir}service/kafka/consumer/GenericConsumer.java`,
-            null,
-            null
+            `${generator.javaDir}service/kafka/consumer/GenericConsumer.java`
         );
         generator.template(
             'src/main/java/package/service/kafka/serde/DeserializationError.java.ejs',
-            `${generator.javaDir}service/kafka/serde/DeserializationError.java`,
-            null,
-            null
+            `${generator.javaDir}service/kafka/serde/DeserializationError.java`
         );
     }
 
     if (containsComponent(constants.CONSUMER_COMPONENT) || containsComponent(constants.PRODUCER_COMPONENT)) {
-        generator.template(
-            'src/main/java/package/config/KafkaProperties.java.ejs',
-            `${generator.javaDir}config/KafkaProperties.java`,
-            null,
-            null
-        );
+        generator.template('src/main/java/package/config/KafkaProperties.java.ejs', `${generator.javaDir}config/KafkaProperties.java`);
     }
 
-    generator.template('src/test/java/package/KafkaArchTest.java.ejs', `${generator.testDir}/KafkaArchTest.java`, null, null);
+    generator.template('src/test/java/package/KafkaArchTest.java.ejs', `${generator.testDir}/KafkaArchTest.java`);
 
     generator.entities.forEach(entity => {
         writeComponents(entity, true);
@@ -360,7 +340,7 @@ function writeKafkaDockerYaml(generator) {
     generator.log(`dockerKafka=${generator.dockerKafka}`);
     generator.log(`dockerAkhq=${generator.dockerAkhq}`);
 
-    generator.template('src/main/docker/akhq.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`, generator, null, null);
+    generator.template('src/main/docker/akhq.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`, generator);
 
     // Related to: https://github.com/jhipster/generator-jhipster/issues/11846
     overrideMainGeneratorAppYml(generator);
@@ -401,30 +381,22 @@ function generateSerdeFiles(generator, entity, useEntityAsType) {
     const globalType = useEntityAsType ? 'Entity' : 'String';
     generator.template(
         'src/main/java/package/service/kafka/serde/DeserializationError.java.ejs',
-        `${generator.javaDir}service/kafka/serde/DeserializationError.java`,
-        null,
-        null
+        `${generator.javaDir}service/kafka/serde/DeserializationError.java`
     );
     generator.template(
         `src/main/java/package/service/kafka/serde/${globalType}Deserializer.java.ejs`,
-        `${generator.javaDir}service/kafka/serde/${entity}Deserializer.java`,
-        null,
-        null
+        `${generator.javaDir}service/kafka/serde/${entity}Deserializer.java`
     );
     generator.template(
         `src/main/java/package/service/kafka/serde/${globalType}Serializer.java.ejs`,
-        `${generator.javaDir}service/kafka/serde/${entity}Serializer.java`,
-        null,
-        null
+        `${generator.javaDir}service/kafka/serde/${entity}Serializer.java`
     );
 
     // When using no_entity there is already a Serdes.String() (which implements Serde<String>) so no need to generate a custom Serde
     if (useEntityAsType) {
         generator.template(
             'src/main/java/package/service/kafka/serde/EntitySerde.java.ejs',
-            `${generator.javaDir}service/kafka/serde/${entity}Serde.java`,
-            null,
-            null
+            `${generator.javaDir}service/kafka/serde/${entity}Serde.java`
         );
     }
 }

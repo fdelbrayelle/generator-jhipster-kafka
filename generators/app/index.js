@@ -50,7 +50,7 @@ module.exports = class extends BaseGenerator {
                 }
             },
             readConfig() {
-                this.jhipsterAppConfig = this.getAllJhipsterConfig();
+                this.jhipsterAppConfig = this.getJhipsterConfig('.yo-rc.json').createProxy();
 
                 if (!this.jhipsterAppConfig) {
                     this.error('Cannot read .yo-rc.json');

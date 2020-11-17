@@ -28,10 +28,10 @@ on:
 env:
   JHI_RUN_APP: 1
   JHI_JDK: 11
-  JHI_LIB_REPO: https://github.com/jhipster/jhipster.git
-  JHI_LIB_BRANCH: release
+  JHI_LIB_REPO: https://github.com/jhipster/jhipster-bom.git
+  JHI_LIB_BRANCH: main
   JHI_GEN_REPO: https://github.com/jhipster/generator-jhipster.git
-  JHI_GEN_BRANCH: v6.x_maintenance # because of coming v7... (for instance: "getAllJhipsterConfig" has been removed, see: https://github.com/jhipster/generator-jhipster/commit/dcb9a508ae6b5e47802ab884ebe3f7c5f4bf7f78)
+  JHI_GEN_BRANCH: main
   SPRING_OUTPUT_ANSI_ENABLED: ALWAYS
   SPRING_JPA_SHOW_SQL: false
   JHI_DISABLE_WEBPACK_LOGS: true

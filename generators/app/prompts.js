@@ -87,11 +87,9 @@ function entitiesChoices(generator) {
         existingEntityNames = fs.readdirSync(constants.JHIPSTER_CONFIG_DIR);
     } catch (e) {
         generator.log(
-            `${chalk.red.bold(
-                'WARN!'
-            )} Error while reading entities folder (you have to generate an entity first with jhipster entity YourEntity): ${
+            `${chalk.red.bold('WARN!')} Error while reading entities folder: ${
                 constants.JHIPSTER_CONFIG_DIR
-            }`,
+            }. You have to generate an entity first with: jhipster entity YourEntity`,
             e
         );
     }
