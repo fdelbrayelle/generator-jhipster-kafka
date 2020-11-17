@@ -398,6 +398,7 @@ function overrideMainGeneratorAppYml(generator) {
 }
 
 function generateSerdeFiles(generator, entity, useEntityAsType) {
+    const globalType = useEntityAsType ? 'Entity' : 'String';
     generator.template(
         'src/main/java/package/service/kafka/serde/DeserializationError.java.ejs',
         `${generator.javaDir}service/kafka/serde/DeserializationError.java`,
@@ -405,13 +406,13 @@ function generateSerdeFiles(generator, entity, useEntityAsType) {
         null
     );
     generator.template(
-        'src/main/java/package/service/kafka/serde/EntityDeserializer.java.ejs',
+        `src/main/java/package/service/kafka/serde/${globalType}Deserializer.java.ejs`,
         `${generator.javaDir}service/kafka/serde/${entity}Deserializer.java`,
         null,
         null
     );
     generator.template(
-        'src/main/java/package/service/kafka/serde/EntitySerializer.java.ejs',
+        `src/main/java/package/service/kafka/serde/${globalType}Serializer.java.ejs`,
         `${generator.javaDir}service/kafka/serde/${entity}Serializer.java`,
         null,
         null

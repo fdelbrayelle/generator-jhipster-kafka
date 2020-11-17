@@ -1,9 +1,7 @@
 package com.mycompany.myapp.service.kafka.serde;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.util.StdDateFormat;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -23,8 +21,6 @@ public class FooDeserializer implements Deserializer<Either<DeserializationError
 
     private final ObjectMapper objectMapper;
 
-    private String encoding = "UTF8";
-
     public FooDeserializer() {
         this.objectMapper =
             new ObjectMapper()
@@ -32,8 +28,6 @@ public class FooDeserializer implements Deserializer<Either<DeserializationError
                 .registerModule(new Jdk8Module())
                 .registerModule(new JavaTimeModule())
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-                .setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE)
-                .setSerializationInclusion(JsonInclude.Include.NON_EMPTY)
                 .setDateFormat(new StdDateFormat());
     }
 
