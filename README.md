@@ -12,20 +12,20 @@
 ## 🚦 Done !
 
 - [x] Basic [Consumer/Producer API use](#consumer-api-and-producer-api)
-- [x] Several [prompt options](#prompt-options-tree) (`polling.timeout`, `auto.offset.reset.policy`)
+- [x] Several [prompt options](#prompt-options-tree) (`polling.timeout`, `auto.offset.reset.policy`, `bootstrap.servers`)
 - [x] [AKHQ (KafkaHQ)](#akhq) support
 - [x] Topic management
 
-## 🛠 To do or doing...
+## 🚧 To do or doing...
 
 You can have more details about work in progress in [issues](https://github.com/fdelbrayelle/generator-jhipster-kafka/issues):
 
+- [x] Schema Registry and Avro support
 - [ ] Producer API (ordered messages, high throughput...)
 - [ ] Deserialization alternatives (JacksonSerde) as a prompt option
 - [ ] Security (SSL protocol as a prompt option, safe mode...)
 - [ ] JHipster entity sub-generator hook
 - [ ] JHipster microservices applications support
-- [ ] Schema Registry and Avro support
 - [ ] Kafka Connect support
 - [ ] Kafka Streams support
 
