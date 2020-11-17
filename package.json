@@ -1,6 +1,6 @@
 {
   "name": "generator-jhipster-kafka",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "A JHipster module that generates Apache Kafka consumers and producers and more!",
   "keywords": [
     "yeoman-generator",
@@ -10,18 +10,44 @@
     "jhipster-7"
   ],
   "homepage": "https://github.com/fdelbrayelle/generator-jhipster-kafka",
+  "bugs": {
+    "url": "https://github.com/fdelbrayelle/generator-jhipster-kafka/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fdelbrayelle/generator-jhipster-kafka.git"
+  },
+  "license": "Apache-2.0",
   "author": {
     "name": "François Delbrayelle",
     "email": "fdelbrayelle@gmail.com",
     "url": "https://fdelbrayelle.github.io/"
   },
+  "main": "generators/app/index.js",
   "files": [
     "generators"
   ],
-  "main": "generators/app/index.js",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/fdelbrayelle/generator-jhipster-kafka.git"
+  "scripts": {
+    "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
+    "prettier:format": "prettier --write \"{,**/}*.{js,json,md,yml}\"",
+    "release": "git push && git push --tags && npm publish",
+    "release:major": "npm version major -a -m \"Update to %s\" && npm run release",
+    "release:minor": "npm version minor -a -m \"Update to %s\" && npm run release",
+    "release:patch": "npm version patch -a -m \"Update to %s\" && npm run release",
+    "pretest": "eslint .",
+    "test": "nyc --reporter=text mocha --timeout 30000 --slow 0 test"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,json,yml,md}": [
+      "prettier --write",
+      "git add"
+    ]
   },
   "dependencies": {
     "chalk": "2.4.1",
@@ -47,31 +73,5 @@
     "prettier": "1.18.2",
     "yeoman-assert": "3.1.1",
     "yeoman-test": "2.4.1"
-  },
-  "scripts": {
-    "prettier:format": "prettier --write \"{,**/}*.{js,json,md,yml}\"",
-    "pretest": "eslint .",
-    "lint": "eslint .",
-    "lint-fix": "eslint . --fix",
-    "release": "git push && git push --tags && npm publish",
-    "release:patch": "npm version patch -a -m \"Update to %s\" && npm run release",
-    "release:minor": "npm version minor -a -m \"Update to %s\" && npm run release",
-    "release:major": "npm version major -a -m \"Update to %s\" && npm run release",
-    "test": "nyc --reporter=text mocha --timeout 30000 --slow 0 test"
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "lint-staged"
-    }
-  },
-  "lint-staged": {
-    "*.{js,json,yml,md}": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "license": "Apache-2.0",
-  "bugs": {
-    "url": "https://github.com/fdelbrayelle/generator-jhipster-kafka/issues"
   }
 }
