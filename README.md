@@ -47,7 +47,11 @@ Or just run:
 npm i -g generator-jhipster
 ```
 
+:warning: If you're using last version of the module or by linking package on master branch you should be using JHipster last version (main branch which is actually wip next release v7). If you want to use JHipster v6 you will have to use `v6.x_maintenance` branch of this module.
+
 # Installation
+
+:warning: Last version of `yo` (Yeoman) is needed to make it work correctly!
 
 ## With NPM
 

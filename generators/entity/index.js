@@ -8,7 +8,7 @@ module.exports = class extends BaseGenerator {
         return {
             readConfig() {
                 this.entityConfig = this.options.entityConfig;
-                this.jhipsterAppConfig = this.getAllJhipsterConfig();
+                this.jhipsterAppConfig = this.getJhipsterConfig('.yo-rc.json').createProxy();
                 if (!this.jhipsterAppConfig) {
                     this.error('Cannot read .yo-rc.json');
                 }
@@ -65,9 +65,6 @@ module.exports = class extends BaseGenerator {
                 this.clientFramework = this.jhipsterAppConfig.clientFramework;
                 this.clientPackageManager = this.jhipsterAppConfig.clientPackageManager;
                 this.buildTool = this.jhipsterAppConfig.buildTool;
-
-                // use function in generator-base.js from generator-jhipster
-                this.angularAppName = this.getAngularAppName();
 
                 // use constants from generator-constants.js
                 const javaDir = `${jhipsterConstants.SERVER_MAIN_SRC_DIR + this.packageFolder}/`;
