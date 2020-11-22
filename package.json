@@ -1,6 +1,6 @@
 {
   "name": "generator-jhipster-kafka",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A JHipster module that generates Apache Kafka consumers and producers and more!",
   "keywords": [
     "yeoman-generator",
