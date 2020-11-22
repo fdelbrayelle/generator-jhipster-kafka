@@ -30,8 +30,6 @@ module.exports = class extends BaseGenerator {
             cleanup: false || this.options['skip-prompts'],
             entitiesOrder: []
         };
-
-        this.setupClientOptions(this);
     }
 
     isFirstGeneration() {
