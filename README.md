@@ -103,7 +103,7 @@ If you want to use local versions of JHipster and the Kafka module:
 
 1. Ensure you have a JHipster version > 6.0.0 with: `jhipster --version`
 2. Create a JHipster project in a new folder: `mkdir myproject && cd myproject && jhipster` (you can also create a backend project only with `jhipster --skip-client`)
-3. Choose `Asynchronous messages using Apache Kafka` in server side options when answering the following question : "Which other technologies would you like to use?"
+3. Choose `Apache Kafka as asynchronous messages broker` in server side options when answering the following question : "Which other technologies would you like to use?"
 4. In the same folder, then run `yo jhipster-kafka` and then follow the use case you need
 5. After the generation have been done, run Kafka with: `docker-compose -f src/main/docker/kafka.yml up -d`
 6. Run your application with: `./mvnw`
