@@ -333,14 +333,19 @@ function writeKafkaDockerYaml(generator) {
     generator.dockerZookeeper = jhipsterConstants.DOCKER_ZOOKEEPER;
     generator.dockerKafka = jhipsterConstants.DOCKER_KAFKA;
     generator.dockerAkhq = 'tchiotludo/akhq:0.14.1';
+    generator.dockerSchemaRegistry = 'confluentinc/cp-schema-registry:6.1.1';
 
     generator.log(`kafkaVersion=${generator.kafkaVersion}`);
     generator.log(`dockerComposeFormatVersion=${generator.dockerComposeFormatVersion}`);
     generator.log(`dockerZookeeper=${generator.dockerZookeeper}`);
     generator.log(`dockerKafka=${generator.dockerKafka}`);
     generator.log(`dockerAkhq=${generator.dockerAkhq}`);
+    generator.log(`dockerSchemaRegistry=${generator.dockerSchemaRegistry}`);
 
     generator.template('src/main/docker/akhq.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/akhq.yml`, generator);
+
+    // FIXME: Only when choosing Avro schemas in prompts
+    generator.template('src/main/docker/schema-registry.yml.ejs', `${jhipsterConstants.MAIN_DIR}docker/schema-registry.yml`, generator);
 
     // Related to: https://github.com/jhipster/generator-jhipster/issues/11846
     overrideMainGeneratorAppYml(generator);
