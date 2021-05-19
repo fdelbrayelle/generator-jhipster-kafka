@@ -105,7 +105,7 @@ If you want to use local versions of JHipster and the Kafka module:
 2. Create a JHipster project in a new folder: `mkdir myproject && cd myproject && jhipster` (you can also create a backend project only with `jhipster --skip-client`)
 3. Choose `Apache Kafka as asynchronous messages broker` in server side options when answering the following question : "Which other technologies would you like to use?"
 4. In the same folder, then run `yo jhipster-kafka` and then follow the use case you need
-5. After the generation have been done, run Kafka with: `docker-compose -f src/main/docker/kafka.yml up -d` (or without `-d` and ensure you have a docker-compose version >= 1.27.4)
+5. After the generation have been done, run Kafka with: `docker-compose -f src/main/docker/kafka.yml up -d` (or without `-d` and ensure you have the latest docker-compose version and that you have uncommented `127.0.0.1:` in your `kafka.yml` locally)
 6. Run your application with: `./mvnw`
 
 The different [use cases](USE_CASES.md) are listed on another page.
@@ -168,8 +168,6 @@ The **END** represents the end of the prompts below, when files are written afte
     <li><em>If "N" was selected:</em> <strong>END</strong></li>
 </ul>
 
-</code>
-
 ## Skip prompts
 
 You can use `yo jhipster-kafka --skip-prompts` to use the default prompts values to generate:
@@ -200,9 +198,16 @@ Generated consumers should not be explicitly used in other classes as each of th
 
 🚀 [AKHQ (previously known as KafkaHQ)](https://github.com/tchiotludo/akhq) can be used following those steps in the root directory:
 
-1. Run `docker-compose -f src/main/docker/kafka.yml -f src/main/docker/akhq.yml up -d` to launch the ZooKeeper and Kafka services with AKHQ
-1. Go to [http://localhost:11817](http://localhost:11817)
-1. Start your application with `./mvnw` to manage your topics and more!
+1. Run `docker-compose -f src/main/docker/kafka.yml -f src/main/docker/akhq.yml up -d` to launch the ZooKeeper and Kafka services with AKHQ (or without `-d` and ensure you have the latest docker-compose version and that you have uncommented `127.0.0.1:` in your `kafka.yml` locally)
+2. Go to [http://localhost:11817](http://localhost:11817)
+3. Start your application with `./mvnw` to manage your topics and more!
+
+## Schema Registry for Avro schemas
+
+🚀 [Schema Registry](https://docs.confluent.io/platform/current/schema-registry/index.html) for Avro schemas can be used following those steps in the root directory:
+
+1. Run `docker-compose -f src/main/docker/kafka.yml -f src/main/docker/schema-registry.yml up -d` to launch the ZooKeeper and Kafka services with AKHQ (or without `-d` and ensure you have the latest docker-compose version and that you have uncommented `127.0.0.1:` in your `kafka.yml` locally)
+2. Choose to generate Avro schemas (`.avsc` files) for your entities in prompts.
 
 # How to contribute?
 
