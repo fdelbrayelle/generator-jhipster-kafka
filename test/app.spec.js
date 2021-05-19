@@ -200,12 +200,14 @@ describe('JHipster generator kafka', () => {
                     assert.strictEqual(entityTestYmlProducerBlock, undefined);
                 });
 
-                it('should set the autoRestOffsetPolicy default value for consumer', () => {
+                it('should set the autoOffsetResetPolicy default value for consumer', () => {
                     const { applicationYml, testApplicationYml } = loadApplicationYaml();
                     const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
                     const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
 
+                    // eslint-disable-next-line
                     assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
+                    // eslint-disable-next-line
                     assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.EARLIEST_OFFSET);
                 });
             });
@@ -271,7 +273,9 @@ describe('JHipster generator kafka', () => {
                     const entityYmlConsumerBlock = applicationYml.kafka.consumer.foo;
                     const entityTestYmlConsumerBlock = testApplicationYml.kafka.consumer.foo;
 
+                    // eslint-disable-next-line
                     assert.textEqual(entityYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
+                    // eslint-disable-next-line
                     assert.textEqual(entityTestYmlConsumerBlock['[auto.offset.reset]'], constants.LATEST_OFFSET);
                 });
             });
@@ -958,8 +962,8 @@ function itShouldUpdatesPropertiesWithGivenValue() {
     });
 
     it('should update application.yml kafka.auto.offset.reset with given value', () => {
-        assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
-        assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: latest/);
+        assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /\[auto.offset.reset\].: latest/);
+        assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /\[auto.offset.reset\].: latest/);
     });
 }
 
@@ -970,8 +974,8 @@ function itShouldUpdatesPropertiesWithDefaultValue() {
     });
 
     it('should update application.yml kafka.auto.offset.reset with default value', () => {
-        assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: earliest/);
-        assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /'\[auto.offset.reset\].: earliest/);
+        assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, /\[auto.offset.reset\].: earliest/);
+        assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, /\[auto.offset.reset\].: earliest/);
     });
 }
 
