@@ -369,11 +369,11 @@ function overrideMainGeneratorAppYml(generator) {
     const appYmlPath = `${jhipsterConstants.MAIN_DIR}docker/app.yml`;
 
     const kafkaBootstrapServersPattern = /^\s.*KAFKA_BOOTSTRAPSERVERS.*$/gm;
-    const kafkaBootstrapServers = '      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092';
+    const kafkaBootstrapServers = '      - KAFKA_BOOTSTRAP_SERVERS: kafka:29092';
     generator.replaceContent(appYmlPath, kafkaBootstrapServersPattern, kafkaBootstrapServers);
 
     const kafkaAdvertisedListenersPattern = /^\s.*KAFKA_ADVERTISED_LISTENERS.*$/gm;
-    const kafkaAdvertisedListeners = '      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092';
+    const kafkaAdvertisedListeners = '      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092';
     generator.replaceContent(appYmlPath, kafkaAdvertisedListenersPattern, kafkaAdvertisedListeners);
 }
 

@@ -1066,11 +1066,11 @@ function assertNoTopicName(applicationYml, testApplicationYml, entityName) {
 }
 
 function assertBootstrapServerProperties(bootstrapServers = constants.DEFAULT_BOOTSTRAP_SERVERS) {
-    const boostrapProps = `bootstrap.servers: \\\${KAFKA_BOOTSTRAP_SERVERS:${bootstrapServers}}`;
+    const bootstrapProps = `bootstrap.servers: \\\${KAFKA_BOOTSTRAP_SERVERS:${bootstrapServers}}`;
 
-    assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, new RegExp(boostrapProps));
+    assert.fileContent(`${jhipsterConstants.SERVER_MAIN_RES_DIR}config/application.yml`, new RegExp(bootstrapProps));
 
-    assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, new RegExp(boostrapProps));
+    assert.fileContent(`${jhipsterConstants.SERVER_TEST_RES_DIR}config/application.yml`, new RegExp(bootstrapProps));
 }
 
 function assertThatKafkaPropertiesAreOrdered(applicationYml) {
