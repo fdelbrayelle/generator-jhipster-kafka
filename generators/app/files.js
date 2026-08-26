@@ -38,6 +38,7 @@ function initVariables(generator) {
     generator.pollingTimeout = generator.props.pollingTimeout;
     generator.autoOffsetResetPolicy = generator.props.autoOffsetResetPolicy;
     generator.entitiesOrder = generator.props.entitiesOrder;
+    generator.groupId = generator.props.groupId || generator.dasherizedBaseName;
 
     // show all variables
     generator.log('\n--- some config read from config ---');
@@ -65,6 +66,7 @@ function initVariables(generator) {
         generator.log(`\ncomponentsPrefixes=${generator.componentsPrefixes}`);
         generator.log(`\npollingTimeout=${generator.pollingTimeout}`);
         generator.log(`\nautoOffsetResetPolicy=${generator.autoOffsetResetPolicy}`);
+        generator.log(`\ngroupId=${generator.groupId}`);
     }
     generator.log('------\n');
 }
@@ -306,7 +308,7 @@ function buildJsonConsumerConfiguration(generator, entity, enabled) {
         enabled,
         '[key.deserializer]': 'org.apache.kafka.common.serialization.StringDeserializer',
         '[value.deserializer]': `${generator.packageName}.service.kafka.serde.${entity}Deserializer`,
-        '[group.id]': `${generator.dasherizedBaseName}`,
+        '[group.id]': `${generator.groupId}`,
         '[auto.offset.reset]': `${generator.autoOffsetResetPolicy}`
     };
 }
